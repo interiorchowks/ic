@@ -43,11 +43,32 @@ class ProductDetailsController extends Controller
                 'cat1.slug as category_slug'
             )
             ->first();
+        // dd($product);
 
         if (!$product) {
             throw new GoneHttpException(); // Yeh 410 Gone return karega
         }
 
+        if(Auth::user()){
+            DB::table('recently_view')->updateOrInsert(
+                [
+                    'user_id'    => Auth::user()->id,
+                    'product_id' => $product->id,
+                ],
+                [
+                    'category_id'         => $product->category_id,
+                    'sub_category_id'     => $product->sub_category_id,
+                    'sub_sub_category_id' => $product->sub_sub_category_id,
+                    'type'                => 'products',
+                    'is_selected'         => 1,
+                    'counts'              => DB::raw('counts + 1'),
+                    'updated_at'          => now(),
+                    'created_at'          => now(),
+                ]
+            );
+        }
+
+        
         $related_products = DB::table('sku_product_new')
             ->join('products', 'sku_product_new.product_id', '=', 'products.id')
             ->leftjoin('sellers','sku_product_new.seller_id','=','sellers.id')
@@ -71,37 +92,6 @@ class ProductDetailsController extends Controller
             ->orWhere('id', $productss->sub_sub_category_id)
             ->first();
             
-            // dd($categoryss);
-        // $productServiceType = DB::table('products')
-        // ->where('id', $product->id)
-        // ->value('service_type');
-
-        // $rel_service_providers = DB::table('users')
-        // ->where('is_active', 1)
-        // ->where(function ($query) use ($productServiceType) {
-        //     foreach (json_decode($productServiceType, true) as $typeId) {
-        //         $query->orWhereRaw('JSON_CONTAINS(serviceTypeId, ?)', [json_encode($typeId)]);
-        //     }
-        // })
-        // ->select(
-        //     'id',
-        //     'business_name',
-        //     'name',
-        //     'phone',
-        //     'image',
-        //     'email',
-        //     'current_address',
-        //     'city',
-        //     'banner_image',
-        //     'description',
-        //     'achievments',
-        //     'total_project_done',
-        //     'working_since',
-        //     'team_strength'
-        // )
-        // ->get();
-
-        // dd($categoryss->slug);
         $rel_service_providers = DB::table('users')
             ->where('role_name', $productss->slug)
             ->where('is_active', 1)
@@ -116,30 +106,6 @@ class ProductDetailsController extends Controller
             ->get();
         }
 
-        // DB::table('users')
-        // ->where('is_active', 1)
-        // ->whereRaw(
-        //     'JSON_OVERLAPS(serviceTypeId, (SELECT service_type FROM products WHERE id = ?))',
-        //     [$product->id]
-        // )
-        // ->select(
-        //     'id',
-        //     'business_name',
-        //     'name',
-        //     'phone',
-        //     'image',
-        //     'email',
-        //     'current_address',
-        //     'city',
-        //     'banner_image',
-        //     'description',
-        //     'achievments',
-        //     'total_project_done',
-        //     'working_since',
-        //     'team_strength'
-        // )
-        // ->get();
-        
         $category = Category::where('id', $product->sub_sub_category_id)
             ->select('id', 'specification', 'key_features', 'technical_specification', 'other_details')
             ->first();
@@ -170,12 +136,14 @@ class ProductDetailsController extends Controller
     
     public function variation(Request $request)
     {
+        // dd($request->color);
         $colors = DB::table('colors')->where('code',$request->color)->first();
 
         $id = $request->id;
+        // dd($id);
         $sku = DB::table('sku_product_new')->where('product_id',$id)->where('variation', 'like', $colors->name . '%')->get();
         
-        //dd($sku);
+        // dd($sku);
         return response()->json(['variant'=>$sku], 200); 
     }
 

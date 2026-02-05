@@ -311,12 +311,19 @@
                                                             Delivery</span>
                                                     @endif
 
-                                                    <a href="{{ url('product/' . ($item->slug ?? '#')) }}">
+                                                    {{-- <a href="{{ url('product/' . ($item->slug ?? '#')) }}">
                                                         <img src="{{ !empty($item->thumbnail_image)
                                                             ? asset('storage/app/public/images/' . $item->thumbnail_image)
                                                             : asset('public/website/assets/images/products/product-placeholder.jpg') }}"
                                                             alt="{{ $item->name ?? 'Product' }}" class="product-image">
+                                                    </a> --}}
+                                                    <a href="{{ url('product/' . ($item->slug ?? '#')) }}">
+                                                        <img src="{{ !empty($item->thumbnail_image)
+                                                            ? rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($item->thumbnail_image, '/')
+                                                            : asset('public/website/assets/images/products/product-placeholder.jpg') }}"
+                                                            alt="{{ $item->name ?? 'Product' }}" class="product-image">
                                                     </a>
+
                                                 </figure>
 
                                                 <div class="product-body">
@@ -414,7 +421,7 @@
                                                     @endif
 
                                                     <a href="{{ url('product/' . $rp->slug) }}">
-                                                        <img src="{{ asset('storage/app/public/images/' . ($rp->thumbnail_image ?? 'default.jpg')) }}"
+                                                        <img src="{{ rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($rp->thumbnail_image, '/') }}"
                                                             alt="{{ $rp->name }}" class="product-image">
                                                     </a>
                                                 </figure>
@@ -485,7 +492,7 @@
                                                     @endif
 
                                                     <a href="{{ url('product/' . $mp->slug) }}">
-                                                        <img src="{{ asset('storage/app/public/images/' . ($mp->thumbnail_image ?? 'default.jpg')) }}"
+                                                        <img src="{{ rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($mp->thumbnail_image, '/') }}"
                                                             alt="{{ $mp->name }}" class="product-image">
                                                     </a>
                                                 </figure>
@@ -598,10 +605,8 @@
                                                             off</span>
                                                     @endif
 
-                                                    <img 
-                                                    {{-- src="{{ asset('storage/app/public/images/' . $wishlist->thumbnail_image) }}" --}}
-                                                    src="{{ rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($wishlist->thumbnail_image, '/') }}"
-                                                    
+                                                    <img {{-- src="{{ asset('storage/app/public/images/' . $wishlist->thumbnail_image) }}" --}}
+                                                        src="{{ rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($wishlist->thumbnail_image, '/') }}"
                                                         alt="{{ $wishlist->name }}" class="product-image loveitgetit">
 
                                                     <div class="media-body">
@@ -848,7 +853,8 @@
                         <div class="tab-pane p-0 fade show active" id="featured-brands-tab" role="tabpanel">
                             <div class="owl-carousel owl-simple carousel-equal-height carousel-with-shadow"
                                 id="top-brands-carousel">
-                                @foreach ($top_brands as $tb)
+                                {{-- @foreach ($top_brands as $tb)
+
                                     <div class="brand-card">
                                         <figure class="brand-logo-wrapper">
                                             <a href="{{ url('products_2', ['brand_id' => $tb->name]) }}">
@@ -857,7 +863,36 @@
                                             </a>
                                         </figure>
                                     </div>
+                                @endforeach --}}
+
+                                @php
+                                    use Illuminate\Support\Str;
+                                @endphp
+
+                                {{-- @foreach ($top_brands as $tb)
+                                    <div class="brand-card">
+                                        <figure class="brand-logo-wrapper">
+                                            <a
+                                                href="{{ route('products.by.brand', Str::slug($tb->name)) }}">
+                                                <img src="{{ env('CLOUDFLARE_R2_PUBLIC_URL') }}{{ $tb->image }}"
+                                                    alt="{{ $tb->name }}" class="brand-logo-img">
+                                            </a>
+                                        </figure>
+                                    </div>
+                                @endforeach --}}
+                                @foreach ($top_brands as $tb)
+                                    <div class="brand-card">
+                                        <figure class="brand-logo-wrapper">
+                                            <a href="{{ url('products_2/' . rawurlencode($tb->name)) }}">
+                                                <img src="{{ rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($tb->image, '/') }}"
+                                                    alt="{{ $tb->name }}"
+                                                    class="brand-logo-img">
+                                            </a>
+                                        </figure>
+                                    </div> 
                                 @endforeach
+
+
                             </div>
                         </div>
                     </div>

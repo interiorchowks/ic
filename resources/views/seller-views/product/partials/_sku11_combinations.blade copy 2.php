@@ -52,7 +52,6 @@
         position: absolute;
         top: 5px;
         right: 5px;
-        width: 5px;
         color: white;
         font-size: 16px;
         border-radius: 50%;
@@ -174,6 +173,11 @@
 
 @foreach ($combinations as $key => $combo)
     @php
+        /**
+         * Variant key (sizes / label) bana rahe hain – EXACT format:
+         *    "Black-20Dx10Wx5H"
+         */
+
         $parts      = [];
         $startIndex = 0;
 
@@ -181,59 +185,53 @@
             $colorCode = $combo[0]; // "#000000"
             $colorRow  = Color::where('code', $colorCode)->first();
 
+            // Color name – "Black"
             $colorName   = $colorRow ? trim($colorRow->name) : trim($colorCode);
             $parts[]     = $colorName;
             $startIndex  = 1;
         }
 
         for ($i = $startIndex; $i < count($combo); $i++) {
-            $clean = str_replace([' ', ','], '', trim($combo[$i]));
-            $parts[] = $clean;
+            // "20D x 10W x 5H" -> "20Dx10Wx5H"
+            $parts[] = str_replace(' ', '', trim($combo[$i]));
         }
 
-        $variantKey = implode('-', $parts);
-        $data       = $existingRows[$variantKey] ?? null;
+        $variantKey = implode('-', $parts);  // "Black-20Dx10Wx5H"
 
-        // SAFE image handling
-        $images = [];
-        if ($data && isset($data->image) && $data->image) {
-            $decoded = json_decode($data->image, true);
-            if (is_array($decoded)) {
-                $images = $decoded;
-            }
-        }
+        // Purane row ka data (agar same variant already DB me hai)
+        $data   = $existingRows[$variantKey] ?? null;
+        $images = $data && $data->image ? json_decode($data->image, true) : [];
     @endphp
 
     <tr data-row-id="{{ $key }}">
         <td>
+            {{-- Yahi value request->sizes[] me aayegi --}}
             <input type="hidden" name="sizes[]" value="{{ $variantKey }}">
             <label class="control-label">{{ $variantKey }}</label>
         </td>
         <td>
-            <input type="text" name="skues[]" value="{{ $data ? $data->sku : '' }}" class="form-control">
+            <input type="text" name="skues[]" value="{{ $data->sku ?? '' }}" class="form-control">
         </td>
         <td>
             <input type="text" min="0" step="0.01" placeholder="Tax" name="taxes[]"
-                value="{{ $data ? $data->tax : '' }}" class="form-control tax" id="tax_{{ $key }}">
+                value="{{ $data->tax ?? '' }}" class="form-control tax" id="tax_{{ $key }}">
         </td>
         <td>
             <div class="d-flex align-items-center">
                 <input type="text" id="tax_gst_{{ $key }}" name="tax_gst[]"
                     class="form-control ms-2 text-center" style="width: 40%; height: 10%;"
-                    value="{{ $data ? $data->gst_percent : '' }}" />
+                    value="{{ $data->gst_percent ?? '' }}" />
                 <span class="fw-bold"> plus </span>
                 <input type="text" id="var_tax_{{ $key }}" name="var_tax[]"
                     class="form-control me-2 text-center" style="width: 40%; height:10%;"
-                    value="{{ $data ? $data->discount_percent : '' }}" />
+                    value="{{ $data->discount_percent ?? '' }}" />
             </div>
             <input type="number" placeholder="Variant MRP" name="unit_prices[]" id="unit_price_{{ $key }}"
-                value="{{ $data ? $data->variant_mrp : '' }}" class="form-control unit_price mt-2">
+                value="{{ $data->variant_mrp ?? '' }}" class="form-control unit_price mt-2">
         </td>
 
         <td>
-            @php
-                $dt = ($data && isset($data->discount_type)) ? $data->discount_type : 'percent';
-            @endphp
+            @php $dt = $data->discount_type ?? 'percent'; @endphp
             <select class="form-control js-select2-custom discount_type" name="discount_types[]"
                 id="discount_type_{{ $key }}">
                 <option value="percent" {{ $dt == 'percent' ? 'selected' : '' }}>Percent</option>
@@ -242,40 +240,36 @@
         </td>
 
         <td>
-            <input type="text" placeholder="Discount" name="discounts[]"
-                value="{{ $data ? $data->discount : '' }}"
+            <input type="text" placeholder="Discount" name="discounts[]" value="{{ $data->discount ?? '' }}"
                 id="discount_{{ $key }}" class="form-control discount">
         </td>
         <td>
             <div class="d-flex align-items-center">
                 <input type="text" id="selling_tax_{{ $key }}" name="selling_taxs[]"
                     class="form-control me-2 text-center" style="width: 40%; height:10%;"
-                    value="{{ $data ? $data->listed_percent : '' }}" />
+                    value="{{ $data->listed_percent ?? '' }}" />
                 <span class="fw-bold"> plus </span>
                 <input type="text" id="tax1_gst_{{ $key }}" name="tax1_gst[]"
                     class="form-control me-2 text-center" style="width: 40%; height:10%;"
-                    value="{{ $data ? $data->listed_gst_percent : '' }}" />
+                    value="{{ $data->listed_gst_percent ?? '' }}" />
             </div>
             <input type="text" id="selling_price_{{ $key }}" name="selling_prices[]"
-                class="form-control selling_price mt-2" value="{{ $data ? $data->listed_price : '' }}"
+                class="form-control selling_price mt-2" value="{{ $data->listed_price ?? '' }}"
                 placeholder="Selling Price">
         </td>
         @if ($commission->commission_fee == 3)
             <td>
-                <input type="number" name="transfer_price[]"
-                    value="{{ $data ? $data->transfer_price : '' }}"
+                <input type="number" name="transfer_price[]" value="{{ $data->transfer_price ?? '' }}"
                     id="transfer_price_{{ $key }}" class="form-control quant">
             </td>
         @endif
 
         <td>
-            <input type="number" name="commission_fee[]"
-                value="{{ $data ? $data->commission_fee : '' }}"
+            <input type="number" name="commission_fee[]" value="{{ $data->commission_fee ?? '' }}"
                 id="commission_fee_{{ $key }}" class="form-control quant">
         </td>
         <td>
-            <input type="number" id="quant_{{ $key }}" name="quant[]"
-                value="{{ $data ? $data->quantity : '' }}"
+            <input type="number" id="quant_{{ $key }}" name="quant[]" value="{{ $data->quantity ?? '' }}"
                 class="form-control quant">
         </td>
     </tr>
@@ -284,19 +278,19 @@
         <td colspan="5" style="text-align:center; padding-top: 20px;">Packaging dimensions* (in Cm)</td>
         <td>
             <label style="position: relative; left: 20px;">Length (in Cm)</label>
-            <input type="text" name="lengths[]" value="{{ $data ? $data->length : '' }}" class="form-control">
+            <input type="text" name="lengths[]" value="{{ $data->length ?? '' }}" class="form-control">
         </td>
         <td>
             <label style="position: relative; left: 20px;">Breadth (in Cm)</label>
-            <input type="text" name="breadths[]" value="{{ $data ? $data->breadth : '' }}" class="form-control">
+            <input type="text" name="breadths[]" value="{{ $data->breadth ?? '' }}" class="form-control">
         </td>
         <td>
             <label style="position: relative; left: 20px;">Height (in Cm)</label>
-            <input type="text" name="heights[]" value="{{ $data ? $data->height : '' }}" class="form-control">
+            <input type="text" name="heights[]" value="{{ $data->height ?? '' }}" class="form-control">
         </td>
         <td>
             <label style="position: relative; left: 20px;">Weight (in Kg)</label>
-            <input type="text" name="weights[]" value="{{ $data ? $data->weight : '' }}" class="form-control">
+            <input type="text" name="weights[]" value="{{ $data->weight ?? '' }}" class="form-control">
         </td>
     </tr>
 
@@ -306,7 +300,7 @@
                 style="background-color: #ffffff; width: 50px; height: 50px; margin: 0 auto; border-radius: 50%; margin-top: 10px;">
             </p>
             <input type="text" name="color_names[]" placeholder="Write a color name"
-                style="margin-top: 10px; text-align:center;" value="{{ $data ? $data->color_name : '' }}">
+                style="margin-top: 10px; text-align:center;" value="{{ $data->color_name ?? '' }}">
         </td>
 
         <td colspan="5">
@@ -324,7 +318,7 @@
             </div>
 
             <input type="hidden" id="thumbnail_input_{{ $key }}"
-                name="thumbnail_image_{{ $key }}" value="{{ $data && isset($data->thumbnail_image) ? $data->thumbnail_image : '' }}">
+                name="thumbnail_image_{{ $key }}" value="{{ $data->thumbnail_image ?? '' }}">
             <input type="hidden" id="image_order_{{ $key }}" name="image_order_{{ $key }}"
                 value="">
 
@@ -334,9 +328,7 @@
                     @foreach ($images as $img)
                         @php
                             $imgClean   = ltrim(str_replace(' ', '', $img), '/');
-                            $thumbClean = $data && isset($data->thumbnail_image)
-                                ? ltrim(str_replace(' ', '', $data->thumbnail_image), '/')
-                                : '';
+                            $thumbClean = ltrim(str_replace(' ', '', $data->thumbnail_image ?? ''), '/');
                         @endphp
 
                         <div class="image-container" draggable="true" style="position:relative; margin:5px;">
@@ -346,7 +338,7 @@
                             <img src="{{ env('CLOUDFLARE_R2_PUBLIC_URL') . '/' . $imgClean }}" width="100">
 
                             <input type="radio" class="image-radio" name="thumbnail_{{ $key }}"
-                                value="{{ $imgClean }}" @if ($thumbClean && basename($imgClean) == basename($thumbClean)) checked @endif
+                                value="{{ $imgClean }}" @if (basename($imgClean) == basename($thumbClean)) checked @endif
                                 style="position:absolute; top:5px; right:80px;">
 
                             <span class="remove-btn"
@@ -366,10 +358,8 @@
     </div>
 @endforeach
 
-@if (count($combinations[0]) > 0)
-        </tbody>
-    </table>
-@endif
+</tbody>
+</table>
 
 {{-- JS part --}}
 

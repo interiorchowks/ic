@@ -2,17 +2,17 @@
 
 return [
 
-    'default' =>'smtp',
+    'default' => env('MAIL_MAILER', 'smtp'),
 
     'mailers' => [
 
         'smtp' => [
             'transport' => 'smtp',
-            'host' => 'smtp.zoho.com',
-            'port' => 587,
-            'encryption' => 'tls',
-            'username' => 'info@interiorchowk.com',
-            'password' => 'LTEbVyYtsmYf',
+            'host' => env('MAIL_HOST', 'smtppro.zoho.in'),
+            'port' => env('MAIL_PORT', 465),
+            'encryption' => env('MAIL_ENCRYPTION', 'ssl'),
+            'username' => env('MAIL_USERNAME'),
+            'password' => env('MAIL_PASSWORD'),
             'timeout' => null,
             'auth_mode' => null,
         ],
@@ -26,10 +26,10 @@ return [
             'transport' => 'array',
         ],
     ],
-
+    
     'from' => [
-        'address' => env('MAIL_FROM_ADDRESS'),
-        'name' => env('MAIL_FROM_NAME'),
+        'address' => env('MAIL_FROM_ADDRESS', 'info@interiorchowk.com'),
+        'name' => env('MAIL_FROM_NAME', 'InteriorChowk Support'),
     ],
 
     'markdown' => [

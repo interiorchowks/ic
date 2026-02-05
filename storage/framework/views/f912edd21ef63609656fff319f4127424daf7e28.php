@@ -313,12 +313,14 @@
                                                             Delivery</span>
                                                     <?php endif; ?>
 
+                                                    
                                                     <a href="<?php echo e(url('product/' . ($item->slug ?? '#'))); ?>">
                                                         <img src="<?php echo e(!empty($item->thumbnail_image)
-                                                            ? asset('storage/app/public/images/' . $item->thumbnail_image)
+                                                            ? rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($item->thumbnail_image, '/')
                                                             : asset('public/website/assets/images/products/product-placeholder.jpg')); ?>"
                                                             alt="<?php echo e($item->name ?? 'Product'); ?>" class="product-image">
                                                     </a>
+
                                                 </figure>
 
                                                 <div class="product-body">
@@ -419,7 +421,7 @@
                                                     <?php endif; ?>
 
                                                     <a href="<?php echo e(url('product/' . $rp->slug)); ?>">
-                                                        <img src="<?php echo e(asset('storage/app/public/images/' . ($rp->thumbnail_image ?? 'default.jpg'))); ?>"
+                                                        <img src="<?php echo e(rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($rp->thumbnail_image, '/')); ?>"
                                                             alt="<?php echo e($rp->name); ?>" class="product-image">
                                                     </a>
                                                 </figure>
@@ -492,7 +494,7 @@
                                                     <?php endif; ?>
 
                                                     <a href="<?php echo e(url('product/' . $mp->slug)); ?>">
-                                                        <img src="<?php echo e(asset('storage/app/public/images/' . ($mp->thumbnail_image ?? 'default.jpg'))); ?>"
+                                                        <img src="<?php echo e(rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($mp->thumbnail_image, '/')); ?>"
                                                             alt="<?php echo e($mp->name); ?>" class="product-image">
                                                     </a>
                                                 </figure>
@@ -608,7 +610,8 @@
                                                             off</span>
                                                     <?php endif; ?>
 
-                                                    <img src="<?php echo e(asset('storage/app/public/images/' . $wishlist->thumbnail_image)); ?>"
+                                                    <img 
+                                                        src="<?php echo e(rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($wishlist->thumbnail_image, '/')); ?>"
                                                         alt="<?php echo e($wishlist->name); ?>" class="product-image loveitgetit">
 
                                                     <div class="media-body">
@@ -854,16 +857,24 @@
                         <div class="tab-pane p-0 fade show active" id="featured-brands-tab" role="tabpanel">
                             <div class="owl-carousel owl-simple carousel-equal-height carousel-with-shadow"
                                 id="top-brands-carousel">
+                                
+
+                                <?php
+                                    use Illuminate\Support\Str;
+                                ?>
+
                                 <?php $__currentLoopData = $top_brands; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $tb): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                     <div class="brand-card">
                                         <figure class="brand-logo-wrapper">
-                                            <a href="<?php echo e(url('products_2', ['brand_id' => $tb->name])); ?>">
+                                            <a
+                                                href="<?php echo e(route('products.by.brand', $tb->slug ?? Str::slug($tb->name))); ?>">
                                                 <img src="<?php echo e(env('CLOUDFLARE_R2_PUBLIC_URL')); ?><?php echo e($tb->image); ?>"
                                                     alt="<?php echo e($tb->name); ?>" class="brand-logo-img">
                                             </a>
                                         </figure>
                                     </div>
                                 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+
                             </div>
                         </div>
                     </div>

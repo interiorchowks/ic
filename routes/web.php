@@ -13,6 +13,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 use App\Services\ShiprocketService;
 use App\Model\Order;
 use App\Http\Controllers\Web\ProductDetailsController;
@@ -138,6 +139,7 @@ Route::group(['namespace' => 'Web','middleware'=>['maintenance_mode']], function
     Route::any('/variation', 'ProductDetailsController@variation')->name('variation');
     Route::get('category/{slug}', 'ProductListController@products_1')->name('category');
     Route::get('products_2/', 'ProductListController@products_2')->name('products_2');
+    Route::get('/products_2/{brand}', 'ProductListController@products_2')->name('products.by.brand');
     Route::get('top-products', 'ProductListController@top_products')->name('top-products');
     Route::get('deals', 'ProductListController@deal_products')->name('deals');
     Route::get('luxury-products', 'ProductListController@luxe_products')->name('luxury-products');
@@ -457,24 +459,20 @@ Route::group(['prefix' => 'cron', 'as' => 'cron'], function () {
     Route::get('/sign-and-save-shipyaari', 'CronController@signInAndSaveShipyaari')->name('sign-in-shipyaari');
 });
 
-
 Route::get('/mail-test', function () {
-    \Log::info('Mail test started');
-
+    Log::info('Mail test started');
     try {
-        \Mail::raw('Laravel SMTP test email', function ($message) {
+        Mail::raw('Laravel SMTP test email', function ($message) {
             $message->to('suramyainteriorchowk@gmail.com')
                     ->subject('Laravel SMTP Test');
         });
-
-        \Log::info('Mail sent successfully from Laravel');
+        Log::info('Mail sent successfully from Laravel');
+        return 'Mail sent (check logs & inbox).';
     } catch (\Exception $e) {
-        \Log::error('Mail failed', ['error' => $e->getMessage()]);
+        Log::error('Mail failed', ['error' => $e->getMessage()]);
+        return 'Mail failed: ' . $e->getMessage();
     }
-
-    return 'Mail test executed';
 });
-
 
 Route::get('/env-test', function () {
     return [

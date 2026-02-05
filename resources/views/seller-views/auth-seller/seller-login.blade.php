@@ -51,6 +51,7 @@
                                 </div>
                                 <!-- End Checkbox -->
                                 {{-- recaptcha --}}
+
                                 @php($recaptcha = \App\CPU\Helpers::get_business_settings('recaptcha'))
                                 @if (isset($recaptcha) && $recaptcha['status'] == 1)
                                     <div id="recaptcha_element" class="w-100" data-type="image"></div>

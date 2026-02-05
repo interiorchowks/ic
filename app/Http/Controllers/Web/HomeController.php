@@ -722,13 +722,15 @@ class HomeController extends Controller
 
     public function brands()
     {
-
-        $top_brands = Brand::where('status', '1')
+        $top_brands = Brand::select('id', 'name', 'slug', 'image')
+            ->where('status', 1)
             ->orderByRaw("(name = 'Other')")
             ->get();
 
         return view('web.brand', compact('top_brands'));
     }
+
+
 
     public function architects()
     {

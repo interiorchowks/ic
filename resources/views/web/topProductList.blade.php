@@ -53,13 +53,13 @@
                                                     <figure class="product-media"
                                                         style="width: 100%; aspect-ratio: 1/1; overflow: hidden;">
 
-                                                        @if ($product->sku_discount)
+                                                        @if ($product->discount)
                                                             <span class="product-label label-top">
 
-                                                                @if ($product->sku_discount_type === 'flat')
-                                                                    Rs. {{ number_format($product->sku_discount, 0) }} Off
+                                                                @if ($product->discount_type === 'flat')
+                                                                    Rs. {{ number_format($product->discount, 0) }} Off
                                                                 @else
-                                                                    {{ number_format($product->sku_discount, 0) }}% Off
+                                                                    {{ number_format($product->discount, 0) }}% Off
                                                                 @endif
 
                                                             </span>
@@ -79,15 +79,12 @@
 
                                                             @endphp
 
-                                                            <img src="{{ asset('storage/app/public/images/' . $firstImage) }}"
+                                                            <img src="{{ rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($firstImage, '/') }}"
                                                                 alt="{{ $product->name }}" class="product-image rounded-lg"
                                                                 style="width: 100%; height: 100%; object-fit: cover;">
-
                                                         </a>
 
                                                     </figure>
-
-
 
                                                     <div class="product-body"
                                                         style="flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between; padding-top: 10px;">

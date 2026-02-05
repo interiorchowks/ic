@@ -318,69 +318,77 @@ class ProductListController extends Controller
         ]);
     }
     
-    public function products_2(Request $request)
+    public function products_2(Request $request, $brand_slug = null)
     {
-        $seller_id = $request->query('seller_id'); 
-        $brand_name = $request->query('brand_id');
-        $brand_id = Brand::where('id',$brand_name)->value('id');
-        if($brand_name){
-            $brand = DB::table('brands')->where('id',$brand_name)->first();
-        
-                $products = DB::table('sku_product_new')
-                ->join('products', 'sku_product_new.product_id', '=', 'products.id')
-                ->leftjoin('sellers','sku_product_new.seller_id','=','sellers.id')
-                ->where('sellers.status','approved')
-                ->where('products.brand_id', $brand_id)
-                ->where('products.status', 1)
-                ->select(
-                    'sku_product_new.*', 
-                    'products.*',
-                    'sku_product_new.discount as sku_discount', 
-                    'sku_product_new.discount_type as sku_discount_type','sellers.status'
-                )
-                ->get()->paginate(25);
+        $seller_id = $request->query('seller_id');
 
-            }else{
+        if ($brand_slug) {
+            $brand = Brand::where('name', $brand_slug)->firstOrFail();
 
             $products = DB::table('sku_product_new')
                 ->join('products', 'sku_product_new.product_id', '=', 'products.id')
-                ->where('products.user_id', $seller_id)
-                ->leftjoin('sellers','sku_product_new.seller_id','=','sellers.id')
-                ->where('sellers.status','approved')
+                ->leftJoin('sellers', 'sku_product_new.seller_id', '=', 'sellers.id')
+                ->where('sellers.status', 'approved')
+                ->where('products.brand_id', $brand->id)
                 ->where('products.status', 1)
                 ->select(
-                    'sku_product_new.*', 
+                    'sku_product_new.*',
                     'products.*',
-                    'sku_product_new.discount as sku_discount', 
-                    'sku_product_new.discount_type as sku_discount_type','sellers.status'
+                    'sku_product_new.discount as sku_discount',
+                    'sku_product_new.discount_type as sku_discount_type',
+                    'sellers.status'
                 )
-                ->get()->paginate(25);
+                ->paginate(25);
 
-            }
-
-        if($brand_id){
-        return view('web.brandProductList',compact('brand','products'));
-        }else{
-            return view('web.brandProductList',compact('products'));
+            return view('web.brandProductList', compact('brand', 'products'));
         }
+
+        // No brand slug: fallback to seller listing
+        $products = DB::table('sku_product_new')
+            ->join('products', 'sku_product_new.product_id', '=', 'products.id')
+            ->leftJoin('sellers', 'sku_product_new.seller_id', '=', 'sellers.id')
+            ->where('sellers.status', 'approved')
+            ->where('products.status', 1)
+            ->when($seller_id, function ($query) use ($seller_id) {
+                $query->where('products.user_id', $seller_id);
+            })
+            ->select(
+                'sku_product_new.*',
+                'products.*',
+                'sku_product_new.discount as sku_discount',
+                'sku_product_new.discount_type as sku_discount_type',
+                'sellers.status'
+            )
+            ->paginate(25);
+
+        return view('web.brandProductList', compact('products'));
     }
 
     public function top_products()
     {
         $products = DB::table('sku_product_new')
-        ->join('home_products', function($join) {
-            $join->on('sku_product_new.product_id', '=', 'home_products.product_id')
-                ->where('home_products.section_type', 'top_products');
-        })
-        ->leftJoin('products', 'sku_product_new.product_id', '=', 'products.id')
-        ->where('products.status', 1)
-        ->select(
-            'sku_product_new.*', 
-            'products.*',
-            'sku_product_new.discount as sku_discount', 
-            'sku_product_new.discount_type as sku_discount_type'
-        )
-        ->get();
+            ->leftJoin('products', 'sku_product_new.product_id', '=', 'products.id')
+            ->leftjoin('sellers','sku_product_new.seller_id','=','sellers.id')
+            ->where('sellers.status','approved')
+            ->where('products.featured',1)
+            ->where('products.status',1)
+            ->select(
+                'sku_product_new.product_id',
+                'sku_product_new.image',
+                'sku_product_new.discount_type',
+                'sku_product_new.discount',
+                'sku_product_new.listed_price',
+                'sku_product_new.variant_mrp',
+                'products.name',
+                'sku_product_new.quantity',
+                'products.slug',
+                'products.category_ids',
+                'products.free_delivery',
+                'sellers.status',
+                'products.featured',
+                'products.status'
+            )
+            ->get();
 
         return view('web.topProductList',compact('products'));
     }

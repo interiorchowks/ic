@@ -21,7 +21,7 @@
                     <div class="col-12">
                         <h5 class="fw-bold">
                             @if (isset($brand))
-                                Top Bronds
+                                Top Brands
                             @else
                                 More From Store
                             @endif
@@ -37,16 +37,16 @@
                         style="border-bottom: 1px dashed #999; scrollbar-width: none; -ms-overflow-style: none;">
                         <div class="d-flex" style="gap: 1rem; min-width: 100%;">
                             <div class="card text-center border-0" style="width: 115px;">
-                                <a href="{{ url('products_2/' . $brand->id) }}" class="text-decoration-none text-dark">
+                                {{-- <a href="{{ url('products_2/' . $brand->id) }}" class="text-decoration-none text-dark"> --}}
                                     <img 
                                     {{-- src="{{ asset('storage/app/public/brand/' . $brand->image) }}" --}}
-                                    src="{{ rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . ($brand->image ?? 'default.jpg') }}"
+                                    src="{{ rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($brand->image, '/') }}"
                                         alt="{{ $brand->name }}" class="card-img-top rounded-circle border"
                                         style="aspect-ratio: 1/1; object-fit: cover;">
                                     <div class="card-body p-2">
                                         <p class="mb-0">{{ $brand->name }}</p>
                                     </div>
-                                </a>
+                                {{-- </a> --}}
                             </div>
                         </div>
                     </div>

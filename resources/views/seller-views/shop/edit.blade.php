@@ -36,7 +36,7 @@
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <label for="comp_name" class="title-color">{{ \App\CPU\translate('Shop_Name') }}
+                                        <label for="comp_name" class="title-color">Shop Name
                                             <span class="text-danger">*</span> <span class="ml-2" data-toggle="tooltip"
                                                 data-placement="top"
                                                 title="{{ \App\CPU\translate('This name will be appear in website') }}">

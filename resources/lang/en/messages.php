@@ -4593,4 +4593,7 @@
   'scheme' => 'Scheme',
   'subscription' => 'Subscription',
   'myshop' => 'Myshop',
+  'Cart Count' => 'Cart Count',
+  'Wishlist Count' => 'Wishlist Count',
+  'Views Count' => 'Views Count',
 );

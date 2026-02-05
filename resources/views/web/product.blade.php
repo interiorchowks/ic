@@ -9,9 +9,21 @@
         <title>{{ $product->name }}</title>
         <meta name="description" content="{!! strip_tags($product->details) !!}">
         <!-- Open Graph -->
+
+        @php
+            $imageUrl = null;
+
+            if (!empty($product->thumbnail_image)) {
+                $base = rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/');
+                $path = ltrim($product->thumbnail_image, '/');
+
+                $imageUrl = $base . '/' . $path;
+            }
+        @endphp
+
         <meta property="og:title" content="{{ $product->name }}">
         <meta property="og:description" content="{!! strip_tags($product->details) !!}">
-        <meta property="og:image" content="{{ secure_url('storage/images/' . $product->thumbnail_image) }}">
+        <meta property="og:image" content="{{ $imageUrl }}">
         <meta property="og:type" content="product">
         <meta property="og:url" content="{{ url()->current() }}">
         <link rel="canonical" href="{{ url()->current() }}">
@@ -20,7 +32,7 @@
         <meta name="twitter:card" content="summary_large_image">
         <meta name="twitter:title" content="{{ $product->name }}">
         <meta name="twitter:description" content="{!! strip_tags($product->details) !!}">
-        <meta name="twitter:image" content="{{ secure_url('storage/images/' . $product->thumbnail_image) }}">
+        <meta name="twitter:image" content="{{ $imageUrl }}">
 
         {{-- @dd($product); --}}
         @if (isset($product))
@@ -141,31 +153,31 @@
         </style>
     @endpush
     <!-- "aggregateRating": {
-                                                                                                                                                                                                                                                                                                                "@type": "AggregateRating",
-                                                                                                                                                                                                                                                                                                                "ratingValue": "{{ number_format($reviews->avg('rating'), 1) ?? '0' }}",
-                                                                                                                                                                                                                                                                                                                "reviewCount": "{{ $reviews->count() }}"
-                                                                                                                                                                                                                                                                                                              },
-                                                                                                                                                                                                                                                                                                              "review": [
-                                                                                                                                                                                                                                                                                                                @foreach ($reviews as $review)
+                                                                                                                                                                                                                                                                                                                    "@type": "AggregateRating",
+                                                                                                                                                                                                                                                                                                                    "ratingValue": "{{ number_format($reviews->avg('rating'), 1) ?? '0' }}",
+                                                                                                                                                                                                                                                                                                                    "reviewCount": "{{ $reviews->count() }}"
+                                                                                                                                                                                                                                                                                                                  },
+                                                                                                                                                                                                                                                                                                                  "review": [
+                                                                                                                                                                                                                                                                                                                    @foreach ($reviews as $review)
     @php
         $ratinguser = App\Model\Customer::find($review->customer_id);
     @endphp
-                                                                                                                                                                                                                                                                                                                  {
-                                                                                                                                                                                                                                                                                                                    "@type": "Review",
-                                                                                                                                                                                                                                                                                                                    "author": {
-                                                                                                                                                                                                                                                                                                                      "@type": "Person",
-                                                                                                                                                                                                                                                                                                                      "name": "{{ $ratinguser->name ?? 'Anonymous' }}"
-                                                                                                                                                                                                                                                                                                                    },
-                                                                                                                                                                                                                                                                                                                    "reviewRating": {
-                                                                                                                                                                                                                                                                                                                      "@type": "Rating",
-                                                                                                                                                                                                                                                                                                                      "ratingValue": "{{ $review->rating }}"
-                                                                                                                                                                                                                                                                                                                    },
-                                                                                                                                                                                                                                                                                                                    "reviewBody": "{{ strip_tags($review->comment) }}"
-                                                                                                                                                                                                                                                                                                                  }@if (!$loop->last)
+                                                                                                                                                                                                                                                                                                                      {
+                                                                                                                                                                                                                                                                                                                        "@type": "Review",
+                                                                                                                                                                                                                                                                                                                        "author": {
+                                                                                                                                                                                                                                                                                                                          "@type": "Person",
+                                                                                                                                                                                                                                                                                                                          "name": "{{ $ratinguser->name ?? 'Anonymous' }}"
+                                                                                                                                                                                                                                                                                                                        },
+                                                                                                                                                                                                                                                                                                                        "reviewRating": {
+                                                                                                                                                                                                                                                                                                                          "@type": "Rating",
+                                                                                                                                                                                                                                                                                                                          "ratingValue": "{{ $review->rating }}"
+                                                                                                                                                                                                                                                                                                                        },
+                                                                                                                                                                                                                                                                                                                        "reviewBody": "{{ strip_tags($review->comment) }}"
+                                                                                                                                                                                                                                                                                                                      }@if (!$loop->last)
     ,
     @endif
     @endforeach
-                                                                                                                                                                                                                                                                                                              ] -->
+                                                                                                                                                                                                                                                                                                                  ] -->
 
     <main class="main">
         <nav aria-label="breadcrumb" class="breadcrumb-nav border-0 mb-0">
@@ -660,7 +672,7 @@
                                 <div class="tab-content description-box">
                                     <div class="tab-pane fade show active" id="product-desc-tab" role="tabpanel">
                                         <div class="product-desc-content">
-                                            <h3><b>Description</b></h3>
+                                            <h3><b style="color:#000;">Description</b></h3>
                                             {!! $product->details !!}
                                         </div>
                                     </div>
@@ -1332,15 +1344,175 @@
             }, 300);
         });
 
+        // document.addEventListener('DOMContentLoaded', function() {
+        //     const colorItems = document.querySelectorAll('.color-item');
+        //     colorItems.forEach(function(item) {
+        //         item.addEventListener('click', function() {
+        //             document.querySelectorAll('.color-item').forEach(el => el.classList.remove(
+        //                 'selected'));
+        //             this.classList.add('selected');
+        //             const selectedColor = this.getAttribute('data-color');
+        //             const id = document.getElementById('id_s').value;
+        //             fetch(`{{ route('variation') }}`, {
+        //                     method: 'POST',
+        //                     headers: {
+        //                         'Content-Type': 'application/json',
+        //                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        //                     },
+        //                     body: JSON.stringify({
+        //                         color: selectedColor,
+        //                         id: id
+        //                     })
+        //                 })
+        //                 .then(res => res.json())
+        //                 .then(response => {
+        //                     let html = '';
+        //                     let colorNames = new Set();
+        //                     let colorToId = {};
+        //                     response.variant.forEach(item => {
+        //                         const color = item.color_name;
+        //                         colorNames.add(color);
+        //                         if (!colorToId[color]) {
+        //                             colorToId[color] = item.id;
+        //                         }
+        //                         html += `
+    //                 <div class="col-3 col-md-2">
+    //                     <div class="card variant-box"
+    //                          data-listed_price="${item.listed_price}"
+    //                          data-variant_mrp="${item.variant_mrp}"
+    //                          data-discount_type="${item.discount_type || ''}"
+    //                          data-discount="${item.discount || 0}"
+    //                          data-sizes="${item.sizes}"
+    //                          data-variation="${item.variation}" 
+    //                            data-thumbnail="${item.thumbnail_image}"
+    //                               data-images='${JSON.stringify(item.image)}'>
+    //                         <div class="card-header text-center p-1 font-weight-bold mb-0" style="background-color: #FFECE2;">
+    //                             ${item.sizes}
+    //                         </div>
+    //                         <div class="card-body p-2">
+    //                             <p class="card-text">₹ ${Math.floor(Number(item.listed_price)).toLocaleString('en-IN')}</p>
+    //                             ${item.discount != 0
+    //                         ? `<p><span class="price-cut ml-0">₹ ${Number(item.variant_mrp).toLocaleString()}</span></p>`
+    //                         : ''
+    //                     }
+    //                         </div>
+    //                     </div>
+    //                 </div>
+    //             `;
+        //                     });
+        //                     document.getElementById('colors').innerText = Array.from(colorNames)
+        //                         .join(', ');
+        //                     const uniqueIds = Object.values(colorToId).join(',');
+        //                     const wishlistBtn = document.getElementById('btn-add-to-wishlist');
+        //                     wishlistBtn.setAttribute('data-id', uniqueIds);
+        //                     document.getElementById('variant-list').innerHTML = html;
+        //                     document.querySelectorAll('.variant-box').forEach(function(box) {
+        //                         box.addEventListener('click', function() {
+        //                             document.querySelectorAll('.variant-box')
+        //                                 .forEach(el => el.classList.remove(
+        //                                     'selected'));
+        //                             this.classList.add('selected');
+        //                             const listedPrice = this.dataset
+        //                                 .listed_price;
+        //                             const variantMrp = this.dataset.variant_mrp;
+        //                             const discountType = this.dataset
+        //                                 .discount_type;
+        //                             const discount = this.dataset.discount;
+        //                             const sizes = this.dataset.sizes;
+        //                             const vari_ant = this.dataset.variation;
+        //                             thumbnail = this.dataset.thumbnail;
+        //                             images = JSON.parse(this.dataset.images ||
+        //                                 '[]');
+        //                             basePathsss =
+        //                                 "{{ asset('storage/app/public/images/') }}/";
+        //                             basePath = "{{ rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') }}";
+        //                             mainImg = document.getElementById(
+        //                                 'product-zoom');
+        //                             images = JSON.parse(images);
+        //                             mainImg.src = basePath + thumbnail;
+        //                             mainImg.src = basePath + images[0];
+        //                             mainImg.setAttribute('data-zoom-image',
+        //                                 basePath + thumbnail);
+
+        //                             gallery = document.getElementById(
+        //                                 'product-zoom-gallery');
+        //                             galleryHTML = '';
+        //                             images.forEach((img, index) => {
+        //                                 galleryHTML += `
+    //                                                         <a class="product-gallery-item ${index === 0 ? 'active' : ''}" href="#"
+    //                                                         data-image="${basePath + img}"
+    //                                                         data-zoom-image="${basePath + img}">
+    //                                                             <img class="galleryImages" src="${basePath + img}" alt="Product side" style="width: 100px; height: 100px;">
+    //                                                         </a>
+    //                                                     `;
+        //                             });
+
+        //                             gallery.innerHTML = galleryHTML;
+        //                             initThumbnailClick();
+        //                             document.querySelector('.product-price')
+        //                                 .innerHTML =
+        //                                 `₹ ${Math.floor(+listedPrice).toLocaleString('en-IN')}`;
+
+        //                             let discountHTML = '';
+        //                             if (discountType === 'percent' && discount >
+        //                                 0) {
+        //                                 discountHTML = `<span class="badge badge-danger" style="background-color: #E26526;">
+    //                         ${Math.round(discount)}% off
+    //                     </span>`;
+        //                             } else if (discountType === 'flat' &&
+        //                                 discount > 0) {
+        //                                 discountHTML = `<span class="badge badge-danger" style="background-color: #E26526;">
+    //                         ₹${Number(discount).toLocaleString()} off
+    //                     </span>`;
+        //                             }
+        //                             if (discount > 0) {
+        //                                 document.querySelector(
+        //                                         '.product-price.mt-1.mb-1')
+        //                                     .innerHTML = `
+    //                     ${discountHTML}
+    //                     <span class="price-cut">₹ ${Number(variantMrp).toLocaleString()}</span>
+    //                 `;
+        //                             }
+        //                             document.querySelector('.size').innerHTML = `
+    //                     <input type="hidden" name="selected_size" value="${vari_ant}">
+    //                 `;
+        //                         });
+        //                     });
+        //                     const firstVariant = document.querySelector('.variant-box');
+        //                     if (firstVariant) {
+        //                         firstVariant.click();
+        //                     }
+        //                 })
+        //                 .catch(err => console.error("AJAX error:", err));
+        //         });
+        //     });
+        //     if (colorItems.length > 0) {
+        //         colorItems[0].click();
+        //     }
+        // });
+
         document.addEventListener('DOMContentLoaded', function() {
             const colorItems = document.querySelectorAll('.color-item');
+
+            // Helper function to join URLs safely
+            function joinUrl(base, path) {
+                if (!path) return '';
+                path = path.replace(/^\/+/, ''); // remove leading slashes
+                return base + '/' + path;
+            }
+
+            const basePath = "{{ rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') }}";
+
             colorItems.forEach(function(item) {
                 item.addEventListener('click', function() {
+                    // Highlight selected color
                     document.querySelectorAll('.color-item').forEach(el => el.classList.remove(
                         'selected'));
                     this.classList.add('selected');
+
                     const selectedColor = this.getAttribute('data-color');
                     const id = document.getElementById('id_s').value;
+
                     fetch(`{{ route('variation') }}`, {
                             method: 'POST',
                             headers: {
@@ -1357,12 +1529,20 @@
                             let html = '';
                             let colorNames = new Set();
                             let colorToId = {};
+
                             response.variant.forEach(item => {
                                 const color = item.color_name;
                                 colorNames.add(color);
-                                if (!colorToId[color]) {
-                                    colorToId[color] = item.id;
+                                if (!colorToId[color]) colorToId[color] = item.id;
+
+                                // Parse images safely
+                                let images = [];
+                                try {
+                                    images = JSON.parse(item.image || '[]');
+                                } catch (e) {
+                                    images = [];
                                 }
+
                                 html += `
                         <div class="col-3 col-md-2">
                             <div class="card variant-box"
@@ -1371,112 +1551,138 @@
                                  data-discount_type="${item.discount_type || ''}"
                                  data-discount="${item.discount || 0}"
                                  data-sizes="${item.sizes}"
-                                 data-variation="${item.variation}" 
-                                   data-thumbnail="${item.thumbnail_image}"
-                                      data-images='${JSON.stringify(item.image)}'>
+                                 data-variation="${item.variation}"
+                                 data-thumbnail="${item.thumbnail_image || ''}"
+                                 data-images='${JSON.stringify(images)}'>
                                 <div class="card-header text-center p-1 font-weight-bold mb-0" style="background-color: #FFECE2;">
                                     ${item.sizes}
                                 </div>
                                 <div class="card-body p-2">
                                     <p class="card-text">₹ ${Math.floor(Number(item.listed_price)).toLocaleString('en-IN')}</p>
-                                    ${item.discount != 0
-                                ? `<p><span class="price-cut ml-0">₹ ${Number(item.variant_mrp).toLocaleString()}</span></p>`
-                                : ''
-                            }
+                                    ${item.discount != 0 ? `<p><span class="price-cut ml-0">₹ ${Number(item.variant_mrp).toLocaleString()}</span></p>` : ''}
                                 </div>
                             </div>
                         </div>
                     `;
                             });
+
+                            // Update color names display
                             document.getElementById('colors').innerText = Array.from(colorNames)
                                 .join(', ');
-                            const uniqueIds = Object.values(colorToId).join(',');
+
+                            // Update wishlist button data-id
                             const wishlistBtn = document.getElementById('btn-add-to-wishlist');
-                            wishlistBtn.setAttribute('data-id', uniqueIds);
+                            wishlistBtn.setAttribute('data-id', Object.values(colorToId).join(
+                                ','));
+
+                            // Render variants
                             document.getElementById('variant-list').innerHTML = html;
+
+                            // Variant click handler
                             document.querySelectorAll('.variant-box').forEach(function(box) {
                                 box.addEventListener('click', function() {
                                     document.querySelectorAll('.variant-box')
                                         .forEach(el => el.classList.remove(
                                             'selected'));
                                     this.classList.add('selected');
+
                                     const listedPrice = this.dataset
                                         .listed_price;
                                     const variantMrp = this.dataset.variant_mrp;
                                     const discountType = this.dataset
                                         .discount_type;
                                     const discount = this.dataset.discount;
-                                    const sizes = this.dataset.sizes;
                                     const vari_ant = this.dataset.variation;
-                                    thumbnail = this.dataset.thumbnail;
-                                    images = JSON.parse(this.dataset.images ||
-                                        '[]');
-                                    basePathsss =
-                                        "{{ asset('storage/app/public/images/') }}/";
-                                    basePath = "{{ rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') }}";
-                                    mainImg = document.getElementById(
-                                        'product-zoom');
-                                    images = JSON.parse(images);
-                                    mainImg.src = basePath + thumbnail;
-                                    mainImg.src = basePath + images[0];
-                                    mainImg.setAttribute('data-zoom-image',
-                                        basePath + thumbnail);
+                                    const thumbnail = this.dataset.thumbnail;
 
-                                    gallery = document.getElementById(
+                                    let images = [];
+                                    try {
+                                        images = JSON.parse(this.dataset
+                                            .images || '[]');
+                                    } catch (e) {
+                                        images = [];
+                                    }
+
+                                    const mainImg = document.getElementById(
+                                        'product-zoom');
+
+                                    // Set main image with fallback
+                                    if (images.length > 0) {
+                                        mainImg.src = joinUrl(basePath, images[
+                                            0]);
+                                        mainImg.setAttribute('data-zoom-image',
+                                            joinUrl(basePath, images[0]));
+                                    } else if (thumbnail) {
+                                        mainImg.src = joinUrl(basePath,
+                                            thumbnail);
+                                        mainImg.setAttribute('data-zoom-image',
+                                            joinUrl(basePath, thumbnail));
+                                    } else {
+                                        mainImg.src =
+                                            "{{ asset('/storage/images/default.jpg') }}";
+                                        mainImg.setAttribute('data-zoom-image',
+                                            "{{ asset('/storage/images/default.jpg') }}"
+                                            );
+                                    }
+
+                                    // Build gallery
+                                    const gallery = document.getElementById(
                                         'product-zoom-gallery');
-                                    galleryHTML = '';
+                                    let galleryHTML = '';
                                     images.forEach((img, index) => {
                                         galleryHTML += `
-                                                                <a class="product-gallery-item ${index === 0 ? 'active' : ''}" href="#"
-                                                                data-image="${basePath + img}"
-                                                                data-zoom-image="${basePath + img}">
-                                                                    <img class="galleryImages" src="${basePath + img}" alt="Product side" style="width: 100px; height: 100px;">
-                                                                </a>
-                                                            `;
+                                <a class="product-gallery-item ${index === 0 ? 'active' : ''}" href="#"
+                                   data-image="${joinUrl(basePath, img)}"
+                                   data-zoom-image="${joinUrl(basePath, img)}">
+                                    <img class="galleryImages" src="${joinUrl(basePath, img)}" alt="Product side" style="width: 100px; height: 100px;">
+                                </a>`;
                                     });
-
                                     gallery.innerHTML = galleryHTML;
                                     initThumbnailClick();
+
+                                    // Update price
                                     document.querySelector('.product-price')
                                         .innerHTML =
                                         `₹ ${Math.floor(+listedPrice).toLocaleString('en-IN')}`;
 
+                                    // Update discount badge
                                     let discountHTML = '';
                                     if (discountType === 'percent' && discount >
                                         0) {
-                                        discountHTML = `<span class="badge badge-danger" style="background-color: #E26526;">
-                                ${Math.round(discount)}% off
-                            </span>`;
+                                        discountHTML =
+                                            `<span class="badge badge-danger" style="background-color: #E26526;">${Math.round(discount)}% off</span>`;
                                     } else if (discountType === 'flat' &&
                                         discount > 0) {
-                                        discountHTML = `<span class="badge badge-danger" style="background-color: #E26526;">
-                                ₹${Number(discount).toLocaleString()} off
-                            </span>`;
+                                        discountHTML =
+                                            `<span class="badge badge-danger" style="background-color: #E26526;">₹${Number(discount).toLocaleString()} off</span>`;
                                     }
+
                                     if (discount > 0) {
                                         document.querySelector(
                                                 '.product-price.mt-1.mb-1')
                                             .innerHTML = `
-                            ${discountHTML}
-                            <span class="price-cut">₹ ${Number(variantMrp).toLocaleString()}</span>
-                        `;
+                                ${discountHTML}
+                                <span class="price-cut">₹ ${Number(variantMrp).toLocaleString()}</span>
+                            `;
                                     }
-                                    document.querySelector('.size').innerHTML = `
-                            <input type="hidden" name="selected_size" value="${vari_ant}">
-                        `;
+
+                                    // Update selected size
+                                    document.querySelector('.size').innerHTML =
+                                        `<input type="hidden" name="selected_size" value="${vari_ant}">`;
                                 });
                             });
+
+                            // Auto-click first variant
                             const firstVariant = document.querySelector('.variant-box');
-                            if (firstVariant) {
-                                firstVariant.click();
-                            }
+                            if (firstVariant) firstVariant.click();
+
                         })
                         .catch(err => console.error("AJAX error:", err));
                 });
             });
-            if (colorItems.length > 0) {
-                colorItems[0].click();
-            }
+
+            // Auto-click first color
+            if (colorItems.length > 0) colorItems[0].click();
         });
     </script>
     <script>

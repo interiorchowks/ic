@@ -15,10 +15,15 @@
                     <div class="col-3 col-sm-3 col-md-3 col-lg-2 mb-2">
                         <div class="product product-7">
                             <figure class="product-media">
-                                <a href="{{ route('products_2') }}?brand_id={{ $tb->id }}">
-                                    <img src="{{ asset('storage/app/public/brand/' . $tb->image) }}" class="product-image"
+                                {{-- <a href="{{ route('products.by.brand', \Illuminate\Support\Str::slug($tb->name)) }}">
+                                    <img src="{{ env('CLOUDFLARE_R2_PUBLIC_URL'). $tb->image }}" class="product-image"
                                         alt="ProductImg">
+                                </a> --}}
+                                <a href="{{ url('products_2/' . rawurlencode($tb->name)) }}">
+                                    <img src="{{ rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($tb->image, '/') }}"
+                                        class="product-image" alt="ProductImg">
                                 </a>
+
                             </figure><!-- End .product-media -->
                         </div><!-- End .product -->
                     </div>
