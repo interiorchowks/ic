@@ -32,6 +32,9 @@ use function App\CPU\translate;
 use Intervention\Image\Facades\Image;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Maatwebsite\Excel\Facades\Excel;
+use Maatwebsite\Excel\Concerns\WithMultipleSheets;
+use Maatwebsite\Excel\Concerns\FromArray;
+use Maatwebsite\Excel\Concerns\WithTitle;
 
 class ProductController extends Controller
 {
@@ -122,8 +125,6 @@ class ProductController extends Controller
     
     public function searchCategories_post(Request $request)
     {
-
-        // dd($request->all());
         session([
         'category_id' => $request->category_id,
         'sub_category_id' => $request->sub_category_id,
@@ -535,21 +536,6 @@ class ProductController extends Controller
             
             DB::table('key_specification_values')->insert($post);
 
-            // $tag_ids = [];
-            // if ($request->tags != null) {
-            //     $tags = explode(",", $request->tags);
-            // }
-            // if(isset($tags)){
-            //     foreach ($tags as $key => $value) {
-            //         $tag = Tag::firstOrNew(
-            //             ['tag' => trim($value)]
-            //         );
-            //         $tag->save();
-            //         $tag_ids[] = $tag->id;
-            //     }
-            // }
-            // $product->tags()->sync($tag_ids);
-
             $tag_ids = [];
 
             if ($request->tags != null) {
@@ -839,279 +825,6 @@ class ProductController extends Controller
 
     }
 
-
-
-
-
-
-
-
-
-    // public function sku_combination_edit(Request $request)
-    // {
-    //     // dd($request->all());
-    //     $product_id = $request->ids;
-
-    //     $options = [];
-
-    //     // 1) COLORS dimension
-    //     if ($request->has('colors_active') && $request->has('colors') && count($request->colors) > 0) {
-    //         $colors_active = 1;
-    //         $options[]     = $request->colors;   // [ '#000000', '#FFFFFF' ]
-    //     } else {
-    //         $colors_active = 0;
-    //     }
-
-    //     $unit_price   = $request->unit_price;
-    //     $product_name = $request->name[array_search('en', $request->lang)];
-
-    //     // 2) SIZE / other attributes
-    //     if ($request->has('choice_no')) {
-    //         foreach ($request->choice_no as $key => $no) {
-    //             $name = 'choice_options_' . $no;   // e.g. "choice_options_1"
-
-    //             // Frontend se kabhi array aata hai, kabhi string – dono handle kar lo
-    //             $rawValues = $request[$name] ?? [];
-
-    //             if (!is_array($rawValues)) {
-    //                 $rawValues = explode(',', $rawValues);
-    //             }
-
-    //             // Blank / space-only values hata do
-    //             $cleanValues = [];
-    //             foreach ($rawValues as $val) {
-    //                 $val = trim($val);
-    //                 if ($val !== '') {
-    //                     $cleanValues[] = $val;
-    //                 }
-    //             }
-
-    //             // Agar koi real value bachi ho tabhi options me push karo
-    //             if (count($cleanValues) > 0) {
-    //                 $options[] = $cleanValues;   // e.g. [ "20D x 10W x 5H" ]
-    //             }
-    //         }
-    //     }
-
-    //     $combinations = Helpers::combinations($options);
-
-    //     $existingRows = DB::table('sku_product_new')
-    //         ->where('product_id', $product_id)
-    //         ->get()
-    //         ->mapWithKeys(function ($row) {
-    //             $sizes = rtrim(trim($row->variation), ','); 
-
-    //             $parts = explode('-', $sizes);
-    //             $color = count($parts) ? array_shift($parts) : null; 
-
-    //             $normalizedParts = array_map(function ($v) {
-    //                 return str_replace([' ', ','], '', trim($v));
-    //             }, $parts);
-
-    //             if ($color !== null && $color !== '') {
-    //                 $normalizedKey = trim($color);
-    //                 if (count($normalizedParts)) {
-    //                     $normalizedKey .= '-' . implode('-', $normalizedParts); // "Black-20Dx10Wx5H"
-    //                 }
-    //             } else {
-    //                 $normalizedKey = implode('-', $normalizedParts);
-    //             }
-
-    //             return [$normalizedKey => $row];
-    //         });
-
-    //     return response()->json([
-    //         'view' => view(
-    //             'seller-views.product.partials._sku11_combinations',
-    //             compact('product_id', 'combinations', 'unit_price', 'colors_active', 'product_name', 'existingRows')
-    //         )->render(),
-    //     ]);
-    // }
-
-
-
-
-    // public function sku_combination_edit(Request $request)
-    // {
-    //     $product_id = $request->ids;
-
-    //     /**********************************************************
-    //      * 1) FORM SE CURRENT ROW VALUES UTHAO
-    //      *    (taaki color / size change hone par data na gayab ho)
-    //      **********************************************************/
-    //     $formRows = [];
-
-    //     if ($request->has('sizes')) {
-    //         $sizes        = $request->sizes;             // ["Beige-20Dx10Wx5H", "Black-20Dx10Wx5H", ...]
-    //         $skues        = $request->skues            ?? [];
-    //         $taxes        = $request->taxes            ?? [];
-    //         $unitMRP      = $request->unit_prices      ?? [];
-    //         $discTypes    = $request->discount_types   ?? [];
-    //         $discounts    = $request->discounts        ?? [];
-    //         $sellingTaxs  = $request->selling_taxs     ?? [];
-    //         $sellingPrice = $request->selling_prices   ?? [];
-    //         $transfer     = $request->transfer_price   ?? [];
-    //         $commission   = $request->commission_fee   ?? [];
-    //         $quantity     = $request->quant            ?? [];
-    //         $lengths      = $request->lengths          ?? [];
-    //         $breadths     = $request->breadths         ?? [];
-    //         $heights      = $request->heights          ?? [];
-    //         $weights      = $request->weights          ?? [];
-    //         $colorNames   = $request->color_names      ?? [];
-    //         $varTax       = $request->var_tax          ?? [];
-    //         $gstMrp       = $request->tax_gst          ?? [];
-    //         $gstSell      = $request->tax1_gst         ?? [];
-
-    //         foreach ($sizes as $i => $variantKey) {
-    //             if (!$variantKey) {
-    //                 continue;
-    //             }
-
-    //             $formRows[$variantKey] = (object) [
-    //                 'variation'           => $variantKey,
-    //                 'sku'                 => $skues[$i]           ?? null,
-    //                 'tax'                 => $taxes[$i]           ?? null,
-    //                 'variant_mrp'         => $unitMRP[$i]         ?? null,
-    //                 'discount_type'       => $discTypes[$i]       ?? null,
-    //                 'discount'            => $discounts[$i]       ?? null,
-    //                 'listed_percent'      => $sellingTaxs[$i]     ?? null,
-    //                 'listed_price'        => $sellingPrice[$i]    ?? null,
-    //                 'transfer_price'      => $transfer[$i]        ?? null,
-    //                 'commission_fee'      => $commission[$i]      ?? null,
-    //                 'quantity'            => $quantity[$i]        ?? null,
-    //                 'length'              => $lengths[$i]         ?? null,
-    //                 'breadth'             => $breadths[$i]        ?? null,
-    //                 'height'              => $heights[$i]         ?? null,
-    //                 'weight'              => $weights[$i]         ?? null,
-    //                 'color_name'          => $colorNames[$i]      ?? null,
-    //                 'discount_percent'    => $varTax[$i]          ?? null,
-    //                 'gst_percent'         => $gstMrp[$i]          ?? null,
-    //                 'listed_gst_percent'  => $gstSell[$i]         ?? null,
-    //                 // Yaha images ka naam bhi rakh sakte ho agar zarurat ho,
-    //                 // lekin serialize() file inputs ko bhejta hi nahi, isliye
-    //                 // nayi upload wali images yaha available nahi hongi.
-    //             ];
-    //         }
-    //     }
-
-    //     /**********************************************************
-    //      * 2) COLOR OPTIONS & ATTRIBUTES COLLECT KARO
-    //      **********************************************************/
-    //     $options = [];
-
-    //     // COLORS
-    //     if ($request->has('colors_active') && $request->has('colors') && count($request->colors) > 0) {
-    //         $colors_active = 1;
-    //         $options[]     = $request->colors;   // ['#000000', '#FFFFFF', ...]
-    //     } else {
-    //         $colors_active = 0;
-    //     }
-
-    //     $unit_price   = $request->unit_price;
-    //     $product_name = $request->name[array_search('en', $request->lang)];
-
-    //     // SIZE / OTHER ATTRIBUTES (choice_attributes)
-    //     if ($request->has('choice_no')) {
-    //         foreach ($request->choice_no as $key => $no) {
-    //             $name      = 'choice_options_' . $no;         // e.g. "choice_options_1"
-    //             $rawValues = $request[$name] ?? [];           // tagsinput data
-
-    //             // Hamesha array bana lo
-    //             if (!is_array($rawValues)) {
-    //                 $rawValues = [$rawValues];
-    //             }
-
-    //             $cleanValues = [];
-
-    //             foreach ($rawValues as $val) {
-    //                 // tagsinput kabhi "20Dx10Wx5H,one" string deta hai
-    //                 $parts = explode(',', $val);
-
-    //                 foreach ($parts as $p) {
-    //                     $p = trim($p);
-    //                     if ($p !== '') {
-    //                         $cleanValues[] = $p;              // "20Dx10Wx5H" / "one"
-    //                     }
-    //                 }
-    //             }
-
-    //             if (count($cleanValues) > 0) {
-    //                 $options[] = $cleanValues;               // ["20Dx10Wx5H", "30Dx15Wx5H", ...]
-    //             }
-    //         }
-    //     }
-
-    //     // saare options ka Cartesian product
-    //     $combinations = Helpers::combinations($options);
-
-    //     /**********************************************************
-    //      * 3) DB SE PURANE SKU ROWS NIKALO & NORMALIZE KEY
-    //      **********************************************************/
-    //     $dbRows = DB::table('sku_product_new')
-    //         ->where('product_id', $product_id)
-    //         ->get()
-    //         ->mapWithKeys(function ($row) {
-    //             // variation example: "Beige-20Dx10Wx5H"
-    //             $sizes = rtrim(trim($row->variation), ',');
-
-    //             $parts = explode('-', $sizes);
-    //             $color = count($parts) ? array_shift($parts) : null;
-
-    //             $normalizedParts = array_map(function ($v) {
-    //                 return str_replace([' ', ','], '', trim($v));
-    //             }, $parts);
-
-    //             if ($color !== null && $color !== '') {
-    //                 $normalizedKey = trim($color);
-    //                 if (count($normalizedParts)) {
-    //                     $normalizedKey .= '-' . implode('-', $normalizedParts);
-    //                 }
-    //             } else {
-    //                 $normalizedKey = implode('-', $normalizedParts);
-    //             }
-
-    //             // key: "Beige-20Dx10Wx5H" jaisa hi banega jaisa Blade me $variantKey
-    //             return [$normalizedKey => $row];
-    //         })
-    //         ->toArray();
-
-    //     /**********************************************************
-    //      * 4) DB ROWS + FORM ROWS MERGE
-    //      *    (form data latest hai, isliye woh DB ke upar overwrite karega)
-    //      **********************************************************/
-    //     $existingRows = [];
-
-    //     // pehle DB ka
-    //     foreach ($dbRows as $key => $row) {
-    //         $existingRows[$key] = $row;
-    //     }
-
-    //     // ab form ka (user ne jo abhi type kiya)
-    //     foreach ($formRows as $key => $row) {
-    //         if (isset($existingRows[$key])) {
-    //             // merge: DB values + latest form values
-    //             $existingRows[$key] = (object) array_merge(
-    //                 (array) $existingRows[$key],
-    //                 (array) $row
-    //             );
-    //         } else {
-    //             // sirf form me hai, DB me nahi (naya variant)
-    //             $existingRows[$key] = $row;
-    //         }
-    //     }
-
-    //     /**********************************************************
-    //      * 5) VIEW RETURN – ye hi aapka _sku11_combinations Blade hai
-    //      **********************************************************/
-    //     return response()->json([
-    //         'view' => view(
-    //             'seller-views.product.partials._sku11_combinations',
-    //             compact('product_id', 'combinations', 'unit_price', 'colors_active', 'product_name', 'existingRows')
-    //         )->render(),
-    //     ]);
-    // }
-
-
     public function sku_combination_edit(Request $request)
     {
         $product_id = $request->ids;
@@ -1278,19 +991,6 @@ class ProductController extends Controller
         ]);
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
     public function edit($id)
     {
         $product = Product::withoutGlobalScopes()->with('translations')->find($id);
@@ -1309,689 +1009,10 @@ class ProductController extends Controller
         }
     }
 
-
-
-
-    // public function update(Request $request, $id)
-    // {
-    //     dd($request->all());
-    //     $product = Product::find($id);
-
-    //     $brand_setting = BusinessSetting::where('type', 'product_brand')->first()->value;
-    //     if ($brand_setting && empty($request->brand_id)) {
-    //         $validator->after(function ($validator) {
-    //             $validator->errors()->add(
-    //                 'brand_id', 'Brand is required!'
-    //             );
-    //         });
-    //     }
-       
-    //     if ($request['discount_type'] == 'percent') {
-    //         $dis = ($request['unit_price'] / 100) * $request['discount'];
-    //     } else {
-    //         $dis = $request['discount'];
-    //     }
-        
-    //     $product->name = $request->name[array_search('en', $request->lang)];
-    //     $product->slug = Str::slug($request->name[array_search('en', $request->lang)], '-') . '-' . Str::random(6);
-    //     $category = [];
-    //     if ($request->category_id != null) {
-    //         array_push($category, [
-    //             'id' => $request->category_id,
-    //             'position' => 1,
-    //         ]);
-    //     }
-    //     if ($request->sub_category_id != null) {
-    //         array_push($category, [
-    //             'id' => $request->sub_category_id,
-    //             'position' => 2,
-    //         ]);
-    //     }
-    //     if ($request->sub_sub_category_id != null) {
-    //         array_push($category, [
-    //             'id' => $request->sub_sub_category_id,
-    //             'position' => 3,
-    //         ]);
-    //     }
-
-    //     $product->HSN_code = $request->HSN_code;
-    //     $product->Return_days     = $request->Return_days;
-    //     $product->Replacement_days = $request->Replacement_days;
-    //     $product->product_type          = $request->product_type;
-    //     $product->category_ids          = json_encode($category);
-    //     $product->category_id          = $request->category_id;
-    //     $product->sub_category_id      = $request->sub_category_id;
-    //     $product->sub_sub_category_id  = $request->sub_sub_category_id;
-    //     $product->brand_id              = isset($request->brand_id) ? $request->brand_id : null;
-    //     $product->unit = $request->unit;
-       
-    //     $product->digital_product_type  = $request->product_type == 'digital' ? $request->digital_product_type : null;
-    //     $product->details               = $request->description[array_search('en', $request->lang)];
-    //     $product->free_delivery      = $request->free_delivery=='on'?1:0;
-
-    //     $product->add_warehouse = $request->warehouse;
-    //     $request->product_type = "physical";
-    //     $request->product_type == 'digital';
-
-    //     if ($request->has('colors_active') && $request->has('colors') && count($request->colors) > 0) {
-    //         $product->colors = $request->product_type == 'physical' ? json_encode($request->colors) : json_encode([]);
-    //     } else {
-    //         $colors = [];
-    //         $product->colors = $request->product_type == 'physical' ? json_encode($colors) : json_encode([]);
-    //     }
-    //     $choice_options = [];
-    //     if ($request->has('choice')) {
-    //         foreach ($request->choice_no as $key => $no) {
-    //             $str = 'choice_options_' . $no;
-    //             $item['name'] = 'choice_' . $no;
-    //             $item['title'] = $request->choice[$key];
-    //             $item['options'] = array_map('trim', explode(',', implode('|', $request[$str])));
-    //             array_push($choice_options, $item);
-    //         }
-    //     }
-      
-    //     $product->choice_options = $request->product_type == 'physical' ? json_encode($choice_options) : json_encode([]);
-    //     $variations = [];
-    //     $options = [];
-    //     if ($request->has('colors_active') && $request->has('colors') && count($request->colors) > 0) {
-    //         $colors_active = 1;
-    //         array_push($options, $request->colors);
-    //     }
-    //     if ($request->has('choice_no')) {
-    //         foreach ($request->choice_no as $key => $no) {
-    //             $name = 'choice_options_' . $no;
-    //             $my_str = implode('|', $request[$name]);
-    //             array_push($options, explode(',', $my_str));
-    //         }
-    //     }
-    //     $combinations = Helpers::combinations($options);
-       
-    //     $variations = [];
-    //     $stock_count = 0;
-    //     if (count($combinations[0]) > 0) {
-    //         foreach ($combinations as $key => $combination) {
-    //             $str = '';
-    //             foreach ($combination as $k => $item) {
-    //                 if ($k > 0) {
-    //                     $str .= '-' . str_replace(' ', '', $item);
-    //                 } else {
-    //                     if ($request->has('colors_active') && $request->has('colors') && count($request->colors) > 0) {
-    //                         $color_name = Color::where('code', $item)->first()->name;
-    //                         $str .= $color_name;
-    //                     } else {
-    //                         $str .= str_replace(' ', '', $item);
-    //                     }
-    //                 }
-    //             }
-              
-    //             $item = [];
-    //             $item['type'] = $str;
-    //             $item['price'] = Convert::usd(abs($request['price_' . str_replace('.', '_', $str)]));
-    //             $item['sku'] = $request['sku_' . str_replace('.', '_', $str)];
-    //             $item['qty'] = abs($request['qty_' . str_replace('.', '_', $str)]);
-    //             array_push($variations, $item);
-    //             $stock_count += $item['qty'];
-    //         }
-    //     } else {
-    //         $stock_count = (integer)$request['current_stock'];
-    //     }
-      
-    //     //combinations end
-    //     $product->variation         = $request->product_type == 'physical' ? json_encode($variations) : json_encode([]);
-    //     $product->unit_price        = Convert::usd($request->unit_price);
-    //     $product->purchase_price    = Convert::usd($request->purchase_price ?? 0);
-    //     $product->tax_model         = $request->tax_model ?? 'include';
-    //     $product->code              = $request->code;
-    //     $product->minimum_order_qty = $request->minimum_order_qty;
-    //     $product->discount          = $request->discount_type == 'flat' ? Convert::usd($request->discount) : $request->discount;
-    //     $product->attributes        = $request->product_type == 'physical' ? json_encode($request->choice_attributes) : json_encode([]);
-    //     $product->discount_type     = $request->discount_type;
-    //     $product->current_stock     = $request->product_type == 'physical' ? abs($stock_count) : 0;
-    //     $product->shipping_cost     = $request->product_type == 'physical' ? (Helpers::get_business_settings('product_wise_shipping_cost_approval')==1?$product->shipping_cost:Convert::usd($request->shipping_cost)) : 0;
-    //     $product->multiply_qty      = ($request->product_type == 'physical') ? ($request->multiplyQTY=='on'?1:0) : 0;
-    //     $product->request_status = Helpers::get_business_settings('new_product_approval')==1?0:1;
-    //     $product->status         = 0;
-      
-    //     if(Helpers::get_business_settings('product_wise_shipping_cost_approval')==1 && $product->shipping_cost != Convert::usd($request->shipping_cost))
-    //     {
-    //         $product->temp_shipping_cost = Convert::usd($request->shipping_cost);
-    //         $product->is_shipping_cost_updated = 0;
-    //     }
-
-    //     $product->video_provider = 'youtube';
-    //     $product->video_url = $request->video_link;
-    //     if ($product->request_status == 2) {
-    //         $product->request_status = 0;
-    //     }
-
-    //     if ($request->ajax()) {
-    //         return response()->json([], 200);
-    //     } else {
-          
-    //         $product->save();
-    //     if($request->sizes){
-    //         foreach ($request->sizes as $index => $skus) {
-    //             $imageNames = [];
-
-    //             $thumbnailImage = $request->input('thumbnail_image_' . $index);
-
-    //             $imageOrder = json_decode($request->input('image_order_' . $index, '[]'), true);
-
-    //                 if ($request->hasFile('image_' . $index)) {
-
-    //                     $files = $request->file('image_' . $index);
-    //                     $fileMap = [];
-
-    //                     foreach ($files as $file) {
-    //                         $fileMap[$file->getClientOriginalName()] = $file;
-    //                     }
-
-    //                     $productFolder = 'products';
-
-    //                     foreach ($imageOrder as $originalName) {
-
-    //                         if (isset($fileMap[$originalName]) && $fileMap[$originalName]->isValid()) {
-
-    //                             $file = $fileMap[$originalName];
-    //                             $ext = strtolower($file->getClientOriginalExtension());
-
-    //                             $safeName = uniqid() . '.webp';
-
-    //                             if ($ext === 'webp') {
-    //                                 $imageContent = file_get_contents($file->getRealPath());
-    //                             } else {
-    //                                 $imageContent = (string) Image::make($file->getRealPath())
-    //                                                     ->encode('webp', 90);
-    //                             }
-
-    //                             $r2Path = $productFolder . '/' . $safeName;
-
-    //                             Storage::disk('r2')->put($r2Path, $imageContent);
-
-    //                             $publicPath = '/' . $r2Path;
-
-    //                             $imageNames[] = $publicPath;
-
-    //                             if ($thumbnailImage == $originalName) {
-    //                                 $thumbnailImage = $publicPath;
-    //                             }
-    //                         }
-    //                     }
-    //                 }
-    //                 $oldImages  = $request->input('old_image_' . $index, []);
-    //                 $finalImages = array_merge($oldImages, $imageNames);
-    //                 $imageJson = !empty($finalImages) ? json_encode($finalImages) : null;
-
-    //             $skuProduct = [
-    //                 'seller_id' => auth('seller')->id() ?? null,
-    //                 'product_id' => $id,
-    //                 'sizes' => $skus,
-    //                 'sku' => $request->skues[$index] ?? null,
-    //                 'tax' => $request->taxes[$index] ?? null,
-    //                 'variant_mrp' => $request->unit_prices[$index] ?? null,
-    //                 'discount_percent' => $request->var_tax[$index] ?? null,
-    //                 'gst_percent' => $request->tax_gst[$index] ?? null,
-    //                 'discount_type' => $request->discount_types[$index] ?? null,
-    //                 'discount' => $request->discounts[$index] ?? null,
-    //                 'listed_price' => $request->selling_prices[$index] ?? null,
-    //                 'listed_percent' => $request->selling_taxs[$index] ?? null,
-    //                 'listed_gst_percent' => $request->tax1_gst[$index],
-    //                 'commission_fee' => $request->commission_fee[$index] ?? null,
-    //                 'quantity' => $request->quant[$index] ?? null,
-    //                 'length' => $request->lengths[$index] ?? null,
-    //                 'breadth' => $request->breadths[$index] ?? null,
-    //                 'weight' => $request->weights[$index] ?? null,
-    //                 'height' => $request->heights[$index] ?? null,
-    //                 'color_name' => $request->color_names[$index] ?? null,
-    //                 'thumbnail_image' => $thumbnailImage ?? $request->new_thumbnail_image,
-    //                 'image' => $imageJson,
-    //             ];
-                
-    //             DB::table('sku_product_new')
-    //                 ->where('sizes', $skus)
-    //                 ->where('sku', $request->skues[$index])
-    //                 ->where('product_id', $request->ids)
-    //                 ->update($skuProduct);
-            
-    //         }
-    //     }
-    
-    //     $post = [
-    //         'seller_id'               => auth('seller')->id() ?? null,
-    //         'product_id'              => $id,
-    //         'specification'           => json_encode($request->specification_values),
-    //         'key_features'            => json_encode($request->features_values),
-    //         'technical_specification' => json_encode($request->technical_specification_values),
-    //         'other_details'           => json_encode($request->other_details_values),
-    //         'created_at'              => now(),
-    //         'updated_at'              => now()
-    //     ];
-            
-    //     DB::table('key_specification_values')->where('product_id', $id)->update($post);
-            
-    //         $tag_ids = [];
-    //         if ($request->tags != null) {
-    //             $tags = explode(",", $request->tags);
-    //         }
-    //         if(isset($tags)){
-    //             foreach ($tags as $key => $value) {
-    //                 $tag = Tag::firstOrNew(
-    //                     ['tag' => trim($value)]
-    //                 );
-    //                 $tag->save();
-    //                 $tag_ids[] = $tag->id;
-    //             }
-    //         }
-    //         $product->tags()->sync($tag_ids);
-
-    //         foreach ($request->lang as $index => $key) {
-    //             if ($request->name[$index] && $key != 'en') {
-    //                 Translation::updateOrInsert(
-    //                     ['translationable_type' => 'App\Model\Product',
-    //                         'translationable_id' => $product->id,
-    //                         'locale' => $key,
-    //                         'key' => 'name'],
-    //                     ['value' => $request->name[$index]]
-    //                 );
-    //             }
-    //             if ($request->description[$index] && $key != 'en') {
-    //                 Translation::updateOrInsert(
-    //                     ['translationable_type' => 'App\Model\Product',
-    //                         'translationable_id' => $product->id,
-    //                         'locale' => $key,
-    //                         'key' => 'description'],
-    //                     ['value' => $request->description[$index]]
-    //                 );
-    //             }
-    //         }
-    //         Toastr::success('Product updated successfully.');
-    //         return back();
-    //     }
-    // }
-
-
-
-
-    // public function update(Request $request, $id)
-    // {
-    //     // dd($request->all());
-    //     $product = Product::find($id);
-
-    //     $brand_setting = BusinessSetting::where('type', 'product_brand')->first()->value;
-    //     if ($brand_setting && empty($request->brand_id)) {
-    //         $validator->after(function ($validator) {
-    //             $validator->errors()->add(
-    //                 'brand_id',
-    //                 'Brand is required!'
-    //             );
-    //         });
-    //     }
-
-    //     if ($request['discount_type'] == 'percent') {
-    //         $dis = ($request['unit_price'] / 100) * $request['discount'];
-    //     } else {
-    //         $dis = $request['discount'];
-    //     }
-
-    //     // ---------- BASIC PRODUCT FIELDS ----------
-    //     $product->name = $request->name[array_search('en', $request->lang)];
-    //     $product->slug = Str::slug($request->name[array_search('en', $request->lang)], '-') . '-' . Str::random(6);
-
-    //     $category = [];
-    //     if ($request->category_id != null) {
-    //         $category[] = [
-    //             'id'       => $request->category_id,
-    //             'position' => 1,
-    //         ];
-    //     }
-    //     if ($request->sub_category_id != null) {
-    //         $category[] = [
-    //             'id'       => $request->sub_category_id,
-    //             'position' => 2,
-    //         ];
-    //     }
-    //     if ($request->sub_sub_category_id != null) {
-    //         $category[] = [
-    //             'id'       => $request->sub_sub_category_id,
-    //             'position' => 3,
-    //         ];
-    //     }
-
-    //     $product->HSN_code          = $request->HSN_code;
-    //     $product->Return_days       = $request->Return_days;
-    //     $product->Replacement_days  = $request->Replacement_days;
-    //     $product->product_type      = $request->product_type;
-    //     $product->category_ids      = json_encode($category);
-    //     $product->category_id       = $request->category_id;
-    //     $product->sub_category_id   = $request->sub_category_id;
-    //     $product->sub_sub_category_id = $request->sub_sub_category_id;
-    //     $product->brand_id          = isset($request->brand_id) ? $request->brand_id : null;
-    //     $product->unit              = $request->unit;
-
-    //     $product->digital_product_type = $request->product_type == 'digital' ? $request->digital_product_type : null;
-    //     $product->details              = $request->description[array_search('en', $request->lang)];
-    //     $product->free_delivery        = $request->free_delivery == 'on' ? 1 : 0;
-
-    //     $product->add_warehouse  = $request->warehouse;
-    //     $request->product_type   = "physical"; // original code ka behaviour
-    //     $request->product_type == 'digital';
-
-    //     // ---------- COLORS ----------
-    //     if ($request->has('colors_active') && $request->has('colors') && count($request->colors) > 0) {
-    //         $product->colors = $request->product_type == 'physical' ? json_encode($request->colors) : json_encode([]);
-    //     } else {
-    //         $colors          = [];
-    //         $product->colors = $request->product_type == 'physical' ? json_encode($colors) : json_encode([]);
-    //     }
-
-    //     // ---------- CHOICE OPTIONS ----------
-    //     $choice_options = [];
-    //     if ($request->has('choice')) {
-    //         foreach ($request->choice_no as $key => $no) {
-    //             $str           = 'choice_options_' . $no;
-    //             $item['name']  = 'choice_' . $no;
-    //             $item['title'] = $request->choice[$key];
-    //             $item['options'] = array_map('trim', explode('|', implode('|', $request[$str])));
-    //             $choice_options[] = $item;
-    //         }
-    //     }
-    //     $product->choice_options = $request->product_type == 'physical'
-    //         ? json_encode($choice_options)
-    //         : json_encode([]);
-
-    //     // ---------- VARIATIONS (product table ke liye) ----------
-    //     $variations = [];
-    //     $options    = [];
-
-    //     if ($request->has('colors_active') && $request->has('colors') && count($request->colors) > 0) {
-    //         $colors_active = 1;
-    //         $options[]     = $request->colors;
-    //     }
-
-    //     if ($request->has('choice_no')) {
-    //         foreach ($request->choice_no as $key => $no) {
-    //             $name   = 'choice_options_' . $no;
-    //             $my_str = implode('|', $request[$name]);
-    //             $options[] = explode(',', $my_str);
-    //         }
-    //     }
-
-    //     $combinations = Helpers::combinations($options);
-
-    //     $variations   = [];
-    //     $stock_count  = 0;
-
-    //     if (count($combinations) && count($combinations[0]) > 0) {
-    //         foreach ($combinations as $key => $combination) {
-    //             $str = '';
-    //             foreach ($combination as $k => $item) {
-    //                 if ($k > 0) {
-    //                     $str .= '-' . str_replace(' ', '', $item);
-    //                 } else {
-    //                     if ($request->has('colors_active') && $request->has('colors') && count($request->colors) > 0) {
-    //                         $color_name = Color::where('code', $item)->first()->name;
-    //                         $str .= $color_name;
-    //                     } else {
-    //                         $str .= str_replace(' ', '', $item);
-    //                     }
-    //                 }
-    //             }
-
-    //             $item            = [];
-    //             $item['type']    = $str;
-    //             $item['price']   = Convert::usd(abs($request['price_' . str_replace('.', '_', $str)]));
-    //             $item['sku']     = $request['sku_' . str_replace('.', '_', $str)];
-    //             $item['qty']     = abs($request['qty_' . str_replace('.', '_', $str)]);
-    //             $variations[]    = $item;
-    //             $stock_count    += $item['qty'];
-    //         }
-    //     } else {
-    //         $stock_count = (int) $request['current_stock'];
-    //     }
-
-    //     $product->variation         = $request->product_type == 'physical' ? json_encode($variations) : json_encode([]);
-    //     $product->unit_price        = Convert::usd($request->unit_price);
-    //     $product->purchase_price    = Convert::usd($request->purchase_price ?? 0);
-    //     $product->tax_model         = $request->tax_model ?? 'include';
-    //     $product->code              = $request->code;
-    //     $product->minimum_order_qty = $request->minimum_order_qty;
-    //     $product->discount          = $request->discount_type == 'flat' ? Convert::usd($request->discount) : $request->discount;
-    //     $product->attributes        = $request->product_type == 'physical'
-    //         ? json_encode($request->choice_attributes)
-    //         : json_encode([]);
-    //     $product->discount_type     = $request->discount_type;
-    //     $product->current_stock     = $request->product_type == 'physical' ? abs($stock_count) : 0;
-    //     $product->shipping_cost     = $request->product_type == 'physical'
-    //         ? (Helpers::get_business_settings('product_wise_shipping_cost_approval') == 1
-    //             ? $product->shipping_cost
-    //             : Convert::usd($request->shipping_cost))
-    //         : 0;
-    //     $product->multiply_qty      = ($request->product_type == 'physical') ? ($request->multiplyQTY == 'on' ? 1 : 0) : 0;
-    //     $product->request_status    = Helpers::get_business_settings('new_product_approval') == 1 ? 0 : 1;
-    //     $product->status            = 0;
-
-    //     if (Helpers::get_business_settings('product_wise_shipping_cost_approval') == 1 &&
-    //         $product->shipping_cost != Convert::usd($request->shipping_cost)
-    //     ) {
-    //         $product->temp_shipping_cost      = Convert::usd($request->shipping_cost);
-    //         $product->is_shipping_cost_updated = 0;
-    //     }
-
-    //     $product->video_provider = 'youtube';
-    //     $product->video_url      = $request->video_link;
-    //     if ($product->request_status == 2) {
-    //         $product->request_status = 0;
-    //     }
-
-    //     if ($request->ajax()) {
-    //         return response()->json([], 200);
-    //     } else {
-
-    //         // ---------- SAVE PRODUCT ----------
-    //         $product->save();
-
-    //         // ========== SKU / VARIANT SYNC TO sku_product_new ==========
-    //         $sizeKeys   = $request->sizes ?? [];          // hidden input: sizes[]
-    //         $skues      = $request->skues ?? [];
-    //         $taxes      = $request->taxes ?? [];
-    //         $unitMRP    = $request->unit_prices ?? [];
-    //         $varTax     = $request->var_tax ?? [];
-    //         $gstTax     = $request->tax_gst ?? [];
-    //         $discType   = $request->discount_types ?? [];
-    //         $discounts  = $request->discounts ?? [];
-    //         $listPrice  = $request->selling_prices ?? [];
-    //         $listTax    = $request->selling_taxs ?? [];
-    //         $listGst    = $request->tax1_gst ?? [];
-    //         $commFee    = $request->commission_fee ?? [];
-    //         $qtyArr     = $request->quant ?? [];
-    //         $lenArr     = $request->lengths ?? [];
-    //         $breArr     = $request->breadths ?? [];
-    //         $heiArr     = $request->heights ?? [];
-    //         $weiArr     = $request->weights ?? [];
-    //         $colorNames = $request->color_names ?? [];
-
-    //         if (empty($sizeKeys)) {
-    //             // koi variant nahi → purane sab delete
-    //             DB::table('sku_product_new')->where('product_id', $id)->delete();
-    //         } else {
-
-    //             // 1) jo OLD sizes ab form me nahi hai, unko delete
-    //             DB::table('sku_product_new')
-    //                 ->where('product_id', $id)
-    //                 ->whereNotIn('sizes', $sizeKeys)
-    //                 ->delete();
-
-    //             // 2) har size key ke liye insert/update
-    //             foreach ($sizeKeys as $index => $sizeKey) {
-
-    //                 // thumbnail original filename (radio se)
-    //                 $thumbnailOriginal = $request->input('thumbnail_image_' . $index);
-
-    //                 // image order (original filenames)
-    //                 $imageOrder = json_decode($request->input('image_order_' . $index, '[]'), true) ?: [];
-
-    //                 $newImageNames = [];
-
-    //                 // ----- NEW UPLOADED IMAGES -----
-    //                 if ($request->hasFile('image_' . $index)) {
-
-    //                     $files   = $request->file('image_' . $index);
-    //                     $fileMap = [];
-
-    //                     foreach ($files as $file) {
-    //                         $fileMap[$file->getClientOriginalName()] = $file;
-    //                     }
-
-    //                     $productFolder = 'products';
-
-    //                     foreach ($imageOrder as $originalName) {
-    //                         if (isset($fileMap[$originalName]) && $fileMap[$originalName]->isValid()) {
-
-    //                             $file = $fileMap[$originalName];
-    //                             $ext  = strtolower($file->getClientOriginalExtension());
-
-    //                             $safeName = uniqid() . '.webp';
-
-    //                             if ($ext === 'webp') {
-    //                                 $imageContent = file_get_contents($file->getRealPath());
-    //                             } else {
-    //                                 $imageContent = (string) Image::make($file->getRealPath())
-    //                                     ->encode('webp', 90);
-    //                             }
-
-    //                             $r2Path = $productFolder . '/' . $safeName;
-    //                             Storage::disk('r2')->put($r2Path, $imageContent);
-
-    //                             $publicPath     = '/' . $r2Path;
-    //                             $newImageNames[] = $publicPath;
-
-    //                             if ($thumbnailOriginal == $originalName) {
-    //                                 $thumbnailOriginal = $publicPath;
-    //                             }
-    //                         }
-    //                     }
-    //                 }
-
-    //                 // purani images jo delete nahi hui
-    //                 $oldImages   = $request->input('old_image_' . $index, []);
-    //                 $finalImages = array_merge($oldImages, $newImageNames);
-    //                 $imageJson   = !empty($finalImages) ? json_encode($finalImages) : null;
-
-    //                 // thumbnail ko final path se match karo (agar abhi bhi sirf filename hai)
-    //                 $thumbnailFinal = $thumbnailOriginal;
-    //                 if ($thumbnailFinal && strpos($thumbnailFinal, '/products/') === false) {
-    //                     foreach ($finalImages as $imgPath) {
-    //                         if (str_ends_with($imgPath, $thumbnailFinal)) {
-    //                             $thumbnailFinal = $imgPath;
-    //                             break;
-    //                         }
-    //                     }
-    //                 }
-
-    //                 $skuProduct = [
-    //                     'seller_id'          => auth('seller')->id() ?? null,
-    //                     'product_id'         => $id,
-    //                     'sizes'              => $sizeKey,                       // e.g. "Black-20Dx10Wx5H"
-    //                     'variation'          => $sizeKey,
-    //                     'sku'                => $skues[$index]          ?? null,
-    //                     'tax'                => $taxes[$index]          ?? null,
-    //                     'variant_mrp'        => $unitMRP[$index]        ?? null,
-    //                     'discount_percent'   => $varTax[$index]         ?? null,
-    //                     'gst_percent'        => $gstTax[$index]         ?? null,
-    //                     'discount_type'      => $discType[$index]       ?? null,
-    //                     'discount'           => $discounts[$index]      ?? null,
-    //                     'listed_price'       => $listPrice[$index]      ?? null,
-    //                     'listed_percent'     => $listTax[$index]        ?? null,
-    //                     'listed_gst_percent' => $listGst[$index]        ?? null,
-    //                     'commission_fee'     => $commFee[$index]        ?? null,
-    //                     'quantity'           => $qtyArr[$index]         ?? null,
-    //                     'length'             => $lenArr[$index]         ?? null,
-    //                     'breadth'            => $breArr[$index]         ?? null,
-    //                     'weight'             => $weiArr[$index]         ?? null,
-    //                     'height'             => $heiArr[$index]         ?? null,
-    //                     'color_name'         => $colorNames[$index]     ?? null,
-    //                     'thumbnail_image'    => $thumbnailFinal ?? $request->new_thumbnail_image,
-    //                     'image'              => $imageJson,
-    //                 ];
-
-    //                 DB::table('sku_product_new')->updateOrInsert(
-    //                     [
-    //                         'product_id' => $id,
-    //                         'sizes'      => $sizeKey,
-    //                     ],
-    //                     $skuProduct
-    //                 );
-    //             }
-    //         }
-
-    //         // ========== SPECIFICATION & OTHER DETAILS ==========
-    //         $post = [
-    //             'seller_id'               => auth('seller')->id() ?? null,
-    //             'product_id'              => $id,
-    //             'specification'           => json_encode($request->specification_values),
-    //             'key_features'            => json_encode($request->features_values),
-    //             'technical_specification' => json_encode($request->technical_specification_values),
-    //             'other_details'           => json_encode($request->other_details_values),
-    //             'created_at'              => now(),
-    //             'updated_at'              => now(),
-    //         ];
-
-    //         DB::table('key_specification_values')->where('product_id', $id)->update($post);
-
-    //         // ========== TAGS ==========
-    //         $tag_ids = [];
-    //         if ($request->tags != null) {
-    //             $tags = explode(",", $request->tags);
-    //         }
-    //         if (isset($tags)) {
-    //             foreach ($tags as $key => $value) {
-    //                 $tag = Tag::firstOrNew(
-    //                     ['tag' => trim($value)]
-    //                 );
-    //                 $tag->save();
-    //                 $tag_ids[] = $tag->id;
-    //             }
-    //         }
-    //         $product->tags()->sync($tag_ids);
-
-    //         // ========== TRANSLATIONS ==========
-    //         foreach ($request->lang as $index => $key) {
-    //             if ($request->name[$index] && $key != 'en') {
-    //                 Translation::updateOrInsert(
-    //                     [
-    //                         'translationable_type' => 'App\Model\Product',
-    //                         'translationable_id'   => $product->id,
-    //                         'locale'               => $key,
-    //                         'key'                  => 'name',
-    //                     ],
-    //                     ['value' => $request->name[$index]]
-    //                 );
-    //             }
-    //             if ($request->description[$index] && $key != 'en') {
-    //                 Translation::updateOrInsert(
-    //                     [
-    //                         'translationable_type' => 'App\Model\Product',
-    //                         'translationable_id'   => $product->id,
-    //                         'locale'               => $key,
-    //                         'key'                  => 'description',
-    //                     ],
-    //                     ['value' => $request->description[$index]]
-    //                 );
-    //             }
-    //         }
-
-    //         Toastr::success('Product updated successfully.');
-    //         return back();
-    //     }
-    // }
-
-
-
     public function update(Request $request, $id)
     {
         $product = Product::find($id);
 
-        // ---------- BASIC PRODUCT FIELDS ----------
         $product->name = $request->name[array_search('en', $request->lang)];
         $product->slug = Str::slug($request->name[array_search('en', $request->lang)], '-') . '-' . Str::random(6);
 
@@ -2023,11 +1044,9 @@ class ProductController extends Controller
 
         $product->add_warehouse = $request->warehouse;
 
-        // tumhare original code jaisa behaviour
         $request->product_type = 'physical';
         $request->product_type == 'digital';
 
-        // ---------- COLORS ----------
         if ($request->has('colors_active') && $request->has('colors') && count($request->colors) > 0) {
             $product->colors = $request->product_type == 'physical'
                 ? json_encode($request->colors)
@@ -2038,7 +1057,6 @@ class ProductController extends Controller
                 : json_encode([]);
         }
 
-        // ---------- CHOICE OPTIONS ----------
         $choice_options = [];
         if ($request->has('choice')) {
             foreach ($request->choice_no as $key => $no) {
@@ -2053,9 +1071,8 @@ class ProductController extends Controller
             ? json_encode($choice_options)
             : json_encode([]);
 
-        // ---------- VARIATIONS (product table + combination keys) ----------
         $options         = [];
-        $combinationKeys = [];   // yahi se sku_product_new ke sizes banenge
+        $combinationKeys = [];
         $variations      = [];
         $stock_count     = 0;
 
@@ -2078,7 +1095,6 @@ class ProductController extends Controller
 
         if (count($combinations) && count($combinations[0]) > 0) {
             foreach ($combinations as $idx => $combination) {
-                // === yahi logic tumhare _sku11_combinations.blade ke jaisa ===
                 $parts      = [];
                 $startIndex = 0;
 
@@ -2095,7 +1111,7 @@ class ProductController extends Controller
                     $parts[] = $clean;
                 }
 
-                $keyStr = implode('-', $parts);          // e.g. "Beige-20Dx10Wx5H" ya "Beige-onesize"
+                $keyStr = implode('-', $parts);
                 $combinationKeys[$idx] = $keyStr;
 
                 $row          = [];
@@ -2149,17 +1165,14 @@ class ProductController extends Controller
             $product->request_status = 0;
         }
 
-        // Agar ajax se call hua (resubmit wala), to sirf blank json
         if ($request->ajax()) {
             $product->save();
             return response()->json([], 200);
         }
 
-        // ---------- SAVE PRODUCT ----------
         $product->save();
 
-        // ========== SKU / VARIANT SYNC TO sku_product_new ==========
-        $sizeKeys = array_values($combinationKeys);   // IMPORTANT: ab yahi truth hai
+        $sizeKeys = array_values($combinationKeys);
 
         $skues      = $request->skues ?? [];
         $taxes      = $request->taxes ?? [];
@@ -2182,13 +1195,11 @@ class ProductController extends Controller
         if (empty($sizeKeys)) {
             DB::table('sku_product_new')->where('product_id', $id)->delete();
         } else {
-            // 1) jo purane sizes ab form/combinations me nahi hain -> delete
             DB::table('sku_product_new')
                 ->where('product_id', $id)
                 ->whereNotIn('sizes', $sizeKeys)
                 ->delete();
 
-            // 2) har size key ke liye insert/update
             foreach ($sizeKeys as $index => $sizeKey) {
 
                 $thumbnailOriginal = $request->input('thumbnail_image_' . $index);
@@ -2284,7 +1295,6 @@ class ProductController extends Controller
             }
         }
 
-        // ========== SPECIFICATION & OTHER DETAILS ==========
         $post = [
             'seller_id'               => auth('seller')->id() ?? null,
             'product_id'              => $id,
@@ -2298,7 +1308,6 @@ class ProductController extends Controller
 
         DB::table('key_specification_values')->where('product_id', $id)->update($post);
 
-        // ========== TAGS ==========
         $tag_ids = [];
         if ($request->tags != null) {
             $tags = explode(',', $request->tags);
@@ -2310,7 +1319,6 @@ class ProductController extends Controller
         }
         $product->tags()->sync($tag_ids);
 
-        // ========== TRANSLATIONS ==========
         foreach ($request->lang as $index => $key) {
             if ($request->name[$index] && $key != 'en') {
                 Translation::updateOrInsert(
@@ -2339,14 +1347,6 @@ class ProductController extends Controller
         Toastr::success('Product updated successfully.');
         return back();
     }
-
-
-
-
-
-
-
-    
 
     public function view($id)
     {
@@ -2405,7 +1405,6 @@ class ProductController extends Controller
 
         Cart::where('product_id', $product->id)->delete();
 
-        // Other images
         if (!empty($product->images)) {
             $images = json_decode($product->images, true);
             if (is_array($images)) {
@@ -2419,24 +1418,26 @@ class ProductController extends Controller
             Storage::disk('r2')->delete(ltrim($product->thumbnail, '/'));
         }
 
-        $bulkQuery = DB::table('bulk_image')
-            ->where('seller_id', auth('seller')->id());
-
         $paths = [];
 
         if (!empty($product->thumbnail)) {
-            $paths[] = $product->thumbnail;
+            $paths[] = ltrim($product->thumbnail, '/');   // yaha bhi same normalisation
         }
 
         if (!empty($product->images)) {
             $images = json_decode($product->images, true);
             if (is_array($images)) {
-                $paths = array_merge($paths, $images);
+                foreach ($images as $img) {
+                    $paths[] = ltrim($img, '/');          // har image normalise
+                }
             }
         }
 
         if (!empty($paths)) {
-            $bulkQuery->whereIn('image_path', $paths)->delete();
+            DB::table('bulk_image')
+                ->where('seller_id', $product->user_id)   // auth('seller') ki jagah product ka seller
+                ->whereIn('image_path', $paths)
+                ->delete();
         }
 
         FlashDealProduct::where('product_id', $id)->delete();
@@ -2511,32 +1512,27 @@ class ProductController extends Controller
                 continue;
             }
 
-            // SPECIFICATION
             if (stripos($header, 'Specification:') === 0) {
                 $key = trim(str_ireplace('Specification:', '', $header));
                 $excel['specification'][$key] = $value;
             }
 
-            // KEY FEATURES
             elseif (stripos($header, 'Key features:') === 0) {
                 $key = trim(str_ireplace('Key features:', '', $header));
                 $excel['key_features'][$key] = $value;
             }
 
-            // TECHNICAL SPECIFICATION
             elseif (stripos($header, 'Technical specification:') === 0) {
                 $key = trim(str_ireplace('Technical specification:', '', $header));
                 $excel['technical_specification'][$key] = $value;
             }
 
-            // OTHER DETAILS
             elseif (stripos($header, 'Other details:') === 0) {
                 $key = trim(str_ireplace('Other details:', '', $header));
                 $excel['other_details'][$key] = $value;
             }
         }
 
-        // ✅ Category order maintain + N/A fallback
         foreach ($allowed as $type => $keys) {
             foreach ($keys as $k) {
                 if (isset($excel[$type][$k])) {
@@ -2550,6 +1546,7 @@ class ProductController extends Controller
         return $result;
     }
 
+
     public function bulk_import_data(Request $request)
     {
         try {
@@ -2557,10 +1554,10 @@ class ProductController extends Controller
             $sheet = $spreadsheet->getActiveSheet();
             $data = $sheet->toArray(null, true, true, true);
 
-            $headers = array_map('trim', $data[1]); 
+            $headers    = array_map('trim', $data[1]);
             $dimheaders = array_map('trim', $data[2]);
 
-            $rows = [];
+            $rows       = [];
             $dimensions = [];
 
             foreach (array_slice($data, 3) as $index => $row) {
@@ -2586,48 +1583,59 @@ class ProductController extends Controller
         foreach ($rows as $i => $row) {
             if (empty($row['Product Title'])) continue;
 
-            $title = trim($row['Product Title']);
-            $colorName = trim($row['Colour'] ?? ''); 
-            $size = trim($row['Size'] ?? '');
-
-           
+            $title     = trim($row['Product Title']);
+            $colorName = trim($row['Colour'] ?? '');
+            $size      = trim($row['Size'] ?? '');
 
             $dimRow = $dimensions[$i] ?? [];
+
             $packaging_dimensions = [
                 'length'  => (float)($dimRow['Length (CM)'] ?? 0),
                 'breadth' => (float)($dimRow['Breadth (CM)'] ?? 0),
                 'height'  => (float)($dimRow['Height (CM)'] ?? 0),
                 'weight'  => (float)($dimRow['Weight (KG)'] ?? 0),
             ];
+
             $colorNames = [
-                'Colour_Name' => ($dimRow['Colour Name'] ?? 0),
+                'Colour_Name'        => ($dimRow['Colour Name'] ?? 0),
                 'Rename_Colour_Name' => ($dimRow['Rename Colour Name'] ?? 0),
             ];
-            
+
+            // Description + Bullet Points yahi se aa rahe hain (dimRow)
+            $descriptionParts = [
+                'Description'     => $dimRow['Description']     ?? null,
+                'Bullet Point 1'  => $dimRow['Bullet Point 1']  ?? null,
+                'Bullet Point 2'  => $dimRow['Bullet Point 2']  ?? null,
+                'Bullet Point 3'  => $dimRow['Bullet Point 3']  ?? null,
+                'Bullet Point 4'  => $dimRow['Bullet Point 4']  ?? null,
+                'Bullet Point 5'  => $dimRow['Bullet Point 5']  ?? null,
+            ];
+
             $colorCode = $dbColors[$colorName] ?? '#000000';
 
             if (!isset($groupedProducts[$title])) {
                 $groupedProducts[$title] = [
                     'product_data' => [
-                        'title' => $title,
-                        'brand' => $row['Brands'] ?? null,
-                        'description' => $row['Product Description'] ?? null,
-                        'packaging_dimensions' => $packaging_dimensions,
-                        'RenameColour' => $colorNames,
-                        'full_row' => $row
+                        'title'               => $title,
+                        'brand'               => $row['Brands'] ?? null,
+                        'description'         => $row['Product Description'] ?? null,
+                        'description_parts'   => $descriptionParts,        // 👈 store kiya
+                        'packaging_dimensions'=> $packaging_dimensions,
+                        'RenameColour'        => $colorNames,
+                        'full_row'            => $row,
                     ],
-                    'variations' => [],
-                    'colors' => [],
+                    'variations'  => [],
+                    'colors'      => [],
                     'color_names' => [],
                 ];
             }
 
             $variationType = trim($colorName . '-' . $size);
-            
-            $mrp = (float)($row['MRP (INR)'] ?? 0);
-            $tax = (float)($row['Tax'] ?? 0);
+
+            $mrp          = (float)($row['MRP (INR)'] ?? 0);
+            $tax          = (float)($row['Tax'] ?? 0);
             $discountType = $row['Discount Type'] ?? null;
-            $discountVal = $row['Discount'] ?? 0;
+            $discountVal  = $row['Discount'] ?? 0;
 
             $discountAmount = ($mrp * $tax) / 100;
 
@@ -2641,17 +1649,17 @@ class ProductController extends Controller
             }
 
             $groupedProducts[$title]['variations'][] = [
-                'type' => $variationType,
-                'price' => $listedPrice,
-                'sku' => $row['Seller SKU ID'] ?? null,
-                'qty' => (int)($row['Stock'] ?? 0),
-                'size' => $size,
-                '_full_row' => $row,
-                '_dimensions' => $packaging_dimensions,
-                '_color_name' => $colorName,
+                'type'          => $variationType,
+                'price'         => $listedPrice,
+                'sku'           => $row['Seller SKU ID'] ?? null,
+                'qty'           => (int)($row['Stock'] ?? 0),
+                'size'          => $size,
+                '_full_row'     => $row,
+                '_dimensions'   => $packaging_dimensions,
+                '_color_name'   => $colorName,
                 '_color_rename' => $colorNames,
-                '_color_code' => $colorCode,
-                '_size' => $size,
+                '_color_code'   => $colorCode,
+                '_size'         => $size,
             ];
 
             if (!in_array($colorCode, $groupedProducts[$title]['colors'])) {
@@ -2697,77 +1705,116 @@ class ProductController extends Controller
                 }
 
                 $freeDel = '';
-                if($row['Free Delivery'] == 'No')
-                {
+                if ($row['Free Delivery'] == 'No') {
                     $freeDel = 0;
-                }elseif($row['Free Delivery'] == 'Yes'){
-                    $freeDel =1;
+                } elseif ($row['Free Delivery'] == 'Yes') {
+                    $freeDel = 1;
                 }
 
                 $product = new Product();
                 $product->added_by = 'seller';
-                $product->user_id = auth('seller')->id();
-                $product->name = $title;
+                $product->user_id  = auth('seller')->id();
+                $product->name     = $title;
                 $product->HSN_code = $row['HSN'] ?? null;
-                $product->slug = Str::slug($title);
+                $product->slug     = Str::slug($title);
 
                 $product->category_ids = json_encode([
-                    ['id' => (string)$category_id, 'position' => 1],
-                    ['id' => (string)$sub_category_id, 'position' => 2],
+                    ['id' => (string)$category_id,      'position' => 1],
+                    ['id' => (string)$sub_category_id,  'position' => 2],
                     ['id' => (string)$sub_sub_category_id, 'position' => 3],
                 ]);
 
-                $product->category_id = $category_id;
-                $product->sub_category_id = $sub_category_id;
-                $product->sub_sub_category_id = $sub_sub_category_id;
-                $product->brand_id = $brand_id;
-                $product->cities = '[""]';
-                $product->product_type="physical";
-                $product->add_warehouse = $row['Warehouse'] ?? null;
-                $product->Return_days = $row['Return Days'] ?? null;
-                $product->replacement_days = $replacement;
-                $product->thumbnail = isset($row['Thumbnail Image name']) ?  $row['Thumbnail Image name'] : null;
-                $product->images = isset($row['Other Image name']) ? json_encode(array_filter(explode(',', $row['Other Image name']))) : null;
-                $product->details = $row['Product Description'] ?? null;
-                $product->unit = $row['Unit'] ?? 'pc';
-                $product->min_qty = $row['MOQ'] ?? 1;
-                $product->free_shipping = (strtolower($row['Free Delivery'] ?? 'no') === 'yes') ? 1 : 0;
-                $product->video_provider = 'youtube';
-                $product->video_url = $row['Video URL'] ?? null;
-                $product->colors = json_encode($data['colors']);
-                $product->length = $dim['length'];
-                $product->breadth = $dim['breadth'];
-                $product->height = $dim['height'];
-                $product->weight = $dim['weight'];
-                $product->free_delivery = $freeDel;  
+                $product->category_id        = $category_id;
+                $product->sub_category_id    = $sub_category_id;
+                $product->sub_sub_category_id= $sub_sub_category_id;
+                $product->brand_id           = $brand_id;
+                $product->cities             = '[""]';
+                $product->product_type       = "physical";
+                $product->add_warehouse      = $row['Warehouse'] ?? null;
+                $product->Return_days        = $row['Return Days'] ?? null;
+                $product->replacement_days   = $replacement;
+                $product->thumbnail          = isset($row['Thumbnail Image name']) ? $row['Thumbnail Image name'] : null;
+                $product->images             = isset($row['Other Image name']) ? json_encode(array_filter(explode(',', $row['Other Image name']))) : null;
 
-                $product->status = 1;
+                // --------- DESCRIPTION + BULLET POINTS → HTML ----------
+                $descParts = $data['product_data']['description_parts'] ?? [];
+
+                $mainDescription = trim($descParts['Description'] ?? '');
+
+                $bulletPoints = [];
+                $bpKeys = [
+                    'Bullet Point 1',
+                    'Bullet Point 2',
+                    'Bullet Point 3',
+                    'Bullet Point 4',
+                    'Bullet Point 5',
+                ];
+
+                foreach ($bpKeys as $key) {
+                    if (!empty(trim($descParts[$key] ?? ''))) {
+                        $bulletPoints[] = trim($descParts[$key]);
+                    }
+                }
+
+                $detailsHtml = '';
+
+                if ($mainDescription !== '') {
+                    $detailsHtml .= '<p>' . htmlspecialchars($mainDescription, ENT_QUOTES, 'UTF-8') . '</p>';
+                }
+
+                if (!empty($bulletPoints)) {
+                    $detailsHtml .= '<ul>';
+                    foreach ($bulletPoints as $bp) {
+                        $detailsHtml .= '<li>' . htmlspecialchars($bp, ENT_QUOTES, 'UTF-8') . '</li>';
+                    }
+                    $detailsHtml .= '</ul>';
+                }
+
+                // Fallback: agar naya format empty hai to purana Product Description use karo
+                if ($detailsHtml === '' && !empty($row['Product Description'] ?? '')) {
+                    $detailsHtml = '<p>' . htmlspecialchars($row['Product Description'], ENT_QUOTES, 'UTF-8') . '</p>';
+                }
+
+                $product->details = $detailsHtml;
+                // -------------------------------------------------------
+
+                $product->unit          = $row['Unit'] ?? 'pc';
+                $product->min_qty       = $row['MOQ'] ?? 1;
+                $product->free_shipping = (strtolower($row['Free Delivery'] ?? 'no') === 'yes') ? 1 : 0;
+                $product->video_provider= 'youtube';
+                $product->video_url     = $row['Video URL'] ?? null;
+                $product->colors        = json_encode($data['colors']);
+                $product->length        = $dim['length'];
+                $product->breadth       = $dim['breadth'];
+                $product->height        = $dim['height'];
+                $product->weight        = $dim['weight'];
+                $product->free_delivery = $freeDel;
+
+                $product->status    = 0;
                 $product->published = 1;
 
                 $all_color_names = array_values(array_filter(array_unique($data['color_names'])));
-                $all_sizes = array_values(array_filter(array_unique(array_column($data['variations'], '_size'))));
+                $all_sizes       = array_values(array_filter(array_unique(array_column($data['variations'], '_size'))));
 
                 $choice_options = [];
-                if (count($all_color_names) > 0) {
-                    $choice_options[] = [
-                        'name' => 'choice_1',
-                        'title' => 'Color',
-                        'options' => $all_color_names
-                    ];
-                }
                 if (count($all_sizes) > 0) {
                     $choice_options[] = [
-                        'name' => 'choice_2',
-                        'title' => 'Size',
-                        'options' => $all_sizes
+                        'name'    => 'choice_1',
+                        'title'   => 'Size',
+                        'options' => $all_sizes,
                     ];
                 }
 
                 $product->choice_options = json_encode($choice_options);
-                $product->attributes = json_encode([1]);
+                $product->attributes     = json_encode([1]);
+
                 $options = [];
-                if (count($all_color_names) > 0) $options[] = $all_color_names;
-                if (count($all_sizes) > 0) $options[] = $all_sizes;
+                if (count($all_color_names) > 0) {
+                    $options[] = $all_color_names; // Color
+                }
+                if (count($all_sizes) > 0) {
+                    $options[] = $all_sizes; // Size
+                }
 
                 $combinations = [];
                 if (!empty($options)) {
@@ -2788,7 +1835,7 @@ class ProductController extends Controller
                 }
 
                 $finalVariations = [];
-                $stock_count = 0;
+                $stock_count     = 0;
 
                 if (!empty($combinations)) {
                     foreach ($combinations as $combination) {
@@ -2804,18 +1851,18 @@ class ProductController extends Controller
 
                         if ($matched) {
                             $finalVariations[] = [
-                                'type' => $matched['type'],
+                                'type'  => $matched['type'],
                                 'price' => $matched['price'],
-                                'sku' => $matched['sku'],
-                                'qty' => $matched['qty'],
+                                'sku'   => $matched['sku'],
+                                'qty'   => $matched['qty'],
                             ];
                             $stock_count += (int)$matched['qty'];
                         } else {
                             $finalVariations[] = [
-                                'type' => $type,
+                                'type'  => $type,
                                 'price' => 0,
-                                'sku' => null,
-                                'qty' => 0,
+                                'sku'   => null,
+                                'qty'   => 0,
                             ];
                         }
                     }
@@ -2824,38 +1871,38 @@ class ProductController extends Controller
                         $sumQty = 0;
                         foreach ($data['variations'] as $v) {
                             $finalVariations[] = [
-                                'type' => $v['type'],
+                                'type'  => $v['type'],
                                 'price' => $v['price'],
-                                'sku' => $v['sku'],
-                                'qty' => $v['qty'],
+                                'sku'   => $v['sku'],
+                                'qty'   => $v['qty'],
                             ];
                             $sumQty += (int)$v['qty'];
                         }
                         $stock_count = $sumQty;
                     } else {
                         $finalVariations[] = [
-                            'type' => $title,
+                            'type'  => $title,
                             'price' => 0,
-                            'sku' => null,
-                            'qty' => 0,
+                            'sku'   => null,
+                            'qty'   => 0,
                         ];
                     }
                 }
 
-                $product->variation = json_encode($finalVariations);
+                $product->variation     = json_encode($finalVariations);
                 $product->current_stock = (int)$stock_count;
 
                 $product->save();
-                
+
                 foreach ($data['variations'] as $variation) {
                     $vrow = $variation['_full_row'];
                     $vdim = $variation['_dimensions'];
                     $vcol = $variation['_color_rename'];
 
-                    $mrp = (float)($vrow['MRP (INR)'] ?? 0);
-                    $tax = (float)($vrow['Tax'] ?? 0); // your column called Tax
+                    $mrp          = (float)($vrow['MRP (INR)'] ?? 0);
+                    $tax          = (float)($vrow['Tax'] ?? 0);
                     $discountType = $vrow['Discount Type'] ?? null;
-                    $discountVal = $vrow['Discount'] ?? 0;
+                    $discountVal  = $vrow['Discount'] ?? 0;
 
                     $discountAmount = ($mrp * $tax) / 100;
 
@@ -2871,49 +1918,47 @@ class ProductController extends Controller
                     $listedPercent = ($listedPrice * $tax) / 100;
 
                     DB::table('sku_product_new')->insert([
-                        'seller_id' => auth('seller')->id(),
-                        'product_id' => $product->id,
-                        'commission_fee' => $vrow['Commission Fee'] ?? 0,
-                        'sku' => $variation['sku'],
-                        'variation' => $variation['type'],
-                        'variant_mrp' => $mrp,
-                        'discount_percent' => $discountAmount,
-                        'gst_percent' => max(0, $mrp - $discountAmount),
-                        'discount_type' => $discountType,
-                        'discount' => $vrow['Discount'] ?? 0,
-                        'listed_price' => $listedPrice,
-                        'listed_percent' => $listedPercent,
-                        'listed_gst_percent' => max(0, $listedPrice - $listedPercent),
-                        'sizes' => $variation['size'],
-                        'quantity' => $variation['qty'],
-                        'color_name' => $vcol['Rename_Colour_Name'] ?? null,
-                        'tax' => $tax,
-                        'length' => $vdim['length'],
-                        'breadth' => $vdim['breadth'],
-                        'height' => $vdim['height'],
-                        'weight' => $vdim['weight'],
-                        'image' => isset($vrow['Other Image name']) ? json_encode(array_filter(explode(',', $vrow['Other Image name']))) : null,
-                        'thumbnail_image' =>$vrow['Thumbnail Image name'] ?? null,
+                        'seller_id'          => auth('seller')->id(),
+                        'product_id'         => $product->id,
+                        'commission_fee'     => $category_id->commission ?? 0, // (same as your old code)
+                        'sku'               => $variation['sku'],
+                        'variation'         => $variation['type'],
+                        'variant_mrp'       => $mrp,
+                        'discount_percent'  => $discountAmount,
+                        'gst_percent'       => max(0, $mrp - $discountAmount),
+                        'discount_type'     => $discountType,
+                        'discount'          => $vrow['Discount'] ?? 0,
+                        'listed_price'      => $listedPrice,
+                        'listed_percent'    => $listedPercent,
+                        'listed_gst_percent'=> max(0, $listedPrice - $listedPercent),
+                        'sizes'             => $variation['size'],
+                        'quantity'          => $variation['qty'],
+                        'color_name'        => $vcol['Rename_Colour_Name'] ?? null,
+                        'tax'               => $tax,
+                        'length'            => $vdim['length'],
+                        'breadth'           => $vdim['breadth'],
+                        'height'            => $vdim['height'],
+                        'weight'            => $vdim['weight'],
+                        'image'             => isset($vrow['Other Image name']) ? json_encode(array_filter(explode(',', $vrow['Other Image name']))) : null,
+                        'thumbnail_image'   => $vrow['Thumbnail Image name'] ?? null,
                     ]);
                 }
 
-
                 $category = DB::table('categories')->where('id', $sub_sub_category_id)->first();
 
-                $allowedSpec = array_map('trim', explode(',', $category->specification ?? ''));
-                $allowedFeatures = array_map('trim', explode(',', $category->key_features ?? ''));
-                $allowedTech = array_map('trim', explode(',', $category->technical_specification ?? ''));
-                $allowedOther = array_map('trim', explode(',', $category->other_details ?? ''));
+                $allowedSpec    = array_map('trim', explode(',', $category->specification ?? ''));
+                $allowedFeatures= array_map('trim', explode(',', $category->key_features ?? ''));
+                $allowedTech    = array_map('trim', explode(',', $category->technical_specification ?? ''));
+                $allowedOther   = array_map('trim', explode(',', $category->other_details ?? ''));
 
                 $allowed = [
-                    'specification' => $allowedSpec,
-                    'key_features' => $allowedFeatures,
+                    'specification'           => $allowedSpec,
+                    'key_features'            => $allowedFeatures,
                     'technical_specification' => $allowedTech,
-                    'other_details' => $allowedOther,
+                    'other_details'           => $allowedOther,
                 ];
 
                 $normalized = $this->normalizeSpecifications($row, $allowed);
-
 
                 DB::table('key_specification_values')->updateOrInsert(
                     ['product_id' => $product->id],
@@ -2928,28 +1973,11 @@ class ProductController extends Controller
                     ]
                 );
 
-                // if (!empty($row['Search Tags'])) {
-                //     $tagNames = array_map('trim', explode(',', $row['Search Tags']));
-                //     $tag_ids = [];
-                //     foreach ($tagNames as $tagName) {
-                //         if ($tagName === '') continue;
-                //         $tag = Tag::firstOrCreate(['tag' => $tagName]);
-                //         $tag_ids[] = $tag->id;
-                //     }
-                //     if (!empty($tag_ids)) {
-                //         if (method_exists($product, 'tags')) {
-                //             $product->tags()->sync($tag_ids);
-                //         }
-                //     }
-                // }
-
                 if (!empty($row['Search Tags'])) {
-
                     $tagNames = array_map('trim', explode(',', $row['Search Tags']));
-                    $tag_ids = [];
+                    $tag_ids  = [];
 
                     foreach ($tagNames as $tagName) {
-
                         if ($tagName === '') {
                             continue;
                         }
@@ -2959,7 +1987,7 @@ class ProductController extends Controller
                         }
 
                         $tag = Tag::firstOrCreate([
-                            'tag' => $tagName
+                            'tag' => $tagName,
                         ]);
 
                         $tag_ids[] = $tag->id;
@@ -2997,7 +2025,7 @@ class ProductController extends Controller
     {
         if ($request->hasFile('images')) {
 
-            $seller_id = auth('seller')->id(); // ✅ Seller ID
+            $seller_id = auth('seller')->id();
 
             foreach ($request->file('images') as $image) {
 
@@ -3008,13 +2036,11 @@ class ProductController extends Controller
 
                 $extension = strtolower($image->getClientOriginalExtension());
 
-                // ✅ Seller ID Prefix added
                 $webpName = $seller_id . '_' . $originalName . '.webp';
 
-                $r2Folder = 'products';
+                $r2Folder = '/products';
                 $r2Path = $r2Folder . '/' . $webpName;
 
-                // ✅ If already webp
                 if ($extension === 'webp') {
                     $imageContent = file_get_contents($image->getRealPath());
                 } 
@@ -3052,7 +2078,7 @@ class ProductController extends Controller
                 Storage::disk('r2')->put($r2Path, $imageContent);
                 DB::table('bulk_image')->insert([
                     'seller_id' => auth('seller')->id(),
-                    'image_path' => $r2Path   // ✅ FIXED
+                    'image_path' => $r2Path
                 ]);
             }
 
@@ -3062,257 +2088,661 @@ class ProductController extends Controller
         return back()->with('error', 'No images found.');
     }
 
-    public function bulk_export_data_category_wise()
-    {
-        $category_id = session('category_id');
-        $sub_category_id = session('sub_category_id');
-        $sub_sub_category_id = session('sub_sub_category_id');
-        $product_id = session('product_id');
-        $brand_id = session('brand_id');
-        $tax = session('tax');
-        $procurement_time = session('procurement_time');
-        $hsn_code = session('hsn_code');
+    // public function bulk_export_data_category_wise()
+    // {
+    //     $category_id = session('category_id');
+    //     $sub_category_id = session('sub_category_id');
+    //     $sub_sub_category_id = session('sub_sub_category_id');
+    //     $product_id = session('product_id');
+    //     $brand_id = session('brand_id');
+    //     $tax = session('tax');
+    //     $procurement_time = session('procurement_time');
+    //     $hsn_code = session('hsn_code');
 
-        $seller_id = auth('seller')->id();
-        $commission_fee = DB::table('sellers')->where('id', $seller_id)->first();
+    //     $seller_id = auth('seller')->id();
+    //     $commission_fee = DB::table('sellers')->where('id', $seller_id)->first();
 
-        $commission_type = match ($commission_fee->commission_fee ?? 1) {
-        1 => 'Default',
-        2 => 'In Percent',
+    //     $commission_type = match ($commission_fee->commission_fee ?? 1) {
+    //     1 => 'Default',
+    //     2 => 'In Percent',
+    //     default => 'Transfer Price',
+    //     };
+
+    //     $category = DB::table('categories')->where('id', $category_id)->first();
+    //     $product = Product::where('id', $product_id)->first() ?? new Product();
+    //     $skuProduct = DB::table('sku_product_new')->where('product_id', $product_id)->first();
+    //     $sub_category = DB::table('categories')->where('id', $sub_category_id)->first();
+    //     $sub_sub_category = DB::table('categories')->where('id', $sub_sub_category_id)->first();
+    //     $brand_name = DB::table('brands')->where('id', $brand_id)->first();
+
+    //     $specifications = !empty($sub_sub_category->specification) ? explode(',',
+    //     $sub_sub_category->specification) : [];
+    //     $key_features = !empty($sub_sub_category->key_features) ? explode(',',
+    //     $sub_sub_category->key_features) : [];
+    //     $technical_specifications = !empty($sub_sub_category->technical_specification) ? explode(',',
+    //     $sub_sub_category->technical_specification) : [];
+    //     $other_details = !empty($sub_sub_category->other_details) ? explode(',',
+    //     $sub_sub_category->other_details) : [];
+
+    //     $colors = DB::table('colors')->pluck('name')->toArray();
+
+    //     $baseData = [
+    //     'InteriorChowk Product Code' => '',
+    //     'Catelogue QC Status' => '',
+    //     'QC Failed Reason (if any)' => $product->qc_failed_reason ?? '',
+    //     'Product Category' => $category->name ?? '',
+    //     'Product Sub Category' => $sub_category->name ?? '',
+    //     'Product Sub Sub Category' => $sub_sub_category->name ?? '',
+    //     'Brands' => $brand_name->name ?? '',
+    //     'Seller SKU ID' => '',
+    //     'Commission Type' => $commission_type,
+    //     'Commission Fee' => $commission_fee->fee ?? '',
+    //     'Listing Status' => '',
+    //     'MRP (INR)' => $skuProduct->variant_mrp ?? '',
+    //     'Discount Type' => $skuProduct->discount_type ?? '',
+    //     'Discount' => $skuProduct->discount ?? '',
+    //     // 👇 Formula directly
+    //     'Your selling price (INR)' => '=IF(M2="Flat", MAX(0, L2-N2), IF(M2="Percent", MAX(0,
+    //     L2-(L2*N2/100)), ""))',
+    //     'Product Title' => '',
+    //     'Product Description' => '',
+    //     'Colour' => implode(', ', $colors),
+    //     'Size' => '',
+    //     'Return Days' => '',
+    //     'Replacement Days' => '',
+    //     'Unit' => '',
+    //     'Free Delivery' => '',
+    //     'Self Delivery' => '',
+    //     'Warehouse' => 'Noida warehouse',
+    //     'Procurement SLA (DAY)' => $procurement_time,
+    //     'Stock' => '',
+    //     'MOQ' => '',
+    //     'Packaging Dimensions' => '',
+    //     'HSN' => $hsn_code,
+    //     'Tax' => $tax,
+    //     'Thumbnail Image name' => '',
+    //     'Other Image name' => '',
+    //     'Video URL' => '',
+    //     'PDF URL' => '',
+    //     'Search Tags' => '',
+    //     'Excel error status' => '',
+    //     ];
+
+
+    //     foreach ($specifications as $spec) {
+    //     $baseData['Specification: ' . trim($spec)] = '';
+    //     }
+    //     foreach ($key_features as $feature) {
+    //     $baseData['Key features: ' . trim($feature)] = '';
+    //     }
+    //     foreach ($technical_specifications as $tech) {
+    //     $baseData['Technical specification: ' . trim($tech)] = '';
+    //     }
+    //     foreach ($other_details as $other) {
+    //     $baseData['Other details: ' . trim($other)] = '';
+    //     }
+
+    //     $baseData = array_merge($baseData, [
+    //     'Return Days' => '',
+    //     'Replacement Days' => '',
+    //     'Unit' => '',
+    //     'Free Delivery' => '',
+    //     'Self Delivery' => '',
+    //     'Warehouse' => 'Noida warehouse',
+    //     'Procurement SLA (DAY)' => $procurement_time,
+    //     'Stock' => '',
+    //     'MOQ' => '',
+    //     'Packaging Dimensions' => '',
+    //     'HSN' => $hsn_code,
+    //     'Tax' => $tax,
+    //     'Thumbnail Image name' => '',
+    //     'Other Image name' => '',
+    //     'Video URL' => '',
+    //     'PDF URL' => '',
+    //     'Search Tags' => '',
+    //     'Excel error status' => '',
+    //     ]);
+
+    //     $map = [
+    //     'InteriorChowk Product Code' => ['', 'To be filled by InteriorChowk'],
+    //     'Catelogue QC Status' => ['', 'To be filled by InteriorChowk'],
+    //     'QC Failed Reason (if any)' => ['', 'To be filled by InteriorChowk'],
+    //     'Product Category' => ['', 'To be filled by InteriorChowk'],
+    //     'Product Sub Category' => ['', 'To be filled by InteriorChowk'],
+    //     'Product Sub Sub Category' => ['', 'To be filled by InteriorChowk'],
+    //     'Brands' => ['', 'To be filled by InteriorChowk'],
+    //     'Seller SKU ID' => ['Text - limited to 64 characters (including spaces)', 'Seller SKU ID is the
+    //     identification number maintained by seller to keep track of SKUs. This will be mapped with
+    //     InteriorChowk product code.'],
+    //     'Commission Type' => ['', 'To be filled by InteriorChowk'],
+    //     'Commission Fee' => ['', 'To be filled by InteriorChowk'],
+    //     'Listing Status' => ['Single - Text', 'Inactive listings are not available for buyers on
+    //     InteriorChowk'],
+    //     'MRP (INR)' => ['Single - Positive_integer', 'Maximum retail price of the product'],
+    //     'Discount Type' => ['-', 'Write flat or percent'],
+    //     'Discount' => ['-', 'In Rs. Or In %'],
+    //     'Your selling price (INR)' => ['Single - Positive_integer', 'Price at which you want to sell this
+    //     listing'],
+    //     'Product Title' => ['Single - Text Used For: Title', 'Product Title is the identity of the product
+    //     that helps in distinguishing it from other products.'],
+    //     'Product Description' => [[
+    //       'Description',
+    //       'Bullet 1',
+    //       'Bullet 2',
+    //       'Bullet 3',
+    //       'Bullet 4',
+    //       'Bullet 5',
+    //     ], ['Please write few lines describing your product...','Bullet 1',
+    //       'Bullet 2',
+    //       'Bullet 3',
+    //       'Bullet 4',
+    //       'Bullet 5',]],
+    //     'Colour' => [['Colour Name','Rename Colour Name'], ['Eg. Silver','Eg. Matt Finish']],
+    //     'Size' => ['Add size', 'Eg. S, M, L or custom size'],
+    //     'Specification' => [['Brand','Product Dimensions','Wattage','Voltage'],['-','-','-','-']],
+    //     'Key Features' => [['Manufacturer','Packer','Net Quantity','Included
+    //     Components'],['-','-','-','-']],
+    //     'Technical Specification' => [['A','B','C','D'],['-','-','-','-']],
+    //     'Other Details' => [['A','B','C','D'],['-','-','-','-']],
+    //     'Return Days' => ['Number', '-'],
+    //     'Replacement Days' => ['Number', 'Enter number of days only if you want to offer replacement only
+    //     (no return).'],
+    //     'Unit' => ['-', 'Eg. - Kg, pc, gms, lts, set, Pair, Sqft, Sq Mtr., Box'],
+    //     'Free Delivery' => ['-', 'Yes / No'],
+    //     'Self Delivery' => ['-', 'If this product is heavy flammable fragile etc. Please enter yes.'],
+    //     'Warehouse' => ['Noida warehouse', "Fill your warehouse name here."],
+    //     'Procurement SLA (DAY)' => ['Single - Number', 'Time required to keep the product ready for
+    //     dispatch.'],
+    //     'Stock' => ['Number', 'Number of items you have in stock. Add minimum 5 quantity to ensure listing
+    //     visibility'],
+    //     'MOQ' => ['Number', 'Write a minimum order quantity'],
+    //     'Packaging Dimensions' => [['Length (CM)','Breadth (CM)','Height (CM)','Weight (KG)'], ['Length of
+    //     the package in cms','Breadth of the package in cms','Height of the package in cms','Weight of the
+    //     final package in kgs']],
+    //     'HSN' => ['Single - Text', 'To be filled by InteriorChowk'],
+    //     'Tax' => ['Single - Text',"InteriorChowk's tax code which decides the GST for the listing"],
+    //     'Thumbnail Image name' => ['Image name', '1st Image (Thumbnail): Front View – Minimum resolution
+    //     100x500'],
+    //     'Other Image name' => ['Eg.TABLELAMP01.webp,TABLELAMP02.webp', 'Upload images in order (2nd – Back,
+    //     3rd – Open, 4th – Side, 5th – Lifestyle, 6th – Detail).'],
+    //     'Video URL' => ['URL', 'See the summary sheet for Video URL guidelines.'],
+    //     'PDF URL' => ['URL', 'See the summary sheet for PDF URL guidelines.'],
+    //     'Search Tags' => ['-', 'Write search keywords and tags for the product'],
+    //     'Excel error status' => ['-', '❌ Error if missing, ✅ OK when all details are filled.'],
+    //     ];
+
+    //     $keys = array_keys($baseData);
+
+    //     // --- Export Excel
+    //     $filename = "products_bulk.xls";
+    //     header("Content-Type: application/vnd.ms-excel; charset=UTF-8");
+    //     header("Content-Disposition: attachment; filename=\"$filename\"");
+    //     echo "\xEF\xBB\xBF"; // UTF-8 BOM
+
+    //     echo '<table border="1" cellspacing="0" cellpadding="5">';
+
+    //         // Row 1: Headers
+    //         echo '<tr
+    //             style="background-color:#c4d79b; color:#000; vertical-align:middle; font-weight:bold; text-align:center;">
+    //             ';
+    //             foreach ($keys as $key) {
+    //             if (isset($map[$key]) && is_array($map[$key][0])) {
+    //             $colspan = count($map[$key][0]);
+    //             echo "<td colspan=\"$colspan\">{$key}</td>";
+    //             } else {
+    //             echo "<td>{$key}</td>";
+    //             }
+    //             }
+    //             echo '</tr>';
+
+    //         // Row 2: Instruction 1
+    //         echo '<tr
+    //             style="background-color:#ffff00; color:#000; vertical-align:middle; font-weight:bold; text-align:center;">
+    //             ';
+    //             foreach ($keys as $key) {
+    //             if (isset($map[$key])) {
+    //             $inst1 = $map[$key][0];
+    //             if (is_array($inst1)) {
+    //             foreach ($inst1 as $sub) {
+    //             echo "<td>{$sub}</td>";
+    //             }
+    //             } else {
+    //             echo "<td>{$inst1}</td>";
+    //             }
+    //             } else {
+    //             echo "<td>-</td>";
+    //             }
+    //             }
+    //             echo '</tr>';
+
+    //         // Row 3: Instruction 2
+    //         echo '<tr
+    //             style="background-color:#fcd5b4; color:#ff0000; font-weight:bold; text-align:center; vertical-align:middle;">
+    //             ';
+    //             foreach ($keys as $key) {
+    //             if (isset($map[$key])) {
+    //             $inst2 = $map[$key][1];
+    //             if (is_array($inst2)) {
+    //             foreach ($inst2 as $sub) {
+    //             echo "<td>{$sub}</td>";
+    //             }
+    //             } else {
+    //             echo "<td>{$inst2}</td>";
+    //             }
+    //             } else {
+    //             echo "<td>-</td>";
+    //             }
+    //             }
+    //             echo '</tr>';
+
+    //         // Row 4: Data
+    //         echo '<tr>';
+    //             foreach ($baseData as $key => $value) {
+    //             if (isset($map[$key]) && is_array($map[$key][0])) {
+    //             foreach ($map[$key][0] as $sub) {
+    //             echo "<td style='text-align:center; vertical-align:middle;'>{$value}</td>";
+    //             }
+    //             } else {
+    //             echo "<td style='text-align:center; vertical-align:middle;'>{$value}</td>";
+    //             }
+    //             }
+    //             echo '</tr>';
+
+    //         echo '</table>';
+    // }
+
+
+
+
+public function bulk_export_data_category_wise()
+{
+    $category_id        = session('category_id');
+    $sub_category_id    = session('sub_category_id');
+    $sub_sub_category_id = session('sub_sub_category_id');
+    $product_id         = session('product_id');
+    $brand_id           = session('brand_id');
+    $tax                = session('tax');
+    $procurement_time   = session('procurement_time');
+    $hsn_code           = session('hsn_code');
+
+    $seller_id      = auth('seller')->id();
+    $commission_fee = DB::table('sellers')->where('id', $seller_id)->first();
+
+    $commission_type = match ($commission_fee->commission_fee ?? 1) {
+        1       => 'Default',
+        2       => 'In Percent',
         default => 'Transfer Price',
-        };
+    };
 
-        $category = DB::table('categories')->where('id', $category_id)->first();
-        $product = Product::where('id', $product_id)->first() ?? new Product();
-        $skuProduct = DB::table('sku_product_new')->where('product_id', $product_id)->first();
-        $sub_category = DB::table('categories')->where('id', $sub_category_id)->first();
-        $sub_sub_category = DB::table('categories')->where('id', $sub_sub_category_id)->first();
-        $brand_name = DB::table('brands')->where('id', $brand_id)->first();
+    $category        = DB::table('categories')->where('id', $category_id)->first();
+    $product         = Product::where('id', $product_id)->first() ?? new Product();
+    $skuProduct      = DB::table('sku_product_new')->where('product_id', $product_id)->first();
+    $sub_category    = DB::table('categories')->where('id', $sub_category_id)->first();
+    $sub_sub_category= DB::table('categories')->where('id', $sub_sub_category_id)->first();
+    $brand_name      = DB::table('brands')->where('id', $brand_id)->first();
 
-        $specifications = !empty($sub_sub_category->specification) ? explode(',',
-        $sub_sub_category->specification) : [];
-        $key_features = !empty($sub_sub_category->key_features) ? explode(',',
-        $sub_sub_category->key_features) : [];
-        $technical_specifications = !empty($sub_sub_category->technical_specification) ? explode(',',
-        $sub_sub_category->technical_specification) : [];
-        $other_details = !empty($sub_sub_category->other_details) ? explode(',',
-        $sub_sub_category->other_details) : [];
+    $specifications           = !empty($sub_sub_category->specification) ? explode(',', $sub_sub_category->specification) : [];
+    $key_features             = !empty($sub_sub_category->key_features) ? explode(',', $sub_sub_category->key_features) : [];
+    $technical_specifications = !empty($sub_sub_category->technical_specification) ? explode(',', $sub_sub_category->technical_specification) : [];
+    $other_details            = !empty($sub_sub_category->other_details) ? explode(',', $sub_sub_category->other_details) : [];
 
-        $colors = DB::table('colors')->pluck('name')->toArray();
+    $colors = DB::table('colors')->pluck('name')->toArray();
 
-        $baseData = [
-        'InteriorChowk Product Code' => '',
-        'Catelogue QC Status' => '',
-        'QC Failed Reason (if any)' => $product->qc_failed_reason ?? '',
-        'Product Category' => $category->name ?? '',
-        'Product Sub Category' => $sub_category->name ?? '',
-        'Product Sub Sub Category' => $sub_sub_category->name ?? '',
-        'Brands' => $brand_name->name ?? '',
-        'Seller SKU ID' => '',
-        'Commission Type' => $commission_type,
-        'Commission Fee' => $commission_fee->fee ?? '',
-        'Listing Status' => '',
-        'MRP (INR)' => $skuProduct->variant_mrp ?? '',
-        'Discount Type' => $skuProduct->discount_type ?? '',
-        'Discount' => $skuProduct->discount ?? '',
-        // 👇 Formula directly
-        'Your selling price (INR)' => '=IF(M2="Flat", MAX(0, L2-N2), IF(M2="Percent", MAX(0,
-        L2-(L2*N2/100)), ""))',
-        'Product Title' => '',
-        'Product Description' => '',
-        'Colour' => implode(', ', $colors),
-        'Size' => '',
-        'Return Days' => '',
-        'Replacement Days' => '',
-        'Unit' => '',
-        'Free Delivery' => '',
-        'Self Delivery' => '',
-        'Warehouse' => 'Noida warehouse',
-        'Procurement SLA (DAY)' => $procurement_time,
-        'Stock' => '',
-        'MOQ' => '',
-        'Packaging Dimensions' => '',
-        'HSN' => $hsn_code,
-        'Tax' => $tax,
-        'Thumbnail Image name' => '',
-        'Other Image name' => '',
-        'Video URL' => '',
-        'PDF URL' => '',
-        'Search Tags' => '',
-        'Excel error status' => '',
-        ];
+    $baseData = [
+        'InteriorChowk Product Code'   => '',
+        'Catelogue QC Status'          => '',
+        'QC Failed Reason (if any)'    => $product->qc_failed_reason ?? '',
+        'Product Category'             => $category->name ?? '',
+        'Product Sub Category'         => $sub_category->name ?? '',
+        'Product Sub Sub Category'     => $sub_sub_category->name ?? '',
+        'Brands'                       => $brand_name->name ?? '',
+        'Seller SKU ID'                => '',
+        'Commission Type'              => $commission_type,
+        'Commission Fee'               => $commission_fee->fee ?? '',
+        'Listing Status'               => '',
+        'MRP (INR)'                    => $skuProduct->variant_mrp ?? '',
+        'Discount Type'                => $skuProduct->discount_type ?? '',
+        'Discount'                     => $skuProduct->discount ?? '',
+        // Formula directly
+        'Your selling price (INR)'     => '=IF(M2="Flat", MAX(0, L2-N2), IF(M2="Percent", MAX(0, L2-(L2*N2/100)), ""))',
+        'Product Title'                => '',
+        'Product Description'          => '',
+        'Colour'                       => implode(', ', $colors),
+        'Size'                         => '',
+        'Return Days'                  => '',
+        'Replacement Days'             => '',
+        'Unit'                         => '',
+        'Free Delivery'                => '',
+        'Self Delivery'                => '',
+        'Warehouse'                    => 'Noida warehouse',
+        'Procurement SLA (DAY)'        => $procurement_time,
+        'Stock'                        => '',
+        'MOQ'                          => '',
+        'Packaging Dimensions'         => '',
+        'HSN'                          => $hsn_code,
+        'Tax'                          => $tax,
+        'Thumbnail Image name'         => '',
+        'Other Image name'             => '',
+        'Video URL'                    => '',
+        'PDF URL'                      => '',
+        'Search Tags'                  => '',
+        'Excel error status'           => '',
+    ];
 
-
-        foreach ($specifications as $spec) {
+    foreach ($specifications as $spec) {
         $baseData['Specification: ' . trim($spec)] = '';
-        }
-        foreach ($key_features as $feature) {
+    }
+    foreach ($key_features as $feature) {
         $baseData['Key features: ' . trim($feature)] = '';
-        }
-        foreach ($technical_specifications as $tech) {
+    }
+    foreach ($technical_specifications as $tech) {
         $baseData['Technical specification: ' . trim($tech)] = '';
-        }
-        foreach ($other_details as $other) {
+    }
+    foreach ($other_details as $other) {
         $baseData['Other details: ' . trim($other)] = '';
-        }
+    }
 
-        $baseData = array_merge($baseData, [
-        'Return Days' => '',
-        'Replacement Days' => '',
-        'Unit' => '',
-        'Free Delivery' => '',
-        'Self Delivery' => '',
-        'Warehouse' => 'Noida warehouse',
-        'Procurement SLA (DAY)' => $procurement_time,
-        'Stock' => '',
-        'MOQ' => '',
-        'Packaging Dimensions' => '',
-        'HSN' => $hsn_code,
-        'Tax' => $tax,
-        'Thumbnail Image name' => '',
-        'Other Image name' => '',
-        'Video URL' => '',
-        'PDF URL' => '',
-        'Search Tags' => '',
-        'Excel error status' => '',
-        ]);
+    $baseData = array_merge($baseData, [
+        'Return Days'            => '',
+        'Replacement Days'       => '',
+        'Unit'                   => '',
+        'Free Delivery'          => '',
+        'Self Delivery'          => '',
+        'Warehouse'              => 'Noida warehouse',
+        'Procurement SLA (DAY)'  => $procurement_time,
+        'Stock'                  => '',
+        'MOQ'                    => '',
+        'Packaging Dimensions'   => '',
+        'HSN'                    => $hsn_code,
+        'Tax'                    => $tax,
+        'Thumbnail Image name'   => '',
+        'Other Image name'       => '',
+        'Video URL'              => '',
+        'PDF URL'                => '',
+        'Search Tags'            => '',
+        'Excel error status'     => '',
+    ]);
 
-        $map = [
+    $map = [
         'InteriorChowk Product Code' => ['', 'To be filled by InteriorChowk'],
-        'Catelogue QC Status' => ['', 'To be filled by InteriorChowk'],
-        'QC Failed Reason (if any)' => ['', 'To be filled by InteriorChowk'],
-        'Product Category' => ['', 'To be filled by InteriorChowk'],
-        'Product Sub Category' => ['', 'To be filled by InteriorChowk'],
-        'Product Sub Sub Category' => ['', 'To be filled by InteriorChowk'],
-        'Brands' => ['', 'To be filled by InteriorChowk'],
-        'Seller SKU ID' => ['Text - limited to 64 characters (including spaces)', 'Seller SKU ID is the
-        identification number maintained by seller to keep track of SKUs. This will be mapped with
-        InteriorChowk product code.'],
-        'Commission Type' => ['', 'To be filled by InteriorChowk'],
-        'Commission Fee' => ['', 'To be filled by InteriorChowk'],
-        'Listing Status' => ['Single - Text', 'Inactive listings are not available for buyers on
-        InteriorChowk'],
-        'MRP (INR)' => ['Single - Positive_integer', 'Maximum retail price of the product'],
-        'Discount Type' => ['-', 'Write flat or percent'],
-        'Discount' => ['-', 'In Rs. Or In %'],
-        'Your selling price (INR)' => ['Single - Positive_integer', 'Price at which you want to sell this
-        listing'],
-        'Product Title' => ['Single - Text Used For: Title', 'Product Title is the identity of the product
-        that helps in distinguishing it from other products.'],
-        'Product Description' => ['Single - Text', 'Please write few lines describing your product...'],
-        'Colour' => [['Colour Name','Rename Colour Name'], ['Eg. Silver','Eg. Matt Finish']],
+        'Catelogue QC Status'        => ['', 'To be filled by InteriorChowk'],
+        'QC Failed Reason (if any)'  => ['', 'To be filled by InteriorChowk'],
+        'Product Category'           => ['', 'To be filled by InteriorChowk'],
+        'Product Sub Category'       => ['', 'To be filled by InteriorChowk'],
+        'Product Sub Sub Category'   => ['', 'To be filled by InteriorChowk'],
+        'Brands'                     => ['', 'To be filled by InteriorChowk'],
+        'Seller SKU ID'              => [
+            'Text - limited to 64 characters (including spaces)',
+            'Seller SKU ID is the identification number maintained by seller to keep track of SKUs. This will be mapped with InteriorChowk product code.',
+        ],
+        'Commission Type'            => ['', 'To be filled by InteriorChowk'],
+        'Commission Fee'             => ['', 'To be filled by InteriorChowk'],
+        'Listing Status'             => [
+            'Single - Text',
+            'Inactive listings are not available for buyers on InteriorChowk',
+        ],
+        'MRP (INR)'                  => [
+            'Single - Positive_integer',
+            'Maximum retail price of the product',
+        ],
+        'Discount Type'              => ['-', 'Write flat or percent'],
+        'Discount'                   => ['-', 'In Rs. Or In %'],
+        'Your selling price (INR)'   => [
+            'Single - Positive_integer',
+            'Price at which you want to sell this listing',
+        ],
+        'Product Title'              => [
+            'Single - Text Used For: Title',
+            'Product Title is the identity of the product that helps in distinguishing it from other products.',
+        ],
+        'Product Description'        => [
+            [
+                'Description',
+                'Bullet 1',
+                'Bullet 2',
+                'Bullet 3',
+                'Bullet 4',
+                'Bullet 5',
+            ],
+            [
+                'Please write few lines describing your product...',
+                'Bullet 1',
+                'Bullet 2',
+                'Bullet 3',
+                'Bullet 4',
+                'Bullet 5',
+            ],
+        ],
+        'Colour' => [
+            ['Colour Name', 'Rename Colour Name'],
+            ['Eg. Silver', 'Eg. Matt Finish'],
+        ],
         'Size' => ['Add size', 'Eg. S, M, L or custom size'],
-        'Specification' => [['Brand','Product Dimensions','Wattage','Voltage'],['-','-','-','-']],
-        'Key Features' => [['Manufacturer','Packer','Net Quantity','Included
-        Components'],['-','-','-','-']],
-        'Technical Specification' => [['A','B','C','D'],['-','-','-','-']],
-        'Other Details' => [['A','B','C','D'],['-','-','-','-']],
+        'Specification' => [
+            ['Brand', 'Product Dimensions', 'Wattage', 'Voltage'],
+            ['-', '-', '-', '-'],
+        ],
+        'Key Features' => [
+            ['Manufacturer', 'Packer', 'Net Quantity', 'Included Components'],
+            ['-', '-', '-', '-'],
+        ],
+        'Technical Specification' => [
+            ['A', 'B', 'C', 'D'],
+            ['-', '-', '-', '-'],
+        ],
+        'Other Details' => [
+            ['A', 'B', 'C', 'D'],
+            ['-', '-', '-', '-'],
+        ],
         'Return Days' => ['Number', '-'],
-        'Replacement Days' => ['Number', 'Enter number of days only if you want to offer replacement only
-        (no return).'],
-        'Unit' => ['-', 'Eg. - Kg, pc, gms, lts, set, Pair, Sqft, Sq Mtr., Box'],
+        'Replacement Days' => [
+            'Number',
+            'Enter number of days only if you want to offer replacement only (no return).',
+        ],
+        'Unit' => [
+            '-',
+            'Eg. - Kg, pc, gms, lts, set, Pair, Sqft, Sq Mtr., Box',
+        ],
         'Free Delivery' => ['-', 'Yes / No'],
-        'Self Delivery' => ['-', 'If this product is heavy flammable fragile etc. Please enter yes.'],
-        'Warehouse' => ['Noida warehouse', "Fill your warehouse name here."],
-        'Procurement SLA (DAY)' => ['Single - Number', 'Time required to keep the product ready for
-        dispatch.'],
-        'Stock' => ['Number', 'Number of items you have in stock. Add minimum 5 quantity to ensure listing
-        visibility'],
+        'Self Delivery' => [
+            '-',
+            'If this product is heavy flammable fragile etc. Please enter yes.',
+        ],
+        'Warehouse' => ['Noida warehouse', 'Fill your warehouse name here.'],
+        'Procurement SLA (DAY)' => [
+            'Single - Number',
+            'Time required to keep the product ready for dispatch.',
+        ],
+        'Stock' => [
+            'Number',
+            'Number of items you have in stock. Add minimum 5 quantity to ensure listing visibility',
+        ],
         'MOQ' => ['Number', 'Write a minimum order quantity'],
-        'Packaging Dimensions' => [['Length (CM)','Breadth (CM)','Height (CM)','Weight (KG)'], ['Length of
-        the package in cms','Breadth of the package in cms','Height of the package in cms','Weight of the
-        final package in kgs']],
+        'Packaging Dimensions' => [
+            ['Length (CM)', 'Breadth (CM)', 'Height (CM)', 'Weight (KG)'],
+            [
+                'Length of the package in cms',
+                'Breadth of the package in cms',
+                'Height of the package in cms',
+                'Weight of the final package in kgs',
+            ],
+        ],
         'HSN' => ['Single - Text', 'To be filled by InteriorChowk'],
-        'Tax' => ['Single - Text',"InteriorChowk's tax code which decides the GST for the listing"],
-        'Thumbnail Image name' => ['Image name', '1st Image (Thumbnail): Front View – Minimum resolution
-        100x500'],
-        'Other Image name' => ['Eg.TABLELAMP01.webp,TABLELAMP02.webp', 'Upload images in order (2nd – Back,
-        3rd – Open, 4th – Side, 5th – Lifestyle, 6th – Detail).'],
+        'Tax' => [
+            'Single - Text',
+            "InteriorChowk's tax code which decides the GST for the listing",
+        ],
+        'Thumbnail Image name' => [
+            'Image name',
+            '1st Image (Thumbnail): Front View – Minimum resolution 100x500',
+        ],
+        'Other Image name' => [
+            'Eg.TABLELAMP01.webp,TABLELAMP02.webp',
+            'Upload images in order (2nd – Back, 3rd – Open, 4th – Side, 5th – Lifestyle, 6th – Detail).',
+        ],
         'Video URL' => ['URL', 'See the summary sheet for Video URL guidelines.'],
-        'PDF URL' => ['URL', 'See the summary sheet for PDF URL guidelines.'],
+        'PDF URL'   => ['URL', 'See the summary sheet for PDF URL guidelines.'],
         'Search Tags' => ['-', 'Write search keywords and tags for the product'],
         'Excel error status' => ['-', '❌ Error if missing, ✅ OK when all details are filled.'],
-        ];
+    ];
 
-        $keys = array_keys($baseData);
+    $keys = array_keys($baseData);
 
-        // --- Export Excel
-        $filename = "products_bulk.xls";
-        header("Content-Type: application/vnd.ms-excel; charset=UTF-8");
-        header("Content-Disposition: attachment; filename=\"$filename\"");
-        echo "\xEF\xBB\xBF"; // UTF-8 BOM
+    /*
+     * -------- Sheet 1: product_bulk (same structure as your HTML table) --------
+     */
+    $sheet1Rows = [];
 
-        echo '<table border="1" cellspacing="0" cellpadding="5">';
-
-            // Row 1: Headers
-            echo '<tr
-                style="background-color:#c4d79b; color:#000; vertical-align:middle; font-weight:bold; text-align:center;">
-                ';
-                foreach ($keys as $key) {
-                if (isset($map[$key]) && is_array($map[$key][0])) {
-                $colspan = count($map[$key][0]);
-                echo "<td colspan=\"$colspan\">{$key}</td>";
-                } else {
-                echo "<td>{$key}</td>";
-                }
-                }
-                echo '</tr>';
-
-            // Row 2: Instruction 1
-            echo '<tr
-                style="background-color:#ffff00; color:#000; vertical-align:middle; font-weight:bold; text-align:center;">
-                ';
-                foreach ($keys as $key) {
-                if (isset($map[$key])) {
-                $inst1 = $map[$key][0];
-                if (is_array($inst1)) {
-                foreach ($inst1 as $sub) {
-                echo "<td>{$sub}</td>";
-                }
-                } else {
-                echo "<td>{$inst1}</td>";
-                }
-                } else {
-                echo "<td>-</td>";
-                }
-                }
-                echo '</tr>';
-
-            // Row 3: Instruction 2
-            echo '<tr
-                style="background-color:#fcd5b4; color:#ff0000; font-weight:bold; text-align:center; vertical-align:middle;">
-                ';
-                foreach ($keys as $key) {
-                if (isset($map[$key])) {
-                $inst2 = $map[$key][1];
-                if (is_array($inst2)) {
-                foreach ($inst2 as $sub) {
-                echo "<td>{$sub}</td>";
-                }
-                } else {
-                echo "<td>{$inst2}</td>";
-                }
-                } else {
-                echo "<td>-</td>";
-                }
-                }
-                echo '</tr>';
-
-            // Row 4: Data
-            echo '<tr>';
-                foreach ($baseData as $key => $value) {
-                if (isset($map[$key]) && is_array($map[$key][0])) {
-                foreach ($map[$key][0] as $sub) {
-                echo "<td style='text-align:center; vertical-align:middle;'>{$value}</td>";
-                }
-                } else {
-                echo "<td style='text-align:center; vertical-align:middle;'>{$value}</td>";
-                }
-                }
-                echo '</tr>';
-
-            echo '</table>';
+    // Row 1: Headers (with "colspan" expanded into multiple columns)
+    $row1 = [];
+    foreach ($keys as $key) {
+        if (isset($map[$key]) && is_array($map[$key][0])) {
+            $colspan = count($map[$key][0]);
+            $row1[]  = $key;
+            for ($i = 1; $i < $colspan; $i++) {
+                $row1[] = ''; // filler cells
+            }
+        } else {
+            $row1[] = $key;
+        }
     }
+    $sheet1Rows[] = $row1;
+
+    // Row 2: Instruction 1 (yellow row in old design)
+    $row2 = [];
+    foreach ($keys as $key) {
+        if (isset($map[$key])) {
+            $inst1 = $map[$key][0];
+            if (is_array($inst1)) {
+                foreach ($inst1 as $sub) {
+                    $row2[] = $sub;
+                }
+            } else {
+                $row2[] = $inst1;
+            }
+        } else {
+            $row2[] = '-';
+        }
+    }
+    $sheet1Rows[] = $row2;
+
+    // Row 3: Instruction 2 (orange/red row in old design)
+    $row3 = [];
+    foreach ($keys as $key) {
+        if (isset($map[$key])) {
+            $inst2 = $map[$key][1];
+            if (is_array($inst2)) {
+                foreach ($inst2 as $sub) {
+                    $row3[] = $sub;
+                }
+            } else {
+                $row3[] = $inst2;
+            }
+        } else {
+            $row3[] = '-';
+        }
+    }
+    $sheet1Rows[] = $row3;
+
+    // Row 4: Data row
+    $row4 = [];
+    foreach ($baseData as $key => $value) {
+        if (isset($map[$key]) && is_array($map[$key][0])) {
+            foreach ($map[$key][0] as $sub) {
+                $row4[] = $value;
+            }
+        } else {
+            $row4[] = $value;
+        }
+    }
+    $sheet1Rows[] = $row4;
+
+    /*
+     * -------- Sheet 2: Guideline (dummy data abhi ke liye) --------
+     */
+       /*
+     * -------- Sheet 2: Guideline (Amazon-type style) --------
+     */
+    $sheet2Rows = [
+        // Header row
+        ['Image Standards', 'Image Examples'],
+
+        // Intro block
+        [
+            'Every product on InteriorChowk needs one or more product images. Choose images that are clear, straightforward and easy to understand. They must accurately represent the product, be information-rich and attractively presented. Show only the product that is being offered for sale, with minimal or no propping. Text, logos and inset images are not allowed. Whenever possible, provide several images, with each one showing different angles and details of the product.',
+            '' // yahan pe tum baad me images add kar sakte ho
+        ],
+        [
+            'We reserve the right to reject images that do not meet our image standards.',
+            ''
+        ],
+        [
+            'It is your responsibility to ensure that you have all necessary rights to the images you submit.',
+            ''
+        ],
+
+        // Empty separator row
+        ['', ''],
+
+        // MAIN Images section
+        ['MAIN Images', ''],
+        [
+            '* The background for a MAIN image must be pure white (blends with site background).',
+            'Pure white background'
+        ],
+        [
+            '* A MAIN image must not be a graphic or illustration and must not contain accessories that are not being dispatched with the product, props that may confuse the customer, text that is not part of the product, or any logos, watermarks or inset images.',
+            'No graphics / illustrations'
+        ],
+        [
+            '* The product must fill 85% or more of the image area.',
+            'Product fills most of the frame'
+        ],
+
+        // Empty separator row
+        ['', ''],
+
+        // Additional Images section
+        ['Additional Images', ''],
+        [
+            '* MAIN images should be supplemented with additional images showing different sides of a product, the product in use, or details that are not visible in the MAIN image.',
+            'Different angles / lifestyle shots'
+        ],
+        [
+            '* Do not use blurry, pixelated or low-resolution images.',
+            'No blurry images'
+        ],
+        [
+            '* Avoid borders, collages, or multiple products in a single image unless clearly part of a set.',
+            'Single clear product'
+        ],
+
+        // Empty separator
+        ['', ''],
+
+        // Not allowed section
+        ['Not Allowed', ''],
+        [
+            '✘ Images with watermarks, logos or promotional text.',
+            'No watermark / logo'
+        ],
+        [
+            '✘ Images with inset boxes, icons or stickers (SALE, NEW, % OFF, etc.).',
+            'No inset images'
+        ],
+        [
+            '✘ Images that do not match the actual product colour, shape or design.',
+            'Product must match listing'
+        ],
+    ];
+}
+   
+
+
+
+
+
+    
 
     public function bulk_export_data()
     {

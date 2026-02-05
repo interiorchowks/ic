@@ -155,13 +155,11 @@
                         {{ \App\CPU\translate('Listed price after discount') }}<br>
                     </label>
                 </td>
-                @if (optional($commission)->commission_fee == 3)
+                @if ($commission->commission_fee == 3)
                     <td class="text-center">
                         <label class="title-color">{{ \App\CPU\translate('Transfer Price') }}</label>
                     </td>
                 @endif
-
-
                 <td class="text-center">
                     <label class="title-color">{{ \App\CPU\translate('Commission fee') }}</label>
                 </td>
@@ -176,16 +174,16 @@
 
 @foreach ($combinations as $key => $combo)
     @php
-        $parts = [];
+        $parts      = [];
         $startIndex = 0;
 
         if ($colors_active && isset($combo[0])) {
             $colorCode = $combo[0]; // "#000000"
-            $colorRow = Color::where('code', $colorCode)->first();
+            $colorRow  = Color::where('code', $colorCode)->first();
 
-            $colorName = $colorRow ? trim($colorRow->name) : trim($colorCode);
-            $parts[] = $colorName;
-            $startIndex = 1;
+            $colorName   = $colorRow ? trim($colorRow->name) : trim($colorCode);
+            $parts[]     = $colorName;
+            $startIndex  = 1;
         }
 
         for ($i = $startIndex; $i < count($combo); $i++) {
@@ -193,17 +191,9 @@
             $parts[] = $clean;
         }
 
-        $variantKey = implode('-', $parts);
-        $data = $existingRows[$variantKey] ?? null;
-
-        // SAFE image handling
-        $images = [];
-        if ($data && isset($data->image) && $data->image) {
-            $decoded = json_decode($data->image, true);
-            if (is_array($decoded)) {
-                $images = $decoded;
-            }
-        }
+        $variantKey = implode('-', $parts); 
+        $data   = $existingRows[$variantKey] ?? null;
+        $images = $data && $data->image ? json_decode($data->image, true) : [];
     @endphp
 
     <tr data-row-id="{{ $key }}">
@@ -212,30 +202,28 @@
             <label class="control-label">{{ $variantKey }}</label>
         </td>
         <td>
-            <input type="text" name="skues[]" value="{{ $data ? $data->sku : '' }}" class="form-control">
+            <input type="text" name="skues[]" value="{{ $data->sku ?? '' }}" class="form-control">
         </td>
         <td>
             <input type="text" min="0" step="0.01" placeholder="Tax" name="taxes[]"
-                value="{{ $data ? $data->tax : '' }}" class="form-control tax" id="tax_{{ $key }}">
+                value="{{ $data->tax ?? '' }}" class="form-control tax" id="tax_{{ $key }}">
         </td>
         <td>
             <div class="d-flex align-items-center">
                 <input type="text" id="tax_gst_{{ $key }}" name="tax_gst[]"
                     class="form-control ms-2 text-center" style="width: 40%; height: 10%;"
-                    value="{{ $data ? $data->gst_percent : '' }}" />
+                    value="{{ $data->gst_percent ?? '' }}" />
                 <span class="fw-bold"> plus </span>
                 <input type="text" id="var_tax_{{ $key }}" name="var_tax[]"
                     class="form-control me-2 text-center" style="width: 40%; height:10%;"
-                    value="{{ $data ? $data->discount_percent : '' }}" />
+                    value="{{ $data->discount_percent ?? '' }}" />
             </div>
             <input type="number" placeholder="Variant MRP" name="unit_prices[]" id="unit_price_{{ $key }}"
-                value="{{ $data ? $data->variant_mrp : '' }}" class="form-control unit_price mt-2">
+                value="{{ $data->variant_mrp ?? '' }}" class="form-control unit_price mt-2">
         </td>
 
         <td>
-            @php
-                $dt = $data && isset($data->discount_type) ? $data->discount_type : 'percent';
-            @endphp
+            @php $dt = $data->discount_type ?? 'percent'; @endphp
             <select class="form-control js-select2-custom discount_type" name="discount_types[]"
                 id="discount_type_{{ $key }}">
                 <option value="percent" {{ $dt == 'percent' ? 'selected' : '' }}>Percent</option>
@@ -244,37 +232,37 @@
         </td>
 
         <td>
-            <input type="text" placeholder="Discount" name="discounts[]" value="{{ $data ? $data->discount : '' }}"
+            <input type="text" placeholder="Discount" name="discounts[]" value="{{ $data->discount ?? '' }}"
                 id="discount_{{ $key }}" class="form-control discount">
         </td>
         <td>
             <div class="d-flex align-items-center">
                 <input type="text" id="selling_tax_{{ $key }}" name="selling_taxs[]"
                     class="form-control me-2 text-center" style="width: 40%; height:10%;"
-                    value="{{ $data ? $data->listed_percent : '' }}" />
+                    value="{{ $data->listed_percent ?? '' }}" />
                 <span class="fw-bold"> plus </span>
                 <input type="text" id="tax1_gst_{{ $key }}" name="tax1_gst[]"
                     class="form-control me-2 text-center" style="width: 40%; height:10%;"
-                    value="{{ $data ? $data->listed_gst_percent : '' }}" />
+                    value="{{ $data->listed_gst_percent ?? '' }}" />
             </div>
             <input type="text" id="selling_price_{{ $key }}" name="selling_prices[]"
-                class="form-control selling_price mt-2" value="{{ $data ? $data->listed_price : '' }}"
+                class="form-control selling_price mt-2" value="{{ $data->listed_price ?? '' }}"
                 placeholder="Selling Price">
         </td>
         @if ($commission->commission_fee == 3)
             <td>
-                <input type="number" name="transfer_price[]" value="{{ $data ? $data->transfer_price : '' }}"
+                <input type="number" name="transfer_price[]" value="{{ $data->transfer_price ?? '' }}"
                     id="transfer_price_{{ $key }}" class="form-control quant">
             </td>
         @endif
 
         <td>
-            <input type="number" name="commission_fee[]" value="{{ $data ? $data->commission_fee : '' }}"
+            <input type="number" name="commission_fee[]" value="{{ $data->commission_fee ?? '' }}"
                 id="commission_fee_{{ $key }}" class="form-control quant">
         </td>
         <td>
-            <input type="number" id="quant_{{ $key }}" name="quant[]"
-                value="{{ $data ? $data->quantity : '' }}" class="form-control quant">
+            <input type="number" id="quant_{{ $key }}" name="quant[]" value="{{ $data->quantity ?? '' }}"
+                class="form-control quant">
         </td>
     </tr>
 
@@ -282,19 +270,19 @@
         <td colspan="5" style="text-align:center; padding-top: 20px;">Packaging dimensions* (in Cm)</td>
         <td>
             <label style="position: relative; left: 20px;">Length (in Cm)</label>
-            <input type="text" name="lengths[]" value="{{ $data ? $data->length : '' }}" class="form-control">
+            <input type="text" name="lengths[]" value="{{ $data->length ?? '' }}" class="form-control">
         </td>
         <td>
             <label style="position: relative; left: 20px;">Breadth (in Cm)</label>
-            <input type="text" name="breadths[]" value="{{ $data ? $data->breadth : '' }}" class="form-control">
+            <input type="text" name="breadths[]" value="{{ $data->breadth ?? '' }}" class="form-control">
         </td>
         <td>
             <label style="position: relative; left: 20px;">Height (in Cm)</label>
-            <input type="text" name="heights[]" value="{{ $data ? $data->height : '' }}" class="form-control">
+            <input type="text" name="heights[]" value="{{ $data->height ?? '' }}" class="form-control">
         </td>
         <td>
             <label style="position: relative; left: 20px;">Weight (in Kg)</label>
-            <input type="text" name="weights[]" value="{{ $data ? $data->weight : '' }}" class="form-control">
+            <input type="text" name="weights[]" value="{{ $data->weight ?? '' }}" class="form-control">
         </td>
     </tr>
 
@@ -304,7 +292,7 @@
                 style="background-color: #ffffff; width: 50px; height: 50px; margin: 0 auto; border-radius: 50%; margin-top: 10px;">
             </p>
             <input type="text" name="color_names[]" placeholder="Write a color name"
-                style="margin-top: 10px; text-align:center;" value="{{ $data ? $data->color_name : '' }}">
+                style="margin-top: 10px; text-align:center;" value="{{ $data->color_name ?? '' }}">
         </td>
 
         <td colspan="5">
@@ -322,8 +310,7 @@
             </div>
 
             <input type="hidden" id="thumbnail_input_{{ $key }}"
-                name="thumbnail_image_{{ $key }}"
-                value="{{ $data && isset($data->thumbnail_image) ? $data->thumbnail_image : '' }}">
+                name="thumbnail_image_{{ $key }}" value="{{ $data->thumbnail_image ?? '' }}">
             <input type="hidden" id="image_order_{{ $key }}" name="image_order_{{ $key }}"
                 value="">
 
@@ -332,11 +319,8 @@
                 @if (is_array($images))
                     @foreach ($images as $img)
                         @php
-                            $imgClean = ltrim(trim($img), '/');
-
-                            $thumbClean =
-                                $data && isset($data->thumbnail_image) ? ltrim(trim($data->thumbnail_image), '/') : '';
-
+                            $imgClean   = ltrim(str_replace(' ', '', $img), '/');
+                            $thumbClean = ltrim(str_replace(' ', '', $data->thumbnail_image ?? ''), '/');
                         @endphp
 
                         <div class="image-container" draggable="true" style="position:relative; margin:5px;">
@@ -346,7 +330,7 @@
                             <img src="{{ env('CLOUDFLARE_R2_PUBLIC_URL') . '/' . $imgClean }}" width="100">
 
                             <input type="radio" class="image-radio" name="thumbnail_{{ $key }}"
-                                value="{{ $imgClean }}" @if ($thumbClean && basename($imgClean) == basename($thumbClean)) checked @endif
+                                value="{{ $imgClean }}" @if (basename($imgClean) == basename($thumbClean)) checked @endif
                                 style="position:absolute; top:5px; right:80px;">
 
                             <span class="remove-btn"
@@ -366,10 +350,8 @@
     </div>
 @endforeach
 
-@if (count($combinations[0]) > 0)
-    </tbody>
-    </table>
-@endif
+</tbody>
+</table>
 
 {{-- JS part --}}
 
@@ -381,24 +363,24 @@
             if (row) {
                 var rowId = row.getAttribute('data-row-id');
 
-                var unitPriceInput = document.getElementById(`unit_price_${rowId}`);
-                var quantityInput = document.getElementById(`quant_${rowId}`);
-                var discountInput = document.getElementById(`discount_${rowId}`);
-                var discountTypeInput = document.getElementById(`discount_type_${rowId}`);
-                var taxInput = document.getElementById(`tax_${rowId}`);
-                var sellingPriceInput = document.getElementById(`selling_price_${rowId}`);
-                var sellingTaxInput = document.getElementById(`selling_tax_${rowId}`);
-                var gstTaxInput = document.getElementById(`tax1_gst_${rowId}`);
+                var unitPriceInput     = document.getElementById(`unit_price_${rowId}`);
+                var quantityInput      = document.getElementById(`quant_${rowId}`);
+                var discountInput      = document.getElementById(`discount_${rowId}`);
+                var discountTypeInput  = document.getElementById(`discount_type_${rowId}`);
+                var taxInput           = document.getElementById(`tax_${rowId}`);
+                var sellingPriceInput  = document.getElementById(`selling_price_${rowId}`);
+                var sellingTaxInput    = document.getElementById(`selling_tax_${rowId}`);
+                var gstTaxInput        = document.getElementById(`tax1_gst_${rowId}`);
                 var transferPriceInput = document.getElementById(`transfer_price_${rowId}`); // FIXED ID
                 var commissionFeeInput = document.getElementById(`commission_fee_${rowId}`);
-                var gstTaxInput1 = document.getElementById(`tax_gst_${rowId}`);
-                var varTaxInput = document.getElementById(`var_tax_${rowId}`);
+                var gstTaxInput1       = document.getElementById(`tax_gst_${rowId}`);
+                var varTaxInput        = document.getElementById(`var_tax_${rowId}`);
 
-                var unitPrice = parseFloat(unitPriceInput?.value) || 0;
-                var quantity = parseFloat(quantityInput?.value) || 1;
-                var discount = parseFloat(discountInput?.value) || 0;
+                var unitPrice    = parseFloat(unitPriceInput?.value) || 0;
+                var quantity     = parseFloat(quantityInput?.value) || 1;
+                var discount     = parseFloat(discountInput?.value) || 0;
                 var discountType = discountTypeInput?.value || "none";
-                var tax = parseFloat(taxInput?.value) || 0;
+                var tax          = parseFloat(taxInput?.value) || 0;
 
                 var sellingPrice = unitPrice;
                 if (discountType === "percent") {
@@ -409,17 +391,17 @@
                 sellingPrice = Math.max(sellingPrice, 0);
 
                 var taxMultiplier = (tax + 100) / 100;
-                var selling = unitPrice / taxMultiplier;
-                var gst = (selling * tax) / 100;
+                var selling       = unitPrice / taxMultiplier;
+                var gst           = (selling * tax) / 100;
 
                 var sellingTax = sellingPrice / taxMultiplier;
-                var gstTax = (sellingPrice * tax) / (tax + 100);
+                var gstTax     = (sellingPrice * tax) / (tax + 100);
 
                 if (sellingPriceInput) sellingPriceInput.value = sellingPrice.toFixed(2);
-                if (sellingTaxInput) sellingTaxInput.value = sellingTax.toFixed(2);
-                if (gstTaxInput) gstTaxInput.value = gstTax.toFixed(2);
-                if (varTaxInput) varTaxInput.value = gst.toFixed(2);
-                if (gstTaxInput1) gstTaxInput1.value = selling.toFixed(2);
+                if (sellingTaxInput)   sellingTaxInput.value   = sellingTax.toFixed(2);
+                if (gstTaxInput)       gstTaxInput.value       = gstTax.toFixed(2);
+                if (varTaxInput)       varTaxInput.value       = gst.toFixed(2);
+                if (gstTaxInput1)      gstTaxInput1.value      = selling.toFixed(2);
 
                 // Commission calculation
                 if (transferPriceInput && commissionFeeInput) {
@@ -432,10 +414,10 @@
     });
 
     document.querySelectorAll('[id^="imageInput_"]').forEach((input) => {
-        const key = input.dataset.key;
-        const dropArea = document.getElementById(`dropArea_${key}`);
-        const imagePreview = document.getElementById(`imagePreview_${key}`);
-        const thumbnailInput = document.getElementById(`thumbnail_input_${key}`);
+        const key             = input.dataset.key;
+        const dropArea        = document.getElementById(`dropArea_${key}`);
+        const imagePreview    = document.getElementById(`imagePreview_${key}`);
+        const thumbnailInput  = document.getElementById(`thumbnail_input_${key}`);
         const imageOrderInput = document.getElementById(`image_order_${key}`);
 
         let draggedElement = null;
@@ -468,7 +450,7 @@
             if (!target || target === draggedElement) return;
 
             const bounding = target.getBoundingClientRect();
-            const offset = bounding.y + bounding.height / 2;
+            const offset   = bounding.y + bounding.height / 2;
 
             if (e.clientY - offset > 0) {
                 target.after(draggedElement);
@@ -495,19 +477,19 @@
                     imgContainer.setAttribute('draggable', true);
 
                     const img = document.createElement('img');
-                    img.src = reader.result;
+                    img.src   = reader.result;
                     img.width = 100;
                     img.style = "display:block;";
 
                     const hiddenInput = document.createElement('input');
-                    hiddenInput.type = 'hidden';
-                    hiddenInput.name = `uploaded_images_${key}[]`;
+                    hiddenInput.type  = 'hidden';
+                    hiddenInput.name  = `uploaded_images_${key}[]`;
                     hiddenInput.value = file.name;
 
                     const radio = document.createElement('input');
-                    radio.type = 'radio';
+                    radio.type  = 'radio';
                     radio.classList.add('image-radio');
-                    radio.name = `thumbnail_${key}`;
+                    radio.name  = `thumbnail_${key}`;
                     radio.value = file.name;
                     radio.style = "position:absolute; top:5px; right:5px;";
 
@@ -543,7 +525,7 @@
         }
 
         function updateImageOrder() {
-            const imgs = imagePreview.querySelectorAll('.image-container');
+            const imgs  = imagePreview.querySelectorAll('.image-container');
             const order = Array.from(imgs).map(container => {
                 const radio = container.querySelector('input.image-radio');
                 return radio ? radio.value : null;
@@ -554,7 +536,7 @@
         imagePreview.querySelectorAll('.remove-btn').forEach(removeBtn => {
             removeBtn.addEventListener('click', () => {
                 const container = removeBtn.closest('.image-container');
-                const radio = container.querySelector('input.image-radio');
+                const radio     = container.querySelector('input.image-radio');
                 if (radio && thumbnailInput.value === radio.value) {
                     thumbnailInput.value = '';
                 }

@@ -31,6 +31,6 @@ class SellerOnboardingMail extends Mailable
     public function build()
     {
         $data = $this->data;
-        return $this->subject(translate('Welcome to InteriorChowk Seller Family - Your Journey Begins Here!'))->view('email-templates.seller-onboarding',['data'=>$data]);
+        return $this->subject(translate('Welcome to InteriorChowk Seller Family - Your Journey Begins Here!'))->view('email-templates.seller-onboarding',['seller'=>$data]);
     }
 }

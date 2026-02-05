@@ -194,7 +194,7 @@
                                                     <img
                                                      {{-- src="{{ asset('storage/app/public/images/' . $new_sku_product->thumbnail_image) }}" --}}
 
-                                                    src="{{ rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . ($new_sku_product->thumbnail_image ?? 'default.jpg') }}"
+                                                    src="{{ rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($new_sku_product->thumbnail_image ?? 'default.jpg', '/') }}"
                                                         alt="Product Image" width="25px" height="25px">
                                                 @else
                                                     <img src="{{ asset('/public/asset/img/logo.png') }}"

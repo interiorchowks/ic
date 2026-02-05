@@ -534,6 +534,13 @@ Route::group(['namespace' => 'Admin', 'prefix' => 'admin', 'as' => 'admin.'], fu
             Route::get('bulk-export', 'ProductController@bulk_export_data')->name('bulk-export');
             Route::get('barcode/{id}', 'ProductController@barcode')->name('barcode');
             Route::get('barcode/generate', 'ProductController@barcode_generate')->name('barcode.generate');
+             Route::get('get-variations', 'ProductController@get_variations')->name('get-variations');
+            Route::post('update-quantity', 'ProductController@update_quantity')->name('update-quantity');
+            Route::get('edit/{id}', 'ProductController@edit')->name('edit');
+            Route::post('update/{id}', 'ProductController@update')->name('update');
+            Route::post('sku-combination', 'ProductController@sku_combination')->name('sku-combination');
+            Route::post('sku_combination_edit', 'ProductController@sku_combination_edit')->name('sku_combination_edit');
+            Route::get('get-categories', 'ProductController@get_categories')->name('get-categories');
         });
 
         Route::group(['prefix' => 'transaction', 'as' => 'transaction.' ,'middleware'=>['module:report']], function () {

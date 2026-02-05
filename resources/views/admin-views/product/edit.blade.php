@@ -1,5 +1,6 @@
 @extends('layouts.back-end.app')
 @section('title', \App\CPU\translate('Product Edit'))
+
 @push('css_or_js')
     <link href="{{ asset('public/assets/back-end/css/tags-input.min.css') }}" rel="stylesheet">
     <link href="{{ asset('public/assets/select2/css/select2.min.css') }}" rel="stylesheet">
@@ -49,19 +50,13 @@
 
         @endphp
 
-
-        <!-- Content Row -->
         <div class="row">
             <div class="col-md-12">
-                <form class="product-form" action="{{ route('seller.product.update', $product->id) }}" method="post"
+                <form class="product-form" action="{{ route('admin.product.update', $product->id) }}" method="post"
                     enctype="multipart/form-data" id="product_form">
-
-
                     @csrf
-
                     <div class="card">
                         <div class="px-4 pt-3">
-
 
                             @php($language = \App\Model\BusinessSetting::where('type', 'pnc_language')->first())
 
@@ -82,8 +77,6 @@
                             </ul>
                         </div>
 
-
-
                         <div class="card-body">
                             @foreach (json_decode($language) as $lang)
                                 <?php
@@ -102,7 +95,7 @@
                                 <div class="{{ $lang != 'en' ? 'd-none' : '' }} lang_form" id="{{ $lang }}-form">
                                     <div class="form-group">
                                         <label class="title-color"
-                                            for="{{ $lang }}_name">{{ \App\CPU\translate('Name') }}
+                                            for="{{ $lang }}_name">{{ \App\CPU\translate('Title') }}
                                             ({{ strtoupper($lang) }})
                                         </label>
                                         <input type="text" {{ $lang == 'en' ? 'required' : '' }} name="name[]"
@@ -115,16 +108,12 @@
                                     <div class="form-group pt-4">
                                         <label class="title-color">{{ \App\CPU\translate('description') }}
                                             ({{ strtoupper($lang) }})</label>
-                                        <textarea cols="130" rows="10" name="description[]" class="textarea  editor-textarea" required>{!! $translate[$lang]['description'] ?? $product['details'] !!}</textarea>
+                                        <textarea name="description[]" cols="140" rows=""10 class="textarea  editor-textarea" required>{!! $translate[$lang]['description'] ?? $product['details'] !!}</textarea>
                                     </div>
                                 </div>
                             @endforeach
                         </div>
                     </div>
-
-
-
-
 
                     <div class="card mt-2 rest-part">
                         <div class="card-header">
@@ -154,14 +143,6 @@
                                             value="{{ $product->Return_days }}" name="Return_days" class="form-control"
                                             required>
                                     </div>
-                                    <!-- <div class="col-md-4 mb-3" id="digital_product_type_show">
-                                                <label for="digital_product_type" class="title-color">{{ \App\CPU\translate('digital_product_type') }}</label>
-                                                <select name="digital_product_type" id="digital_product_type" class="form-control" required>
-                                                    <option value="{{ old('digital_product_type') }}" {{ !$product->digital_product_type ? 'selected' : '' }} disabled>---Select---</option>
-                                                    <option value="ready_after_sell" {{ $product->digital_product_type == 'ready_after_sell' ? 'selected' : '' }}>{{ \App\CPU\translate('Ready After Sell') }}</option>
-                                                    <option value="ready_product" {{ $product->digital_product_type == 'ready_product' ? 'selected' : '' }}>{{ \App\CPU\translate('Ready Product') }}</option>
-                                                </select>
-                                            </div> -->
 
                                     <div class="col-md-4 mb-3">
                                         <label for="warehouse-select" class="title-color">Warehouse / Pickup Address<span
@@ -172,13 +153,7 @@
                                                     alt="img">
                                             </span></label>
                                         <select class="form-control" id="warehouse-select" name="warehouse">
-                                            <?php
-                                                $selectedwarehouse = DB::table('warehouse')
-                                                    ->where('id', $product->add_warehouse)
-                                                    ->first();
-                                            ?>
-                                            <option value="{{ $selectedwarehouse->id }}" selected disabled>
-                                                {{ $selectedwarehouse->title }}</option>
+                                            <option value="" selected disabled>---Select---</option>
                                             @foreach ($warehouse as $b)
                                                 <option value="{{ $b->id }}"
                                                     {{ $b->id == $product->add_warehouse ? 'selected' : '' }}>
@@ -222,7 +197,7 @@
                                         <select
                                             class="js-example-basic-multiple js-states js-example-responsive form-control"
                                             name="category_id" id="category_id"
-                                            onchange="getRequest('{{ url('/') }}/seller/product/get-categories?parent_id='+this.value,'sub-category-select','select')">
+                                            onchange="getRequest('{{ url('/') }}/admin/product/get-categories?parent_id='+this.value,'sub-category-select','select')">
                                             <option value="0" selected disabled>
                                                 ---{{ \App\CPU\translate('Select') }}---</option>
                                             @foreach ($categories as $category)
@@ -239,7 +214,7 @@
                                             class="js-example-basic-multiple js-states js-example-responsive form-control"
                                             name="sub_category_id" id="sub-category-select"
                                             data-id="{{ $product->sub_category_id ? $product->sub_category_id : '' }}"
-                                            onchange="getRequest('{{ url('/') }}/seller/product/get-categories?parent_id='+this.value,'sub-sub-category-select','select')">
+                                            onchange="getRequest('{{ url('/') }}/admin/product/get-categories?parent_id='+this.value,'sub-sub-category-select','select')">
                                         </select>
                                     </div>
                                     <div class="col-md-4 mb-3">
@@ -302,31 +277,6 @@
                             </div>
                         </div>
                     </div>
-
-
-
-
-                    <!-- <div class="card mt-2 rest-part">
-            <div class="card-body __coba-aspect">
-                <div class="row">
-                    <div class="col-md-12 mb-4">
-                        <div class="d-flex flex-wrap gap-2 mb-2">
-                            <label class="title-color mb-0">{{ \App\CPU\translate('Youtube video link') }}</label>
-                            <span class="badge badge-soft-info">(
-                                {{ \App\CPU\translate('optional') }},
-                                {{ \App\CPU\translate('please_provide_embed_link_not_direct_link') }}
-                            )</span>
-                        </div>
-
-                        <input type="text" name="video_link"
-                            placeholder="EX: https://www.youtube.com/embed/5R06LRdUCSE"
-                            class="form-control" />
-                    </div>
-                </div>
-            </div>
-        </div> -->
-
-
 
                     <div class="card mt-2 rest-part">
                         <div class="card-body __coba-aspect">
@@ -444,13 +394,8 @@
                                             @else
                                                 <p>No other details found.</p>
                                             @endif
-
-
                                         </div>
-
-                                        <!-- <div class="row g-2" id="thumbnail"></div> -->
                                     </div>
-
 
                                     <div class="card mt-2 rest-part physical_product_show">
                                         <div class="card-header">
@@ -507,7 +452,7 @@
 
                                                 <div class="col-md-12 mt-2 mb-2">
                                                     <div class="customer_choice_options" id="customer_choice_options">
-                                                        @include('seller-views.product.partials._choices', [
+                                                        @include('admin-views.product.partials._choices', [
                                                             'choice_no' => json_decode($product['attributes']),
                                                             'choice_options' => json_decode(
                                                                 $product['choice_options'],
@@ -525,13 +470,7 @@
                                         </div>
                                         <!---------- product discount ------>
                                         <div class="sku_combination" id="sku_combination">
-                                            <!-- @include(
-                                                'seller-views.product.partials._edit_sku_combinations',
-                                                ['combinations' => json_decode($product['variation'], true)]
-                                            ) -->
                                         </div>
-                                        <!----- product quantity --->
-                                        <!---------dimension-------->
 
                                         <div class="card mt-2 mb-2 rest-part">
                                             <div class="card-header">
@@ -554,43 +493,6 @@
                                                 </div>
                                             </div>
                                         </div>
-
-                                        <!--<div class="card mt-2 mb-2 rest-part">
-                                <div class="card-header">
-                                    <h4 class="mb-0">{{ \App\CPU\translate('seo_section') }}</h4>
-                                </div>
-                                <div class="card-body">
-                                    <div class="row">
-                                        <div class="col-md-12 mb-4">
-                                            <label class="title-color">{{ \App\CPU\translate('Meta_Title') }}</label>
-                                            <input type="text" name="meta_title" value="{{ $product['meta_title'] }}" placeholder="" class="form-control">
-                                        </div>
-
-                                        <div class="col-md-8 mb-4">
-                                            <label class="title-color">{{ \App\CPU\translate('Meta_Description') }}</label>
-                                            <textarea rows="10" type="text" name="meta_description" class="form-control">
-                                        {{ $product['meta_description'] }}
-                                    </textarea>
-                                        </div>
-
-                                        <div class="col-md-4">
-                                            <div class="form-group mb-0">
-                                                <label class="title-color">{{ \App\CPU\translate('Meta_Image') }}</label>
-                                            </div>
-                                            <div class="__coba-aspect">
-                                                <div class="row g-2" id="meta_img">
-                                                    <div class="col-sm-6 col-md-12 col-lg-6">
-                                                        <img class="w-100" height="auto"
-                                                                onerror="this.src='{{ asset('public/assets/front-end/img/image-place-holder.png') }}'"
-                                                                src="{{ asset('storage/app/public/product/meta') }}/{{ $product['meta_image'] }}"
-                                                                alt="Meta image">
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>-->
 
                                         <div class="card mt-2 rest-part __coba-aspect">
                                             <div class="card-body">
@@ -626,7 +528,7 @@
                                                         value="{{ $product->images }}">
                                                     <input type="hidden" id="product_id" value="{{ $product->id }}">
                                                     <input type="hidden" id="remove_url"
-                                                        value="{{ route('seller.product.remove-image') }}">
+                                                        value="{{ route('admin.product.remove-image') }}">
                                                 </div>
                                             </div>
                 </form>
@@ -659,38 +561,34 @@
             $('#selling_price_').text(selling_price.toFixed(2));
         }
 
-        // Bind the change event to the discount type select element
         $('#discount_type_').change(function() {
             calculateSellingPrice();
         });
 
-        // Bind the keyup event to the discount input element
         $('#discount_').keyup(function() {
             calculateSellingPrice();
         });
 
-        // Bind the keyup event to the unit price input element
         $('#unit_price_').keyup(function() {
             calculateSellingPrice();
         });
     });
 </script>
 
-
 @push('script_2')
     <script src="{{ asset('public/assets/back-end') }}/js/tags-input.min.js"></script>
     <!-- <script src="{{ asset('public/assets/select2/js/select2.min.js') }}"></script>-->
     <script src="{{ asset('public/assets/back-end/js/spartan-multi-image-picker.js') }}"></script>
 
-
     <script>
+        // ================= COLOR SWITCHER =================
         $('#color_switcher').click(function() {
-            let checkBoxes = $("#color_switcher");
             if ($('#color_switcher').prop('checked')) {
                 $('#color_wise_image').show();
             } else {
                 $('#color_wise_image').hide();
             }
+            update_sku(); // color on/off change par bhi SKU recompute
         });
 
         function readURL(input) {
@@ -739,6 +637,7 @@
             }
         });
 
+        // ============ ATTRIBUTE (SIZE) CHANGE ============
         $('#choice_attributes').on('change', function() {
             // Preserve existing options
             let existingOptions = {};
@@ -750,45 +649,53 @@
 
             $('#customer_choice_options').html(null);
 
-            // Add the selected options, including previously filled values
             $.each($("#choice_attributes option:selected"), function() {
-                add_more_customer_choice_option($(this).val(), $(this).text(), existingOptions[$(this)
-                    .val()]);
+                add_more_customer_choice_option(
+                    $(this).val(),
+                    $(this).text(),
+                    existingOptions[$(this).val()]
+                );
             });
+
+            update_sku(); // attributes list change par recompute
         });
 
         function add_more_customer_choice_option(i, name, existingValue = '') {
             let n = name.split(' ').join('');
             $('#customer_choice_options').append(
-                '<div class="row"><div class="col-md-3"><input type="hidden" name="choice_no[]" value="' + i +
-                '"><input type="text" class="form-control" name="choice[]" value="' + n +
-                '" placeholder="{{ trans('Choice Title') }}" readonly></div><div class="col-lg-9"><input type="text" class="form-control" name="choice_options_' +
-                i +
-                '[]" placeholder="{{ trans('Enter choice values') }}" data-role="tagsinput" value="' + (
-                    existingValue || '') + '" onchange="update_sku()"></div></div>'
+                '<div class="row">' +
+                    '<div class="col-md-3">' +
+                        '<input type="hidden" name="choice_no[]" value="' + i + '">' +
+                        '<input type="text" class="form-control" name="choice[]" value="' + n +
+                        '" placeholder="{{ trans('Choice Title') }}" readonly>' +
+                    '</div>' +
+                    '<div class="col-lg-9">' +
+                        '<input type="text" class="form-control" name="choice_options_' + i +
+                        '[]" placeholder="{{ trans('Enter choice values') }}" data-role="tagsinput" value="' +
+                        (existingValue || '') + '">' +
+                    '</div>' +
+                '</div>'
             );
 
+            // init tagsinput
             $("input[data-role=tagsinput], select[multiple][data-role=tagsinput]").tagsinput();
         }
 
-        document.addEventListener("DOMContentLoaded", function() {
-            let inputs = document.querySelectorAll('.call-update-sku');
-            inputs.forEach(input => {
-                if (input.value.trim() !== "") {
-                    update_sku();
+        // ============ SKU UPDATE AJAX ============
+        function update_sku() {
+            $.ajax({
+                type: "POST",
+                url: '{{ route('admin.product.sku_combination_edit') }}',
+                data: $('#product_form').serialize(),
+                success: function(data) {
+                    $('#sku_combination').html(data.view);
                 }
-                input.addEventListener('change', function() {
-                    update_sku();
-                });
             });
+        }
 
-
-        });
-
-
+        // ============ COLOR CHANGE TRIGGER ============
         $('#colors-selector').on('change', function() {
             update_sku();
-            let checkBoxes = $("#color_switcher");
             if ($('#color_switcher').prop('checked')) {
                 $('#color_wise_image').show();
                 color_wise_image($('#colors-selector'));
@@ -797,123 +704,102 @@
             }
         });
 
+        // main unit price (top) change → recompute
         $('input[name="unit_price"]').on('keyup', function() {
             update_sku();
         });
 
-        function update_sku() {
-            $.ajaxSetup({
-                headers: {
-                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                }
-            });
+        // ============ *** MAIN FIX *** ============
+        // size / choice options add–remove par SKU recalc
+        $(document).on('itemAdded itemRemoved', 'input[name^="choice_options_"]', function() {
+            update_sku();
+        });
 
-            $.ajax({
-                type: "POST",
-                url: '{{ route('seller.product.sku_combination_edit') }}',
-                data: $('#product_form').serialize(),
-                success: function(data) {
-                    $('#sku_combination').html(data.view);
-                    if (data.length > 1) {
-                        $('#quantity').hide();
-                    } else {
-                        $('#quantity').show();
-                    }
-                }
-            });
-        }
+        // agar kisi reason se bas change event fire ho
+        $(document).on('change', 'input[name^="choice_options_"]', function() {
+            update_sku();
+        });
 
+        // ============ COLOR WISE IMAGE HANDLING ============
         function color_wise_image(t) {
-            let colors = t.val();
-            let color_image = $('#color_image').val() ? $.parseJSON($('#color_image').val()) : [];
-            let images = $.parseJSON($('#images').val());
-            var product_id = $('#product_id').val();
-            let remove_url = $('#remove_url').val();
+            const colors = t.val() || [];
+            const color_image = $('#color_image').val() ? $.parseJSON($('#color_image').val()) : [];
+            const product_id = $('#product_id').val();
+            const remove_url = $('#remove_url').val();
 
-            let color_image_value = $.map(color_image, function(item) {
-                return item.color;
-            });
+            const existingColors = color_image.map(item => item.color.toLowerCase());
 
-            $('#color_wise_existing_image').html('')
-            $('#color_wise_image_field').html('')
+            // Clear previous HTML
+            $('#color_wise_existing_image').html('');
+            $('#color_wise_image_field').html('');
 
-            $.each(colors, function(key, value) {
-                let value_id = value.replace('#', '');
-                let in_array_image = $.inArray(value_id, color_image_value);
-                let input_image_name = "color_image_" + value_id;
+            colors.forEach(color => {
+                const value_id = color.replace('#', '').toLowerCase();
+                const input_name = `color_image_${value_id}`;
 
-                $.each(color_image, function(color_key, color_value) {
-                    if ((in_array_image !== -1) && (color_value['color'] === value_id)) {
-                        let image_name = color_value['image_name'];
-                        let exist_image_html = `
-                            <div class="col-6 col-md-6">
-                                <div class="card">
-                                    <div class="card-body">
-                                    <span class="upload--icon" style="background: #${color_value['color']} ">
-                                    <i class="tio-done"></i>
-                                    </span>
-                                        <img class="w-100" height="auto"
-                                             onerror="this.src='{{ asset('public/assets/front-end/img/image-place-holder.png') }}'"
-                                             src="{{ asset('storage/app/public/product/`+image_name+`') }}"
-                                             alt="Product image">
-                                        <a href="` + remove_url + `?id=` + product_id + `&name=` + image_name +
-                            `&color=` + color_value['color'] + `"
-                                           class="btn btn-danger btn-block">{{ \App\CPU\translate('Remove') }}</a>
-                                    </div>
-                                </div>
-                            </div>`;
-                        $('#color_wise_existing_image').append(exist_image_html)
-                    }
-                });
-            });
+                const existingImage = color_image.find(img => img.color.toLowerCase() === value_id);
 
-            $.each(colors, function(key, value) {
-                let value_id = value.replace('#', '');
-                let in_array_image = $.inArray(value_id, color_image_value);
-                let input_image_name = "color_image_" + value_id;
-
-                if (in_array_image === -1) {
-                    let html = ` <div class='col-6 col-md-6'> <label style='border: 2px dashed #ddd; border-radius: 3px; cursor: pointer; text-align: center; overflow: hidden; padding: 5px; margin-top: 5px; margin-bottom : 5px; position : relative; display: flex; align-items: center; margin: auto; justify-content: center; flex-direction: column;'>
-                            <span class="upload--icon" style="background: ${value}">
-                            <i class="tio-edit"></i>
-                                <input type="file" name="` + input_image_name + `" id="` + value_id + `" class="d-none" accept=".jpg, .png, .jpeg, .gif, .bmp, .tif, .tiff|image/*" required="">
+                if (existingImage) {
+                    const exist_html = `
+                <div class="col-6 col-md-6">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <span class="upload--icon" style="background:#${existingImage.color}">
+                                <i class="tio-done"></i>
                             </span>
-                            <img src="{{ asset('public/assets/back-end/img/400x400/img2.jpg') }}" style="object-fit: cover;aspect-ratio:1"  alt="public/img">
-                          </label> </div>`;
-                    $('#color_wise_image_field').append(html)
-
-                    $("#color_wise_image input[type='file']").each(function() {
-
-                        var $this = $(this).closest('label');
-
-                        function proPicURL(input) {
-                            if (input.files && input.files[0]) {
-                                var uploadedFile = new FileReader();
-                                uploadedFile.onload = function(e) {
-                                    $this.find('img').attr('src', e.target.result);
-                                    $this.fadeIn(300);
-                                };
-                                uploadedFile.readAsDataURL(input.files[0]);
-                            }
-                        }
-
-                        $(this)
-                            .on("change", function() {
-                                proPicURL(this);
-                            });
-                    });
+                            <img class="w-100" style="height:auto; object-fit: cover;"
+                                 onerror="this.src='{{ asset('public/assets/front-end/img/image-place-holder.png') }}'"
+                                 src="{{ asset('storage/app/public/product/${existingImage.image_name}') }}"
+                                 alt="Product image">
+                            <a href="${remove_url}?id=${product_id}&name=${existingImage.image_name}&color=${existingImage.color}"
+                               class="btn btn-danger btn-block">{{ \App\CPU\translate('Remove') }}</a>
+                        </div>
+                    </div>
+                </div>`;
+                    $('#color_wise_existing_image').append(exist_html);
+                } else {
+                    const upload_html = `
+                <div class="col-6 col-md-6">
+                    <label style="border:2px dashed #ddd; border-radius:3px; cursor:pointer; text-align:center; 
+                                  overflow:hidden; padding:5px; margin:5px auto; display:flex; 
+                                  align-items:center; justify-content:center; flex-direction:column;">
+                        <span class="upload--icon" style="background:${color}">
+                            <i class="tio-edit"></i>
+                            <input type="file" name="${input_name}" class="d-none" 
+                                   accept=".jpg,.png,.jpeg,.gif,.bmp,.tif,.tiff|image/*" required>
+                        </span>
+                        <img src="{{ asset('public/assets/back-end/img/400x400/img2.jpg') }}" 
+                             style="object-fit:cover; aspect-ratio:1;" alt="placeholder">
+                    </label>
+                </div>`;
+                    $('#color_wise_image_field').append(upload_html);
                 }
             });
         }
 
+        $(document).on('change', '#color_wise_image_field input[type="file"]', function() {
+            const $label = $(this).closest('label');
+            const input = this;
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    $label.find('img').attr('src', e.target.result);
+                    $label.fadeIn(300);
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        });
+
+        // ============ ON READY ============
         $(document).ready(function() {
             let category = $("#category_id").val();
             let sub_category = $("#sub-category-select").attr("data-id");
             let sub_sub_category = $("#sub-sub-category-select").attr("data-id");
-            getRequest('{{ url('/') }}/seller/product/get-categories?parent_id=' + category +
+            getRequest('{{ url('/') }}/admin/product/get-categories?parent_id=' + category +
                 '&sub_category=' + sub_category, 'sub-category-select', 'select');
-            getRequest('{{ url('/') }}/seller/product/get-categories?parent_id=' + sub_category +
+            getRequest('{{ url('/') }}/admin/product/get-categories?parent_id=' + sub_category +
                 '&sub_category=' + sub_sub_category, 'sub-sub-category-select', 'select');
+
             // color select select2
             $('.color-var-select').select2({
                 templateResult: colorCodeSelect,
@@ -923,7 +809,6 @@
                 }
             });
 
-            let checkBoxes = $("#color_switcher");
             if ($('#color_switcher').prop('checked')) {
                 $('#color_wise_image').show();
                 color_wise_image($('#colors-selector'));
@@ -934,27 +819,25 @@
             function colorCodeSelect(state) {
                 var colorCode = $(state.element).val();
                 if (!colorCode) return state.text;
-                return "<span class='color-preview' style='background-color:" + colorCode + ";'></span>" + state
-                    .text;
+                return "<span class='color-preview' style='background-color:" + colorCode + ";'></span>" + state.text;
             }
+
+            // page load hote hi ek baar SKU table generate
+            update_sku();
         });
     </script>
 
     <script>
         function check() {
-
-
             let totalSize = 0;
             const imageFileInputs = document.querySelectorAll('input[name="images[]"]');
             const imageFile = document.querySelector('input[name="image"]').files[0];
-
 
             if (imageFile != undefined) {
                 totalSize += imageFile.size;
             } else {
                 totalSize = 0;
             }
-
 
             imageFileInputs.forEach(input => {
                 if (input.files.length > 0) {
@@ -964,11 +847,7 @@
                 }
             });
 
-
-
-
             let totalSizeMB = totalSize / 1024 / 1024;
-
 
             if (totalSizeMB > 5) {
 
@@ -992,7 +871,7 @@
                 }
             });
             $.post({
-                url: '{{ route('seller.product.update', $product->id) }}',
+                url: '{{ route('admin.product.update', $product->id) }}',
                 data: formData,
                 contentType: false,
                 processData: false,
@@ -1053,7 +932,6 @@
 
             let form_id = this.id;
             let lang = form_id.split("-")[0];
-            console.log(lang);
             $("#" + lang + "-form").removeClass('d-none');
             if (lang == '{{ $default_lang }}') {
                 $(".rest-part").removeClass('d-none');
@@ -1087,7 +965,6 @@
             } else if (product_type === 'digital') {
                 $('#digital_product_type_show').show();
                 $('.physical_product_show').hide();
-
             }
         }
 
@@ -1102,7 +979,6 @@
         }
     </script>
 
-    {{-- ck editor --}}
     <script src="{{ asset('/') }}vendor/ckeditor/ckeditor/ckeditor.js"></script>
     <script src="{{ asset('/') }}vendor/ckeditor/ckeditor/adapters/jquery.js"></script>
     <script>
@@ -1110,8 +986,8 @@
             contentsLangDirection: '{{ Session::get('direction') }}',
         });
     </script>
-    {{-- ck editor --}}
 @endpush
+
 <script>
     function getRndIntegerAlpha() {
         const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';

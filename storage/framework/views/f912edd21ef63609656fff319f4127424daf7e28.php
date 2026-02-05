@@ -863,17 +863,19 @@
                                     use Illuminate\Support\Str;
                                 ?>
 
+                                
                                 <?php $__currentLoopData = $top_brands; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $tb): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                     <div class="brand-card">
                                         <figure class="brand-logo-wrapper">
-                                            <a
-                                                href="<?php echo e(route('products.by.brand', $tb->slug ?? Str::slug($tb->name))); ?>">
-                                                <img src="<?php echo e(env('CLOUDFLARE_R2_PUBLIC_URL')); ?><?php echo e($tb->image); ?>"
-                                                    alt="<?php echo e($tb->name); ?>" class="brand-logo-img">
+                                            <a href="<?php echo e(url('products_2/' . rawurlencode($tb->name))); ?>">
+                                                <img src="<?php echo e(rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($tb->image, '/')); ?>"
+                                                    alt="<?php echo e($tb->name); ?>"
+                                                    class="brand-logo-img">
                                             </a>
                                         </figure>
-                                    </div>
+                                    </div> 
                                 <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+
 
                             </div>
                         </div>

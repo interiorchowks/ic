@@ -1,9 +1,9 @@
 @extends('layouts.back-end.common_seller_1')
 @section('content')
 <style>
-    .custom_radio .addTag {
-        top: 12px !important;
-    }
+.custom_radio .addTag {
+    top: 12px !important;
+}
 </style>
 <link rel="stylesheet" href="{{ asset('public/website/assets/css/billing.css') }}">
 <main class="main checkoutRespoWrapper">
@@ -165,38 +165,37 @@
                                 </div>
 
                                 <script>
-                                    $(document).on("click", ".editAddressBtn", function () {
-                                        $("#address_id").val($(this).data("id"));
-                                        $("#edit_name").val($(this).data("name"));
-                                        $("#edit_phone").val($(this).data("phone"));
-                                        $("#edit_address").val($(this).data("address"));
-                                        $("#edit_landmark").val($(this).data("landmark"));
-                                        $("#edit_zip").val($(this).data("zip"));
-                                        $("#edit_city").val($(this).data("city"));
-                                        $("#edit_state").val($(this).data("state"));
-                                        $("#editAddressModal").modal("show");
-                                    });
+                                $(document).on("click", ".editAddressBtn", function() {
+                                    $("#address_id").val($(this).data("id"));
+                                    $("#edit_name").val($(this).data("name"));
+                                    $("#edit_phone").val($(this).data("phone"));
+                                    $("#edit_address").val($(this).data("address"));
+                                    $("#edit_landmark").val($(this).data("landmark"));
+                                    $("#edit_zip").val($(this).data("zip"));
+                                    $("#edit_city").val($(this).data("city"));
+                                    $("#edit_state").val($(this).data("state"));
+                                    $("#editAddressModal").modal("show");
+                                });
                                 </script>
 
                                 <script>
-                                    let lastShippingCost = 0;
+                                let lastShippingCost = 0;
 
-                                    document.addEventListener("DOMContentLoaded", function () {
-                                        function updateShippingCost() {
-                                            const selectedAddressRadio = document.querySelector(
-                                                'input.address-radio:checked');
-                                            if (!selectedAddressRadio) return;
-                                            const address_id = selectedAddressRadio.dataset.addressId;
-                                            const iscod = document.querySelector('input[name="iscod"]:checked')
-                                                ?.value || 0;
-                                            const cartGroups = Array.from(document.querySelectorAll('.cart_group'))
-                                                .map(input => input.value);
-                                            const instant = document.querySelector(
-                                                'input[name="instant_delivery"]:checked')?.value || false;
+                                document.addEventListener("DOMContentLoaded", function() {
+                                    function updateShippingCost() {
+                                        const selectedAddressRadio = document.querySelector(
+                                            'input.address-radio:checked');
+                                        if (!selectedAddressRadio) return;
+                                        const address_id = selectedAddressRadio.dataset.addressId;
+                                        const iscod = document.querySelector('input[name="iscod"]:checked')
+                                            ?.value || 0;
+                                        const cartGroups = Array.from(document.querySelectorAll('.cart_group'))
+                                            .map(input => input.value);
+                                        const instant = document.querySelector(
+                                            'input[name="instant_delivery"]:checked')?.value || false;
 
-                                            fetch(
-                                                '{{ route('get_shipping_cost') }}',
-                                                {
+                                        fetch(
+                                                '{{ route('get_shipping_cost') }}', {
                                                     method: 'POST',
                                                     headers: {
                                                         'Content-Type': 'application/json',
@@ -209,77 +208,77 @@
                                                         instant_delivery: instant
                                                     })
                                                 })
-                                                .then(response => response.json())
-                                                .then(data => {
+                                            .then(response => response.json())
+                                            .then(data => {
 
-                                                    if (data.status === "success") {
-                                                        const totalAmountSpan = document.getElementById(
-                                                            'total-amount');
-                                                        let currentTotal = parseFloat(totalAmountSpan
-                                                            .textContent.replace('₹', '').trim());
+                                                if (data.status === "success") {
+                                                    const totalAmountSpan = document.getElementById(
+                                                        'total-amount');
+                                                    let currentTotal = parseFloat(totalAmountSpan
+                                                        .textContent.replace('₹', '').trim());
 
-                                                        const shippingHidden = document.getElementById(
-                                                            'shippingInput');
+                                                    const shippingHidden = document.getElementById(
+                                                        'shippingInput');
 
-                                                        if (data.free_delivery == 1) {
+                                                    if (data.free_delivery == 1) {
 
-                                                            const originalCost = parseFloat(data.shipping_cost);
+                                                        const originalCost = parseFloat(data.shipping_cost);
 
-                                                            document.getElementById('delivery-charge')
-                                                                .innerHTML =
-                                                                `<span style="color:#3f9339;font-weight:600;">Free</span>
+                                                        document.getElementById('delivery-charge')
+                                                            .innerHTML =
+                                                            `<span style="color:#3f9339;font-weight:600;">Free</span>
                                                                     &nbsp;<span style="text-decoration:line-through;color:#999;">₹${originalCost.toFixed(2)}</span>`;
 
-                                                            currentTotal = currentTotal - lastShippingCost;
-                                                            totalAmountSpan.textContent = "₹" + currentTotal
-                                                                .toFixed(2);
-
-                                                            if (shippingHidden) {
-                                                                shippingHidden.value = 0;
-                                                            }
-
-                                                            lastShippingCost = 0;
-                                                            return;
-                                                        }
-
-                                                        const newShippingCost = parseFloat(data.shipping_cost);
-
-                                                        document.getElementById('delivery-charge').textContent =
-                                                            '₹' + newShippingCost.toFixed(2);
-
-                                                        const finalAmount = currentTotal - lastShippingCost +
-                                                            newShippingCost;
-                                                        totalAmountSpan.textContent = '₹' + finalAmount.toFixed(
-                                                            2);
+                                                        currentTotal = currentTotal - lastShippingCost;
+                                                        totalAmountSpan.textContent = "₹" + currentTotal
+                                                            .toFixed(2);
 
                                                         if (shippingHidden) {
-                                                            shippingHidden.value = newShippingCost;
+                                                            shippingHidden.value = 0;
                                                         }
 
-                                                        lastShippingCost = newShippingCost;
+                                                        lastShippingCost = 0;
+                                                        return;
                                                     }
 
-                                                })
-                                                .catch(error => console.error("Error:", error));
-                                        }
+                                                    const newShippingCost = parseFloat(data.shipping_cost);
 
-                                        document.querySelectorAll('input.address-radio').forEach(radio => {
-                                            radio.addEventListener('change', updateShippingCost);
-                                        });
+                                                    document.getElementById('delivery-charge').textContent =
+                                                        '₹' + newShippingCost.toFixed(2);
 
-                                        document.querySelectorAll('input[name="iscod"]').forEach(radio => {
-                                            radio.addEventListener('change', updateShippingCost);
-                                        });
+                                                    const finalAmount = currentTotal - lastShippingCost +
+                                                        newShippingCost;
+                                                    totalAmountSpan.textContent = '₹' + finalAmount.toFixed(
+                                                        2);
 
-                                        document.querySelectorAll('input[name="instant_delivery"]').forEach(
-                                            radio => {
-                                                radio.addEventListener('change', updateShippingCost);
-                                            });
+                                                    if (shippingHidden) {
+                                                        shippingHidden.value = newShippingCost;
+                                                    }
 
-                                        if (document.querySelector('input.address-radio:checked')) {
-                                            updateShippingCost();
-                                        }
+                                                    lastShippingCost = newShippingCost;
+                                                }
+
+                                            })
+                                            .catch(error => console.error("Error:", error));
+                                    }
+
+                                    document.querySelectorAll('input.address-radio').forEach(radio => {
+                                        radio.addEventListener('change', updateShippingCost);
                                     });
+
+                                    document.querySelectorAll('input[name="iscod"]').forEach(radio => {
+                                        radio.addEventListener('change', updateShippingCost);
+                                    });
+
+                                    document.querySelectorAll('input[name="instant_delivery"]').forEach(
+                                        radio => {
+                                            radio.addEventListener('change', updateShippingCost);
+                                        });
+
+                                    if (document.querySelector('input.address-radio:checked')) {
+                                        updateShippingCost();
+                                    }
+                                });
                                 </script>
                                 @php
                                 $addresses = DB::table('shipping_addresses')
@@ -348,50 +347,50 @@
                                             @endif
                                         </div>
                                         <script>
-                                            document.addEventListener("DOMContentLoaded", function () {
-                                                const shipAdd2 = document.getElementById("shipAdd2");
-                                                const addressWrapper = document.querySelector(".selAddWrappers");
-                                                const selectedAddress = document.getElementById("selectedAddress");
+                                        document.addEventListener("DOMContentLoaded", function() {
+                                            const shipAdd2 = document.getElementById("shipAdd2");
+                                            const addressWrapper = document.querySelector(".selAddWrappers");
+                                            const selectedAddress = document.getElementById("selectedAddress");
 
-                                                shipAdd2.addEventListener("change", function () {
-                                                    if (this.checked) {
-                                                        addressWrapper.style.display = "block";
-                                                    } else {
-                                                        addressWrapper.style.display = "none";
-                                                        selectedAddress.style.display = "none";
-                                                    }
-                                                });
+                                            shipAdd2.addEventListener("change", function() {
+                                                if (this.checked) {
+                                                    addressWrapper.style.display = "block";
+                                                } else {
+                                                    addressWrapper.style.display = "none";
+                                                    selectedAddress.style.display = "none";
+                                                }
                                             });
+                                        });
                                         </script>
                                         <script>
-                                            let isVisible = false;
+                                        let isVisible = false;
 
-                                            document.getElementById('addressDropdown').addEventListener('change',
-                                                function () {
-                                                    const selectedOption = this.options[this.selectedIndex];
+                                        document.getElementById('addressDropdown').addEventListener('change',
+                                            function() {
+                                                const selectedOption = this.options[this.selectedIndex];
 
-                                                    if (selectedOption.value !== "") {
-                                                        document.getElementById('shipAdd2')
-                                                            .setAttribute('data-address-bill-id', selectedOption.value);
-                                                        const name = selectedOption.getAttribute('data-name');
-                                                        const phone = selectedOption.getAttribute('data-phone');
-                                                        const full = selectedOption.getAttribute('data-full');
-                                                        const type = selectedOption.getAttribute('data-type');
+                                                if (selectedOption.value !== "") {
+                                                    document.getElementById('shipAdd2')
+                                                        .setAttribute('data-address-bill-id', selectedOption.value);
+                                                    const name = selectedOption.getAttribute('data-name');
+                                                    const phone = selectedOption.getAttribute('data-phone');
+                                                    const full = selectedOption.getAttribute('data-full');
+                                                    const type = selectedOption.getAttribute('data-type');
 
-                                                        const displayDiv = document.getElementById('selectedAddress');
-                                                        displayDiv.innerHTML = `
+                                                    const displayDiv = document.getElementById('selectedAddress');
+                                                    displayDiv.innerHTML = `
                                                         <div class="d-flex align-items-center justify-content-between mb-1">
                                                             <p><strong>${name}</strong> - ${phone}</p>
                                                         </div>
                                                         <p>${full}</p>
                                                         <span class="addTag addTagCol1">${type}</span>
                                                     `;
-                                                        displayDiv.style.display = 'block';
-                                                        document.querySelector('.selAddWrappers').style.display =
-                                                            'none';
-                                                        isVisible = false;
-                                                    }
-                                                });
+                                                    displayDiv.style.display = 'block';
+                                                    document.querySelector('.selAddWrappers').style.display =
+                                                        'none';
+                                                    isVisible = false;
+                                                }
+                                            });
                                         </script>
                                     </div>
                                 </div>
@@ -421,10 +420,10 @@
                                 </div>
                                 @endif
                                 <script>
-                                    document.getElementById('gstCheck').addEventListener('change', function () {
-                                        document.getElementById('gstFields').classList.toggle('d-none', !this
-                                            .checked);
-                                    });
+                                document.getElementById('gstCheck').addEventListener('change', function() {
+                                    document.getElementById('gstFields').classList.toggle('d-none', !this
+                                        .checked);
+                                });
                                 </script>
                                 <div class="billAddWrapper paymentWrapper">
                                     <h3>Payment</h3>
@@ -634,95 +633,95 @@
 
                             <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
                             <script>
-                                const payBtn = document.getElementById("pay-btn");
-                                const btnText = payBtn.querySelector(".btn-text");
-                                const btnLoader = payBtn.querySelector(".btn-loader");
+                            const payBtn = document.getElementById("pay-btn");
+                            const btnText = payBtn.querySelector(".btn-text");
+                            const btnLoader = payBtn.querySelector(".btn-loader");
 
-                                function showBtnLoader() {
-                                    btnText.style.display = 'none';
-                                    btnLoader.style.display = 'inline-block';
-                                    payBtn.disabled = true;
+                            function showBtnLoader() {
+                                btnText.style.display = 'none';
+                                btnLoader.style.display = 'inline-block';
+                                payBtn.disabled = true;
+                            }
+
+                            function hideBtnLoader() {
+                                btnText.style.display = 'inline-block';
+                                btnLoader.style.display = 'none';
+                                payBtn.disabled = false;
+                            }
+
+                            payBtn.addEventListener("click", function() {
+
+                                let selectedShip = document.querySelector('input[name="featured"]:checked');
+                                if (!selectedShip) {
+                                    alert("Please select a shipping address.");
+                                    return;
                                 }
 
-                                function hideBtnLoader() {
-                                    btnText.style.display = 'inline-block';
-                                    btnLoader.style.display = 'none';
-                                    payBtn.disabled = false;
+                                let billRadio = document.querySelector('input[name="shipAdd"]:checked');
+                                if (!billRadio) {
+                                    alert("Please select a billing address option.");
+                                    return;
                                 }
 
-                                payBtn.addEventListener("click", function () {
-
-                                    let selectedShip = document.querySelector('input[name="featured"]:checked');
-                                    if (!selectedShip) {
-                                        alert("Please select a shipping address.");
+                                if (billRadio.id === "shipAdd2") {
+                                    let dropdown = document.getElementById("addressDropdown");
+                                    if (!dropdown.value || dropdown.value === "") {
+                                        alert("Please select a billing address from dropdown.");
+                                        dropdown.focus();
                                         return;
                                     }
+                                }
+                                document.getElementById('payment-form').addEventListener('submit', function(e) {
+                                    e.preventDefault();
+                                    showBtnLoader();
 
-                                    let billRadio = document.querySelector('input[name="shipAdd"]:checked');
-                                    if (!billRadio) {
-                                        alert("Please select a billing address option.");
-                                        return;
-                                    }
+                                    const formData = new FormData(this);
+                                    const data = {};
 
-                                    if (billRadio.id === "shipAdd2") {
-                                        let dropdown = document.getElementById("addressDropdown");
-                                        if (!dropdown.value || dropdown.value === "") {
-                                            alert("Please select a billing address from dropdown.");
-                                            dropdown.focus();
-                                            return;
-                                        }
-                                    }
-                                    document.getElementById('payment-form').addEventListener('submit', function (e) {
-                                        e.preventDefault();
-                                        showBtnLoader();
+                                    formData.forEach((value, key) => data[key] = value);
 
-                                        const formData = new FormData(this);
-                                        const data = {};
+                                    let iscod = document.querySelector('input[name="iscod"]:checked')
+                                        .value;
 
-                                        formData.forEach((value, key) => data[key] = value);
+                                    let delivery_charge = document.getElementById('delivery-charge')
+                                        .innerText.replace('₹', '')
+                                        .trim();
+                                    let wallet_amount = document.getElementById('wallet_amount')
+                                        .innerText.replace('₹', '')
+                                        .trim();
+                                    let coupon_charge = document.getElementById('coupon-charge')
+                                        .innerText.replace('₹', '')
+                                        .trim();
+                                    let total_amount = document.getElementById('total-amount').innerText
+                                        .replace('₹', '')
+                                        .trim();
 
-                                        let iscod = document.querySelector('input[name="iscod"]:checked')
-                                            .value;
-
-                                        let delivery_charge = document.getElementById('delivery-charge')
-                                            .innerText.replace('₹', '')
-                                            .trim();
-                                        let wallet_amount = document.getElementById('wallet_amount')
-                                            .innerText.replace('₹', '')
-                                            .trim();
-                                        let coupon_charge = document.getElementById('coupon-charge')
-                                            .innerText.replace('₹', '')
-                                            .trim();
-                                        let total_amount = document.getElementById('total-amount').innerText
-                                            .replace('₹', '')
-                                            .trim();
-
-                                        let selectedShip = document.querySelector(
-                                            'input[name="featured"]:checked');
-                                        let shipping_address_id = selectedShip ? selectedShip.getAttribute(
+                                    let selectedShip = document.querySelector(
+                                        'input[name="featured"]:checked');
+                                    let shipping_address_id = selectedShip ? selectedShip.getAttribute(
                                             'data-address-id') :
-                                            null;
+                                        null;
 
-                                        let selectedBill = document.querySelector(
-                                            'input[name="shipAdd"]:checked');
+                                    let selectedBill = document.querySelector(
+                                        'input[name="shipAdd"]:checked');
 
-                                        let billing_address_id = selectedBill ? selectedBill.getAttribute(
+                                    let billing_address_id = selectedBill ? selectedBill.getAttribute(
                                             'data-address-bill-id') :
-                                            null;
+                                        null;
 
-                                        data['iscod'] = iscod;
-                                        data['shipping_fee'] = delivery_charge;
-                                        data['wallet_deduct_amount'] = wallet_amount;
-                                        data['coupon_discount'] = coupon_charge;
-                                        data['amount'] = total_amount;
-                                        data['shipping_address_id'] = shipping_address_id;
-                                        data['billing_address_id'] = billing_address_id;
-                                        data['coupon_code'] = document.getElementById('coupon_codes').value;
-                                        data['company_name'] = document.getElementById('company_name')
-                                            .value;
-                                        data['gst_no'] = document.getElementById('gst_no').value;
+                                    data['iscod'] = iscod;
+                                    data['shipping_fee'] = delivery_charge;
+                                    data['wallet_deduct_amount'] = wallet_amount;
+                                    data['coupon_discount'] = coupon_charge;
+                                    data['amount'] = total_amount;
+                                    data['shipping_address_id'] = shipping_address_id;
+                                    data['billing_address_id'] = billing_address_id;
+                                    data['coupon_code'] = document.getElementById('coupon_codes').value;
+                                    data['company_name'] = document.getElementById('company_name')
+                                        .value;
+                                    data['gst_no'] = document.getElementById('gst_no').value;
 
-                                        fetch("{{ route('create.razorpay.order') }}", {
+                                    fetch("{{ route('create.razorpay.order') }}", {
                                             method: "POST",
                                             credentials: "include", // IMPORTANT
                                             headers: {
@@ -731,35 +730,35 @@
                                             },
                                             body: JSON.stringify(data)
                                         })
-                                            .then(res => res.json())
-                                            .then(res => {
-                                                if (iscod === '1') {
-                                                    if (res.order_ids && res.order_ids.length > 0) {
-                                                        window.location.href = res.redirect_url;
-                                                        return;
-                                                    } else {
-                                                        alert("Order creation failed");
-                                                        hideBtnLoader();
-                                                        return;
-                                                    }
-                                                }
-
-                                                if (!res.online_payment || !res.online_payment.id) {
-                                                    alert("Failed to create Razorpay order.");
+                                        .then(res => res.json())
+                                        .then(res => {
+                                            if (iscod === '1') {
+                                                if (res.order_ids && res.order_ids.length > 0) {
+                                                    window.location.href = res.redirect_url;
+                                                    return;
+                                                } else {
+                                                    alert("Order creation failed");
+                                                    hideBtnLoader();
                                                     return;
                                                 }
-                                                let created_cart_group_ids = res.cart_group_ids;
-                                                var options = {
-                                                    "key": "{{ config('razor.razor_key') }}",
-                                                    "amount": res.amount * 100,
-                                                    "currency": "INR",
-                                                    "name": "Interior Chowk",
-                                                    "description": "Order Payment",
-                                                    "order_id": res.online_payment.id,
+                                            }
 
-                                                    "handler": function (response) {
-                                                        showBtnLoader();
-                                                        fetch("{{ route('payment.razorpay') }}", {
+                                            if (!res.online_payment || !res.online_payment.id) {
+                                                alert("Failed to create Razorpay order.");
+                                                return;
+                                            }
+                                            let created_cart_group_ids = res.cart_group_ids;
+                                            var options = {
+                                                "key": "{{ config('razor.razor_key') }}",
+                                                "amount": res.amount * 100,
+                                                "currency": "INR",
+                                                "name": "Interior Chowk",
+                                                "description": "Order Payment",
+                                                "order_id": res.online_payment.id,
+
+                                                "handler": function(response) {
+                                                    showBtnLoader();
+                                                    fetch("{{ route('payment.razorpay') }}", {
                                                             method: "POST",
                                                             credentials: "include", // VERY IMPORTANT
                                                             headers: {
@@ -776,37 +775,38 @@
                                                                 cart_group_ids: created_cart_group_ids
                                                             })
                                                         })
-                                                            .then(res => res.json())
-                                                            .then(final => {
-                                                                console.log(final);
+                                                        .then(res => res.json())
+                                                        .then(final => {
+                                                            console.log(final);
 
-                                                                if (final && final
-                                                                    .success) {
+                                                            if (final && final
+                                                                .success) {
 
-                                                                    window.location.href =
-                                                                        final.redirect_url;
-                                                                } else {
-                                                                    alert(
-                                                                        "Payment verification failed on server.");
-                                                                    hideBtnLoader();
-                                                                }
-                                                            });
-                                                    },
-                                                    "modal": {
-                                                        "ondismiss": function () {
-                                                            console.log(
-                                                                "Payment popup closed.");
-                                                            hideBtnLoader();
-                                                            location.reload();
-                                                        }
+                                                                window.location.href =
+                                                                    final.redirect_url;
+                                                            } else {
+                                                                alert(
+                                                                    "Payment verification failed on server."
+                                                                    );
+                                                                hideBtnLoader();
+                                                            }
+                                                        });
+                                                },
+                                                "modal": {
+                                                    "ondismiss": function() {
+                                                        console.log(
+                                                            "Payment popup closed.");
+                                                        hideBtnLoader();
+                                                        location.reload();
                                                     }
-                                                };
-                                                var rzp1 = new Razorpay(options);
-                                                rzp1.open();
-                                            })
-                                            .catch(err => alert("Error: " + err.message));
-                                    });
+                                                }
+                                            };
+                                            var rzp1 = new Razorpay(options);
+                                            rzp1.open();
+                                        })
+                                        .catch(err => alert("Error: " + err.message));
                                 });
+                            });
                             </script>
                         </div>
                     </div>
@@ -971,61 +971,61 @@
                                 @endif
                                 @endif
                                 <script>
-                                    document.querySelectorAll('.btnApply').forEach(function (button) {
-                                        button.addEventListener('click', function (e) {
-                                            e.preventDefault();
-                                            let cod = this.getAttribute('data-code');
-                                            let clickedButton = this; // store clicked button
-                                            let shipping_fee_raw = document.getElementById(
-                                                'delivery-charge').textContent.trim();
-                                            let shipping_fee = shipping_fee_raw.replace(/[^\d.]/g, '');
-                                            console.log('Shipping fee:', shipping_fee);
+                                document.querySelectorAll('.btnApply').forEach(function(button) {
+                                    button.addEventListener('click', function(e) {
+                                        e.preventDefault();
+                                        let cod = this.getAttribute('data-code');
+                                        let clickedButton = this; // store clicked button
+                                        let shipping_fee_raw = document.getElementById(
+                                            'delivery-charge').textContent.trim();
+                                        let shipping_fee = shipping_fee_raw.replace(/[^\d.]/g, '');
+                                        console.log('Shipping fee:', shipping_fee);
 
-                                            fetch('{{ route('applys') }}', {
-                                                method: 'POST',
-                                                headers: {
-                                                    "X-CSRF-TOKEN": "{{ csrf_token() }}",
-                                                    "Content-Type": "application/json"
-                                                },
-                                                body: JSON.stringify({
-                                                    code: cod,
-                                                    shipping_fee: shipping_fee
+                                        fetch('{{ route('applys') }}', {
+                                                    method: 'POST',
+                                                    headers: {
+                                                        "X-CSRF-TOKEN": "{{ csrf_token() }}",
+                                                        "Content-Type": "application/json"
+                                                    },
+                                                    body: JSON.stringify({
+                                                        code: cod,
+                                                        shipping_fee: shipping_fee
+                                                    })
                                                 })
+                                            .then(response => response.json())
+                                            .then(data => {
+                                                console.log(data);
+
+                                                const discountAmount = parseFloat(data
+                                                    .coupon_discount).toFixed(2);
+                                                document.getElementById('coupon-charge')
+                                                    .textContent = '-' + '₹' +
+                                                    discountAmount;
+                                                document.getElementById('coupon_codes').value = data
+                                                    .coupon_code;
+
+                                                const coupon_cost = parseFloat(discountAmount);
+                                                const totalAmountSpan = document.getElementById(
+                                                    'total-amount');
+                                                const totalAmountText = totalAmountSpan.textContent
+                                                    .replace('₹', '').trim();
+                                                const totalAmount = parseFloat(totalAmountText);
+                                                const finalAmount = totalAmount - coupon_cost;
+                                                totalAmountSpan.textContent = '₹' + finalAmount
+                                                    .toFixed(2);
+
+                                                // ✅ Change button text to Applied
+                                                clickedButton.textContent = "Applied";
+                                                clickedButton.disabled =
+                                                    true; // optional: disable button
+                                                clickedButton.classList.add(
+                                                    "btn-success"); // optional: change style
                                             })
-                                                .then(response => response.json())
-                                                .then(data => {
-                                                    console.log(data);
-
-                                                    const discountAmount = parseFloat(data
-                                                        .coupon_discount).toFixed(2);
-                                                    document.getElementById('coupon-charge')
-                                                        .textContent = '-' + '₹' +
-                                                        discountAmount;
-                                                    document.getElementById('coupon_codes').value = data
-                                                        .coupon_code;
-
-                                                    const coupon_cost = parseFloat(discountAmount);
-                                                    const totalAmountSpan = document.getElementById(
-                                                        'total-amount');
-                                                    const totalAmountText = totalAmountSpan.textContent
-                                                        .replace('₹', '').trim();
-                                                    const totalAmount = parseFloat(totalAmountText);
-                                                    const finalAmount = totalAmount - coupon_cost;
-                                                    totalAmountSpan.textContent = '₹' + finalAmount
-                                                        .toFixed(2);
-
-                                                    // ✅ Change button text to Applied
-                                                    clickedButton.textContent = "Applied";
-                                                    clickedButton.disabled =
-                                                        true; // optional: disable button
-                                                    clickedButton.classList.add(
-                                                        "btn-success"); // optional: change style
-                                                })
-                                                .catch(error => {
-                                                    console.error('Error:', error);
-                                                });
-                                        });
+                                            .catch(error => {
+                                                console.error('Error:', error);
+                                            });
                                     });
+                                });
                                 </script>
                                 @if ($balance > 0)
                                 <div
@@ -1048,40 +1048,40 @@
                                 @endif
 
                                 <script>
-                                    document.querySelector('.btnCash').addEventListener('click', function () {
-                                        var walletText = document.getElementById('wallet_balance').textContent;
-                                        var wallet_amount = parseFloat(walletText.replace('₹', '').trim());
-                                        var totalAmountText = document.getElementById('total-amount').textContent
-                                            .replace('₹', '').trim();
-                                        var total_amount = parseFloat(totalAmountText);
+                                document.querySelector('.btnCash').addEventListener('click', function() {
+                                    var walletText = document.getElementById('wallet_balance').textContent;
+                                    var wallet_amount = parseFloat(walletText.replace('₹', '').trim());
+                                    var totalAmountText = document.getElementById('total-amount').textContent
+                                        .replace('₹', '').trim();
+                                    var total_amount = parseFloat(totalAmountText);
 
-                                        var used_wallet_amount = Math.min(wallet_amount, total_amount);
+                                    var used_wallet_amount = Math.min(wallet_amount, total_amount);
 
-                                        document.getElementById('wallet_amount').textContent = "₹" +
-                                            used_wallet_amount.toFixed(2);
+                                    document.getElementById('wallet_amount').textContent = "₹" +
+                                        used_wallet_amount.toFixed(2);
 
-                                        var remaining_amount = total_amount - used_wallet_amount;
-                                        document.getElementById('total-amount').textContent = "₹" + remaining_amount
-                                            .toFixed(2);
+                                    var remaining_amount = total_amount - used_wallet_amount;
+                                    document.getElementById('total-amount').textContent = "₹" + remaining_amount
+                                        .toFixed(2);
 
-                                        if (remaining_amount != 0) {
-                                            document.querySelectorAll('.form-group.wallets').forEach(function (el) {
-                                                el.style.display = 'none';
-                                            });
-                                        }
-                                        if (remaining_amount === 0) {
-                                            document.querySelectorAll('.walletsss').forEach(function (el) {
-                                                el.style.display = 'none';
-                                            });
-                                        }
+                                    if (remaining_amount != 0) {
+                                        document.querySelectorAll('.form-group.wallets').forEach(function(el) {
+                                            el.style.display = 'none';
+                                        });
+                                    }
+                                    if (remaining_amount === 0) {
+                                        document.querySelectorAll('.walletsss').forEach(function(el) {
+                                            el.style.display = 'none';
+                                        });
+                                    }
 
-                                        this.textContent = "Cash Used";
-                                        this.disabled = true;
-                                        this.classList.add("btn-success");
+                                    this.textContent = "Cash Used";
+                                    this.disabled = true;
+                                    this.classList.add("btn-success");
 
-                                        console.log("Remaining to pay after wallet: ₹" + remaining_amount.toFixed(
-                                            2));
-                                    });
+                                    console.log("Remaining to pay after wallet: ₹" + remaining_amount.toFixed(
+                                        2));
+                                });
                                 </script>
                             </li>
                         </ul>
@@ -1145,7 +1145,10 @@
                                     <h6 class="mb-0">Primary Address</h6>
                                     <button type="button" class="btn edit-btn"><i class="fas fa-edit"></i></button>
                                 </div>
-                                <button type="button" class="btn btnEdit">Change Address</button>
+                                <button type="button" class="btn btnEdit" data-toggle="modal"
+                                    data-target="#exampleModal">
+                                    Change Address
+                                </button>
                             </div>
                             <p>Vivek - 9859658741</p>
                             <p>Near sardar ji ki chakki, Milan vihar, MORADABAD - 244001, Uttar Pradesh</p>
@@ -1178,11 +1181,13 @@
                                         <!-- Display Selected Address -->
                                         <div class="displaySelAddr mt-1" style="display:none;">
                                             <p>Rishi Mathur - 8475863605</p>
-                                            <p>Near sardar ji ki chakki, Milan vihar, MORADABAD - 244001, Uttar Pradesh</p>
+                                            <p>Near sardar ji ki chakki, Milan vihar, MORADABAD - 244001, Uttar Pradesh
+                                            </p>
                                         </div>
                                     </div>
                                     <div class="saveaddress" style="width: 50%; margin: auto; display:none;">
-                                        <img src="{{ asset('public/website/assets/images/nosavedaddress.webp') }}" alt="">
+                                        <img src="{{ asset('public/website/assets/images/nosavedaddress.webp') }}"
+                                            alt="">
                                     </div>
                                 </div>
                             </div>
@@ -1325,7 +1330,8 @@
                                 <div class="form-group position-relative border-bottom-0 selected">
                                     <div class="form-check pl-0">
                                         <input type="radio" name="payMode" id="payMode1" checked required>
-                                        <label for="payMode1" class="mb-0">Razorpay Secure (UPI, Cards, Wallets, Netbanking)</label>
+                                        <label for="payMode1" class="mb-0">Razorpay Secure (UPI, Cards, Wallets,
+                                            Netbanking)</label>
                                     </div>
                                 </div>
 
@@ -1340,370 +1346,362 @@
                         </div>
                     </div>
                 </div>
-
-                <div class="col-12 col-sm-12 col-md-6">
-                    <div class="mobileAddrWrapper">
-                        <!-- edit address modal start here------------------------------------------------------  -->
-                        <div class="modal fade" tabindex="-1" aria-hidden="true">
-                            <div class="modal-dialog modal-lg">
-                                <div class="modal-content">
-                                    <form method="POST" action="">
-                                        <input type="hidden" name="">
-
-                                        <div class="modal-header">
-                                            <h5 class="modal-title">Edit Address</h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                        </div>
-
-                                        <div class="modal-body">
-                                            <div class="row g-3">
-                                                <div class="col-md-6">
-                                                    <input type="text" name="contact_person_name" class="form-control"
-                                                        placeholder="Enter Name" required>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <input type="text" name="phone" class="form-control"
-                                                        placeholder="Phone No." required>
-                                                </div>
-
-                                                <div class="col-12">
-                                                    <textarea name="address" class="form-control" placeholder="Address"
-                                                        required></textarea>
-                                                </div>
-
-                                                <div class="col-12">
-                                                    <input type="text" name="landmark" class="form-control"
-                                                        placeholder="Landmark (optional)">
-                                                </div>
-
-                                                <div class="col-md-4">
-                                                    <input type="text" name="zip" class="form-control"
-                                                        placeholder="Pincode" required>
-                                                </div>
-                                                <div class="col-md-4">
-                                                    <input type="text" name="city" class="form-control"
-                                                        placeholder="City" required>
-                                                </div>
-                                                <div class="col-md-4">
-                                                    <input type="text" name="state" class="form-control"
-                                                        placeholder="State" required>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div class="modal-footer">
-                                            <button type="submit" class="btn btn-primary">Update</button>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- edit address modal ended here------------------------------------------------------  -->
-                    </div>
-                </div>
             </div>
         </div>
     </div>
 </main>
 <script>
-    (function ($) {
-        const $tabLink = $('#tabs-section .tab-link');
-        const $tabBody = $('#tabs-section .tab-body');
-        let timerOpacity;
-        const init = () => {
-            $tabLink.off('click').on('click', function (e) {
-                e.preventDefault();
-                e.stopPropagation();
-                window.clearTimeout(timerOpacity);
-                $tabLink.removeClass('active');
-                $tabBody.removeClass('active');
-                $tabBody.removeClass('active-content');
-                $(this).addClass('active');
-                $($(this).attr('href')).addClass('active');
-                $(".tab-head-m").hide();
-                $(".bg-texture").hide();
-                timerOpacity = setTimeout(() => {
-                    $($(this).attr('href')).addClass('active-content');
-                }, 50);
-            });
-        };
-        $(function () {
-            init();
-        });
-    }(jQuery));
-</script>
-<script>
-    jQuery(".profile-menu").click(function () {
-        if (jQuery(".bg-texture").is(":hidden")) {
-            jQuery(".tab-head-m").show();
-            jQuery(".bg-texture").show();
-            jQuery('.tab-head-m').toggle('slide', {
-                direction: 'left'
-            }, 1000);
-        } else {
-            jQuery(".bg-texture").hide();
-            jQuery('.tab-head-m').toggle('slide', {
-                direction: 'left'
-            }, 1000);
-        }
-    });
-</script>
-<script>
-    $(document).ready(function () {
-        var pincode = $('#pincode');
-        pincode.on('input', function () {
-            var pincodes = pincode.val();
-            $.ajax({
-                url: '{{ route('pincode') }}',
-                type: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                },
-                data: {
-                    pincode: pincodes
-                },
-                success: function (response) {
-                    $('#city').val(response.city);
-                    $('#state').val(response.state);
-                    $('#country').val(response.country);
-                },
-            });
-        });
-    });
-</script>
-<script>
-    $(document).ready(function () {
-        $.ajaxSetup({
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-            }
-        });
-
-        $('#addressForm').on('submit', function (e) {
+(function($) {
+    const $tabLink = $('#tabs-section .tab-link');
+    const $tabBody = $('#tabs-section .tab-body');
+    let timerOpacity;
+    const init = () => {
+        $tabLink.off('click').on('click', function(e) {
             e.preventDefault();
-
-            // Clear all previous error messages
-            $('#nameError, #phoneErrorRR, #addressError, #landmarkError, #pincodeError, #cityError, #stateError, #addressTypeError')
-                .text('');
-
-            $.ajax({
-                url: '{{ route('save_address') }}',
-                type: 'POST',
-                data: $(this).serialize(),
-                success: function (res) {
-                    if (res.status === false) {
-                        // Loop through backend validation errors
-                        $.each(res.errors, function (key, value) {
-                            // Map each backend field to the correct span
-                            switch (key) {
-                                case 'contact_person_name':
-                                    $('#nameError').text(value[0]);
-                                    break;
-                                case 'phone':
-                                    $('#phoneErrorRR').text(value[0]);
-                                    break;
-                                case 'address':
-                                    $('#addressError').text(value[0]);
-                                    break;
-                                case 'landmark':
-                                    $('#landmarkError').text(value[0]);
-                                    break;
-                                case 'zip':
-                                    $('#pincodeError').text(value[0]);
-                                    break;
-                                case 'city':
-                                    $('#cityError').text(value[0]);
-                                    break;
-                                case 'state':
-                                    $('#stateError').text(value[0]);
-                                    break;
-                                case 'address_type':
-                                    $('#addressTypeError').text(value[0]);
-                                    break;
-                            }
-                        });
-                    } else {
-                        // Success: show message and reset form
-                        toastr.success(res.message);
-                        $('#addressForm')[0].reset();
-                        setTimeout(() => {
-                            location.reload();
-                        }, 500);
-                    }
-                },
-                error: function (xhr) {
-                    console.error(xhr);
-                }
-            });
+            e.stopPropagation();
+            window.clearTimeout(timerOpacity);
+            $tabLink.removeClass('active');
+            $tabBody.removeClass('active');
+            $tabBody.removeClass('active-content');
+            $(this).addClass('active');
+            $($(this).attr('href')).addClass('active');
+            $(".tab-head-m").hide();
+            $(".bg-texture").hide();
+            timerOpacity = setTimeout(() => {
+                $($(this).attr('href')).addClass('active-content');
+            }, 50);
+        });
+    };
+    $(function() {
+        init();
+    });
+}(jQuery));
+</script>
+<script>
+jQuery(".profile-menu").click(function() {
+    if (jQuery(".bg-texture").is(":hidden")) {
+        jQuery(".tab-head-m").show();
+        jQuery(".bg-texture").show();
+        jQuery('.tab-head-m').toggle('slide', {
+            direction: 'left'
+        }, 1000);
+    } else {
+        jQuery(".bg-texture").hide();
+        jQuery('.tab-head-m').toggle('slide', {
+            direction: 'left'
+        }, 1000);
+    }
+});
+</script>
+<script>
+$(document).ready(function() {
+    var pincode = $('#pincode');
+    pincode.on('input', function() {
+        var pincodes = pincode.val();
+        $.ajax({
+            url: '{{ route('pincode') }}',
+            type: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            data: {
+                pincode: pincodes
+            },
+            success: function(response) {
+                $('#city').val(response.city);
+                $('#state').val(response.state);
+                $('#country').val(response.country);
+            },
         });
     });
-
-    $(document).ready(function () {
-        $('.address').on('change', function () {
-
-            const addressId = $(this).data('address-id');
-            const isChecked = $(this).is(':checked') ? 1 : 0;
-            console.log("Address ID:", addressId);
-            console.log("Status:", isChecked);
-            $.ajax({
-                url: '{{ route('select_address') }}',
-                type: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                },
-                data: {
-                    address_id: addressId,
-                    status: isChecked
-                },
-                success: function (response) {
-                    if (response.status === 'success') {
-                        localStorage.setItem('redirectTab', 'pills-chosAdd-tab');
-                        location.reload(); // reload page
-                    }
-                    console.log("Success:", response);
-                },
-                error: function (xhr, status, error) {
-                    console.error("Error:", error);
-                }
-            });
-        });
-        const tabToActivate = localStorage.getItem('redirectTab');
-        if (tabToActivate) {
-            document.getElementById(tabToActivate)?.click();
-            localStorage.removeItem('redirectTab'); // clean up
+});
+</script>
+<script>
+$(document).ready(function() {
+    $.ajaxSetup({
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
         }
     });
 
-    $(document).ready(function () {
-        $('#payWay2').on('change', function () {
-            if ($(this).is(':checked')) {
-                $('.btnPayNow').text('Order Now');
-            }
-        });
-        $('#payWay1').on('change', function () {
-            if ($(this).is(':checked')) {
-                $('.btnPayNow').text('Pay Now');
-            }
-        })
-    });
-</script>
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        const inputs = document.querySelectorAll("#company_name, #gst_no");
+    $('#addressForm').on('submit', function(e) {
+        e.preventDefault();
 
-        inputs.forEach(input => {
-            input.addEventListener("input", function () {
-                this.value = this.value.toUpperCase();
-            });
-        });
-    });
-</script>
-<script>
-    document.getElementById('useLocationBtn').addEventListener('click', function () {
-        if (!navigator.geolocation) return alert("Geolocation not supported.");
+        // Clear all previous error messages
+        $('#nameError, #phoneErrorRR, #addressError, #landmarkError, #pincodeError, #cityError, #stateError, #addressTypeError')
+            .text('');
 
-        navigator.geolocation.getCurrentPosition(
-            pos => {
-                const {
-                    latitude: lat,
-                    longitude: lng
-                } = pos.coords;
-                const apiKey = 'AIzaSyBjSaMOYIsNMmMcqZI6iyd9bjREm0oBhjY';
-                const url =
-                    `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${apiKey}`;
-
-                fetch(url)
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.status !== "OK" || !data.results.length) {
-                            return alert('Failed to fetch location info.');
+        $.ajax({
+            url: '{{ route('save_address') }}',
+            type: 'POST',
+            data: $(this).serialize(),
+            success: function(res) {
+                if (res.status === false) {
+                    // Loop through backend validation errors
+                    $.each(res.errors, function(key, value) {
+                        // Map each backend field to the correct span
+                        switch (key) {
+                            case 'contact_person_name':
+                                $('#nameError').text(value[0]);
+                                break;
+                            case 'phone':
+                                $('#phoneErrorRR').text(value[0]);
+                                break;
+                            case 'address':
+                                $('#addressError').text(value[0]);
+                                break;
+                            case 'landmark':
+                                $('#landmarkError').text(value[0]);
+                                break;
+                            case 'zip':
+                                $('#pincodeError').text(value[0]);
+                                break;
+                            case 'city':
+                                $('#cityError').text(value[0]);
+                                break;
+                            case 'state':
+                                $('#stateError').text(value[0]);
+                                break;
+                            case 'address_type':
+                                $('#addressTypeError').text(value[0]);
+                                break;
                         }
-
-                        const addressComponents = data.results[0].address_components;
-                        let streetParts = [];
-
-                        addressComponents.forEach(function (comp) {
-                            if (
-                                comp.types.includes('premise') ||
-                                comp.types.includes('route') ||
-                                comp.types.includes('sublocality') ||
-                                comp.types.includes('neighborhood') ||
-                                comp.types.includes('point_of_interest')
-                            ) {
-                                streetParts.push(comp.long_name);
-                            }
-                        });
-
-                        const shortAddress = streetParts.join(', ');
-
-                        let city = '',
-                            state = '',
-                            country = '',
-                            postalCode = '';
-
-                        addressComponents.forEach(comp => {
-                            if (comp.types.includes('locality')) city = comp.long_name;
-                            if (comp.types.includes('administrative_area_level_1')) state = comp
-                                .long_name;
-                            if (comp.types.includes('country')) country = comp.long_name;
-                            if (comp.types.includes('postal_code')) postalCode = comp.long_name;
-                        });
-
-
-                        if (!postalCode) {
-                            alert(
-                                'Could not detect a postal code from the first result. Try moving the pin slightly.'
-                            );
-                            return;
-                        }
-
-                        console.log({
-                            city,
-                            state,
-                            country,
-                            postalCode
-                        });
-
-                        document.getElementById('zip').value = postalCode || '';
-                        document.getElementById('city').value = city || '';
-                        document.getElementById('state').value = state || '';
-                        document.getElementById('address').value = shortAddress || '';
-                    })
-                    .catch(err => {
-                        console.error(err);
-                        alert('Failed to fetch location info.');
                     });
+                } else {
+                    // Success: show message and reset form
+                    toastr.success(res.message);
+                    $('#addressForm')[0].reset();
+                    setTimeout(() => {
+                        location.reload();
+                    }, 500);
+                }
             },
-            () => alert('Location access denied.')
-        );
-    });
-
-
-    $(document).ready(function () {
-        var pincode = $('#zip');
-
-        pincode.on('input', function () {
-            var pincodes = pincode.val();
-            console.log(pincodes);
-
-            $.ajax({
-                url: '{{ route('pincode') }}', // Replace with your server-side route
-                type: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}' // Laravel CSRF token for security
-                },
-                data: {
-                    pincode: pincodes
-                },
-                success: function (response) {
-                    console.log('Pincode response:', response);
-                    $('#city').val(response.city);
-                    $('#state').val(response.state);
-                },
-            });
+            error: function(xhr) {
+                console.error(xhr);
+            }
         });
     });
+});
+
+$(document).ready(function() {
+    $('.address').on('change', function() {
+
+        const addressId = $(this).data('address-id');
+        const isChecked = $(this).is(':checked') ? 1 : 0;
+        console.log("Address ID:", addressId);
+        console.log("Status:", isChecked);
+        $.ajax({
+            url: '{{ route('select_address') }}',
+            type: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            data: {
+                address_id: addressId,
+                status: isChecked
+            },
+            success: function(response) {
+                if (response.status === 'success') {
+                    localStorage.setItem('redirectTab', 'pills-chosAdd-tab');
+                    location.reload(); // reload page
+                }
+                console.log("Success:", response);
+            },
+            error: function(xhr, status, error) {
+                console.error("Error:", error);
+            }
+        });
+    });
+    const tabToActivate = localStorage.getItem('redirectTab');
+    if (tabToActivate) {
+        document.getElementById(tabToActivate)?.click();
+        localStorage.removeItem('redirectTab'); // clean up
+    }
+});
+
+$(document).ready(function() {
+    $('#payWay2').on('change', function() {
+        if ($(this).is(':checked')) {
+            $('.btnPayNow').text('Order Now');
+        }
+    });
+    $('#payWay1').on('change', function() {
+        if ($(this).is(':checked')) {
+            $('.btnPayNow').text('Pay Now');
+        }
+    })
+});
 </script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const inputs = document.querySelectorAll("#company_name, #gst_no");
+
+    inputs.forEach(input => {
+        input.addEventListener("input", function() {
+            this.value = this.value.toUpperCase();
+        });
+    });
+});
+</script>
+<script>
+document.getElementById('useLocationBtn').addEventListener('click', function() {
+    if (!navigator.geolocation) return alert("Geolocation not supported.");
+
+    navigator.geolocation.getCurrentPosition(
+        pos => {
+            const {
+                latitude: lat,
+                longitude: lng
+            } = pos.coords;
+            const apiKey = 'AIzaSyBjSaMOYIsNMmMcqZI6iyd9bjREm0oBhjY';
+            const url =
+                `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${apiKey}`;
+
+            fetch(url)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status !== "OK" || !data.results.length) {
+                        return alert('Failed to fetch location info.');
+                    }
+
+                    const addressComponents = data.results[0].address_components;
+                    let streetParts = [];
+
+                    addressComponents.forEach(function(comp) {
+                        if (
+                            comp.types.includes('premise') ||
+                            comp.types.includes('route') ||
+                            comp.types.includes('sublocality') ||
+                            comp.types.includes('neighborhood') ||
+                            comp.types.includes('point_of_interest')
+                        ) {
+                            streetParts.push(comp.long_name);
+                        }
+                    });
+
+                    const shortAddress = streetParts.join(', ');
+
+                    let city = '',
+                        state = '',
+                        country = '',
+                        postalCode = '';
+
+                    addressComponents.forEach(comp => {
+                        if (comp.types.includes('locality')) city = comp.long_name;
+                        if (comp.types.includes('administrative_area_level_1')) state = comp
+                            .long_name;
+                        if (comp.types.includes('country')) country = comp.long_name;
+                        if (comp.types.includes('postal_code')) postalCode = comp.long_name;
+                    });
+
+
+                    if (!postalCode) {
+                        alert(
+                            'Could not detect a postal code from the first result. Try moving the pin slightly.'
+                        );
+                        return;
+                    }
+
+                    console.log({
+                        city,
+                        state,
+                        country,
+                        postalCode
+                    });
+
+                    document.getElementById('zip').value = postalCode || '';
+                    document.getElementById('city').value = city || '';
+                    document.getElementById('state').value = state || '';
+                    document.getElementById('address').value = shortAddress || '';
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert('Failed to fetch location info.');
+                });
+        },
+        () => alert('Location access denied.')
+    );
+});
+
+
+$(document).ready(function() {
+    var pincode = $('#zip');
+
+    pincode.on('input', function() {
+        var pincodes = pincode.val();
+        console.log(pincodes);
+
+        $.ajax({
+            url: '{{ route('pincode') }}', // Replace with your server-side route
+            type: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}' // Laravel CSRF token for security
+            },
+            data: {
+                pincode: pincodes
+            },
+            success: function(response) {
+                console.log('Pincode response:', response);
+                $('#city').val(response.city);
+                $('#state').val(response.state);
+            },
+        });
+    });
+});
+</script>
+
+<!-- Modal -->
+<div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Change Address</h5>
+                <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-md-12">
+                        <button class="btn btnEdit">Add a new address<i
+                                class="fas fa-plus-circle ml-1 bg-white"></i></button>
+                        <div class="selAddWrapper">
+                            <div class="custom_radio">
+                                <div class="form-group position-relative">
+                                    <div class="form-check text-right">
+                                        <input type="radio" name="selectAddress" id="selectAddress1" class="address">
+                                        <label for="selectAddress1"></label>
+                                    </div>
+
+                                    <div class="d-flex align-items-center justify-content-between mb-1">
+                                        <p class="mt-1">Ritik Tandon -
+                                            9857458596
+                                        </p>
+                                    </div>
+                                    <p>Near sardar ji ki chakki, Milan vihar, MORADABAD - 244001, Uttar Pradesh</p>
+                                    <span class="addTag addTagCol1">Home <span>default</span> </span>
+                                </div>
+                            </div>
+                        </div>
+                        <form>
+                            <input type="text" name="contact_person_name" class="form-control" placeholder="Enter Name"
+                                required>
+                            <input type="text" name="phone" class="form-control" placeholder="Phone No." required>
+                            <textarea name="address" class="form-control" placeholder="Address" required></textarea>
+                            <input type="text" name="landmark" class="form-control" placeholder="Landmark (optional)">
+                            <input type="text" name="zip" class="form-control" placeholder="Pincode" required>
+                            <input type="text" name="city" class="form-control" placeholder="City" required>
+                            <input type="text" name="state" class="form-control" placeholder="State" required>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-primary">Update</button>
+            </div>
+        </div>
+    </div>
+</div>
 </body>
 
 </html>

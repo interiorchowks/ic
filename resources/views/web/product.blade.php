@@ -368,7 +368,7 @@
                                 <tr>
                                     <td>
                                         <img class="bulk-thumb"
-                                            src="{{ rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . ($product->thumbnail_image ?? 'default.jpg') }}"
+                                           src="{{ rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($product->thumbnail_image ?? 'default.jpg', '/') }}"
                                             alt="Product image">
                                     </td>
                                     <td>

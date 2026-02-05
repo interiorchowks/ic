@@ -128,7 +128,7 @@
                                         @foreach ($images as $image)
                                             <div class="prev-image">
                                                 <img
-                                                    src="{{ env('CLOUDFLARE_R2_PUBLIC_URL') . '/' . $image->image_path }}">
+                                                    src="{{ rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($image->image_path ?? 'default.jpg', '/') }}">
 
                                                 <div class="copy-wrap">
                                                     <span class="copy-text" onclick="copyText(this)">

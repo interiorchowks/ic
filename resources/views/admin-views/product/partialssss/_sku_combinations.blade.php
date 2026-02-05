@@ -39,13 +39,17 @@
 
     .image-container {
         display: inline-block;
+        /* Make each image-container an inline block */
         margin-right: 10px;
+        /* Add some spacing between images */
     }
 
     .image-preview {
         display: flex;
         flex-wrap: wrap;
+        /* This will wrap images to the next line if space runs out */
         justify-content: flex-start;
+        /* Align images to the left */
     }
 
     .remove-btn {
@@ -73,6 +77,8 @@
         object-fit: cover;
     }
 
+
+    /* Popup styling */
     .popup {
         position: fixed;
         top: 0;
@@ -115,6 +121,7 @@
 
     label {
         display: inline-block;
+        /* margin-bottom: .5rem; */
     }
 </style>
 
@@ -125,7 +132,6 @@
     $sub_cat = DB::table('categories')->where('id', $sub_category)->first();
 
 @endphp
-{{-- @dd($combinations); --}}
 @if (count($combinations[0]) > 0)
     <table class="table table-bordered physical_product_show">
         <thead>
@@ -205,7 +211,7 @@
             }
         }
     @endphp
-    {{-- @dd($str); --}}
+
     @if (strlen($str) > 0)
         <tr data-row-id="{{ $key }}">
             <td>
@@ -582,7 +588,7 @@
                                 if (cb !== checkbox) {
                                     cb.checked = false;
                                     cb.disabled = checkbox
-                                        .checked; // Disable others
+                                    .checked; // Disable others
                                 }
                             });
 
@@ -591,7 +597,7 @@
                                 `thumbnail_input_${key}`);
                             if (checkbox.checked) {
                                 thumbnailInput.value = file
-                                    .name; // Save selected file as thumbnail
+                                .name; // Save selected file as thumbnail
                             } else {
                                 thumbnailInput.value = ""; // Clear selection
                             }
@@ -662,9 +668,9 @@
             const imageNames = [];
 
             previewContainer.querySelectorAll('input[type="hidden"][name^="uploaded_images_"]').forEach(
-                input => {
-                    imageNames.push(input.value);
-                });
+            input => {
+                imageNames.push(input.value);
+            });
 
             // Hidden input to send image order
             let imageOrderInput = document.getElementById(`image_order_${key}`);
