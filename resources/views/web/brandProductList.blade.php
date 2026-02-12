@@ -37,25 +37,19 @@
                         style="border-bottom: 1px dashed #999; scrollbar-width: none; -ms-overflow-style: none;">
                         <div class="d-flex" style="gap: 1rem; min-width: 100%;">
                             <div class="card text-center border-0" style="width: 115px;">
-                                {{-- <a href="{{ url('products_2/' . $brand->id) }}" class="text-decoration-none text-dark"> --}}
-                                    <img 
-                                    {{-- src="{{ asset('storage/app/public/brand/' . $brand->image) }}" --}}
-                                    src="{{ rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($brand->image, '/') }}"
-                                        alt="{{ $brand->name }}" class="card-img-top rounded-circle border"
-                                        style="aspect-ratio: 1/1; object-fit: cover;">
-                                    <div class="card-body p-2">
-                                        <p class="mb-0">{{ $brand->name }}</p>
-                                    </div>
+                                <img src="{{ 'https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev/' . ltrim($brand->image, '/') }}"
+                                    alt="{{ $brand->name }}" class="card-img-top rounded-circle border"
+                                    style="aspect-ratio: 1/1; object-fit: cover;">
+                                <div class="card-body p-2">
+                                    <p class="mb-0">{{ $brand->name }}</p>
+                                </div>
                                 {{-- </a> --}}
                             </div>
                         </div>
                     </div>
             </div>
             @endif
-            {{-- @if (!isset($brand))
-                <img src="{{ asset('public/website/new/assets/images/banners/banner-3.jpg') }}" style="max-width: 100%;">
-            @endif --}}
-            {{-- Hide scrollbar (WebKit only) --}}
+
             <style>
                 div[style*="overflow-x: auto"]::-webkit-scrollbar {
                     display: none;
@@ -102,9 +96,8 @@
                                                                 ? $images[0]
                                                                 : 'default.jpg';
                                                         @endphp
-                                                        <img 
-                                                        {{-- src="{{ asset('storage/app/public/images/' . $firstImage) }}" --}}
-                                                        src="{{ rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($firstImage ?? 'default.jpg', '/') }}"
+                                                        <img {{-- src="{{ asset('storage/app/public/images/' . $firstImage) }}" --}}
+                                                            src="{{ 'https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev/' . ltrim($firstImage ?? 'default.jpg', '/') }}"
                                                             alt="{{ $product->name }}" class="product-image rounded-lg"
                                                             style="width: 100%; height: 100%; object-fit: cover;">
                                                     </a>
@@ -121,8 +114,16 @@
                                                                 {{ $product->name }}
                                                             </h5>
                                                         </a>
-                                                        <p class="mb-0" style="color:#FF7373;">
-                                                            {{ $product->quantity ?? 0 }} Units left</p>
+
+                                                        @if ($product->quantity <= 0)
+                                                            <p class="mb-0" style="color:#FF7373;">Out of
+                                                                Stock</p>
+                                                        @elseif ($product->quantity <= 10)
+                                                            <p class="mb-0" style="color:#FF7373;">
+                                                                {{ $product->quantity }} Units Left</p>
+                                                        @else
+                                                            <p class="mb-0" style="color:#FF7373;"></p>
+                                                        @endif
                                                     </div>
                                                     <div>
                                                         <div class="d-flex ml-auto">
@@ -201,8 +202,8 @@
                             <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist"
                                 aria-orientation="vertical">
                                 <button class="nav-link active" id="v-pills-size-tab" data-toggle="pill"
-                                    data-target="#v-pills-size" type="button" role="tab" aria-controls="v-pills-size"
-                                    aria-selected="true">Size</button>
+                                    data-target="#v-pills-size" type="button" role="tab"
+                                    aria-controls="v-pills-size" aria-selected="true">Size</button>
                                 <button class="nav-link" id="v-pills-sort-tab" data-toggle="pill"
                                     data-target="#v-pills-sort" type="button" role="tab"
                                     aria-controls="v-pills-sort" aria-selected="false">Sort By</button>

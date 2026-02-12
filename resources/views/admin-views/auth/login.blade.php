@@ -192,14 +192,11 @@
     <!-- JS Plugins Init. -->
     <script>
         $(document).on('ready', function() {
-            // INITIALIZATION OF SHOW PASSWORD
-            // =======================================================
+            
             $('.js-toggle-password').each(function() {
                 new HSTogglePassword(this).init()
             });
 
-            // INITIALIZATION OF FORM VALIDATION
-            // =======================================================
             $('.js-validate').each(function() {
                 $.HSCore.components.HSValidation.init($(this));
             });

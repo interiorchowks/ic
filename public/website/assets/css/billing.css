@@ -1113,6 +1113,53 @@ span.star {
     color: #3d3d3d;
 }
 
+.chngeAddrModal .modal-header {
+    border-bottom: 0px solid #000000;
+}
+
+.chngeAddrModal h5.modal-title {
+    font-size: 16px;
+}
+
+.chngeAddrModal .btnEdit {
+    padding: 4px 4px;
+    border-radius: 16px;
+    margin-bottom: 10px;
+}
+
+.chngeAddrModal .btnEdit i {
+    color: #2e6cb2;
+    padding: 2px;
+    border-radius: 50%;
+}
+
+.chngeAddrModal .selAddWrapper,
+.chngeAddrModal .chngeAddrFormWrapper {
+    border: 1px solid #2e6cb2;
+    border-radius: 16px;
+    margin-bottom: 10px;
+}
+
+.chngeAddrModal .chngeAddrFormWrapper .form-control {
+    height: 32px;
+    padding: .5rem 1rem;
+    margin-bottom: 10px;
+}
+
+.chngeAddrModal .chngeAddrFormWrapper textarea.form-control {
+    background: #ffffff;
+}
+
+.chngeAddrModal .custom_radio .form-group {
+    border-bottom: 0px solid #2e6cb2;
+}
+
+.couponsModal .offerCoupWrapper {
+    padding: 10px;
+    border: 1px solid #c3c3c3;
+    border-radius: 16px;
+}
+
 /* responsive start here------------------------------------------------------------------------ */
 @media (min-width:576px) {
 

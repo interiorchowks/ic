@@ -47,11 +47,8 @@
                         <div class="px-3 py-4 d-flex flex-wrap align-items-center gap-10 justify-content-center">
                             <h4 class="mb-0">{{\App\CPU\translate('Import Products File')}}</h4>
                             <a href="{{ route('seller.product.bulk-export-data') }}" class="btn btn-success">
-    Download Excel
-</a>
-
-                            <!-- <a href="{{asset('public/assets/product_bulk_format.xlsx')}}" download=""
-                               class="btn-link text-capitalize fz-16 font-weight-medium">{{\App\CPU\translate('Download Format')}}</a> -->
+                                Download Excel
+                            </a>
                         </div>
                         <div class="card-body">
                             <div class="form-group">

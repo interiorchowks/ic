@@ -927,14 +927,6 @@ class HomeController extends Controller
                 'message' => "OTP Sent",
             ]);
         } else {
-            //Disable below code to remove new signup restriction
-            // return response()->json([
-            //     'result' => false,
-            //     'message' => "Thank you for your interest. We are launching soon...",
-            // ]);
-
-            //Enable below code for new signup
-
             $referrer_code =  Str::random(8);
             $user = new User();
             $user->phone = $request->phone;
@@ -944,13 +936,6 @@ class HomeController extends Controller
             $user->email_verified_at = null;
             $user->referral_code = $referrer_code;
             $user->save();
-            /* $request->merge(["phone"=> $request->phone]);
-             $request->merge(["temporary_token"=> $otp]);
-             $request->merge(["is_phone_verified"=> 1]);
-             $request->merge(["is_email_verified"=> 1]);
-             $request->merge(["email_verified_at"=> null]);
-             $request->merge(["referral_code"=> $referrer_code]);
-             DB::table('users')->insert($request->all());*/
 
             $curl = curl_init();
             curl_setopt_array($curl, array(
@@ -976,22 +961,6 @@ class HomeController extends Controller
             ]);
         }
     }
-
-    // public function web_suggestion(Request $request)
-    // {
-    //     $suggestions = [];
-
-    //     $sug = $request->has('search') ? $request['search'] : null;
-
-    //     if (!empty($sug)) {
-    //         $suggestion = DB::table('tags')->where('tag', 'like', "%$sug%")
-    //             ->limit(10)
-    //             ->get(['id', 'tag']);
-    //         $suggestions = $suggestion;
-    //     }
-
-    //     return response()->json(['suggestion' => $suggestion]);
-    // }
 
     public function web_suggestion(Request $request)
     {
@@ -1058,12 +1027,11 @@ class HomeController extends Controller
                 ->where('category_ids', 'like', "%{$id}%")
                 ->inRandomOrder()->take(12)->get();
         });
-        //products based on top seller
+        
         $top_sellers = Seller::approved()->with('shop')
             ->withCount(['orders'])->orderBy('orders_count', 'DESC')->take(12)->get();
         //end
 
-        //feature products finding based on selling
         $featured_products = Product::with(['reviews'])->active()
             ->where('featured', 1)
             ->withCount(['order_details'])->orderBy('order_details_count', 'DESC')

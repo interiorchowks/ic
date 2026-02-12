@@ -7,7 +7,7 @@
 </style>
 <link rel="stylesheet" href="{{ asset('public/website/assets/css/billing.css') }}">
 <main class="main checkoutRespoWrapper">
-    <div class="page-content">
+    <div class="page-content d-none d-md-block">
         <div class="container">
             <div class="row">
                 <div class="col-12 col-sm-12 col-md-6">
@@ -195,8 +195,7 @@
                                             'input[name="instant_delivery"]:checked')?.value || false;
 
                                         fetch(
-                                            '{{ route('get_shipping_cost') }}',
-                                             {
+                                                '{{ route('get_shipping_cost') }}', {
                                                     method: 'POST',
                                                     headers: {
                                                         'Content-Type': 'application/json',
@@ -272,9 +271,9 @@
                                     });
 
                                     document.querySelectorAll('input[name="instant_delivery"]').forEach(
-                                    radio => {
-                                        radio.addEventListener('change', updateShippingCost);
-                                    });
+                                        radio => {
+                                            radio.addEventListener('change', updateShippingCost);
+                                        });
 
                                     if (document.querySelector('input.address-radio:checked')) {
                                         updateShippingCost();
@@ -367,31 +366,31 @@
                                         let isVisible = false;
 
                                         document.getElementById('addressDropdown').addEventListener('change',
-                                        function() {
-                                            const selectedOption = this.options[this.selectedIndex];
+                                            function() {
+                                                const selectedOption = this.options[this.selectedIndex];
 
-                                            if (selectedOption.value !== "") {
-                                                document.getElementById('shipAdd2')
-                                                    .setAttribute('data-address-bill-id', selectedOption.value);
-                                                const name = selectedOption.getAttribute('data-name');
-                                                const phone = selectedOption.getAttribute('data-phone');
-                                                const full = selectedOption.getAttribute('data-full');
-                                                const type = selectedOption.getAttribute('data-type');
+                                                if (selectedOption.value !== "") {
+                                                    document.getElementById('shipAdd2')
+                                                        .setAttribute('data-address-bill-id', selectedOption.value);
+                                                    const name = selectedOption.getAttribute('data-name');
+                                                    const phone = selectedOption.getAttribute('data-phone');
+                                                    const full = selectedOption.getAttribute('data-full');
+                                                    const type = selectedOption.getAttribute('data-type');
 
-                                                const displayDiv = document.getElementById('selectedAddress');
-                                                displayDiv.innerHTML = `
+                                                    const displayDiv = document.getElementById('selectedAddress');
+                                                    displayDiv.innerHTML = `
                                                         <div class="d-flex align-items-center justify-content-between mb-1">
                                                             <p><strong>${name}</strong> - ${phone}</p>
                                                         </div>
                                                         <p>${full}</p>
                                                         <span class="addTag addTagCol1">${type}</span>
                                                     `;
-                                                displayDiv.style.display = 'block';
-                                                document.querySelector('.selAddWrappers').style.display =
-                                                'none';
-                                                isVisible = false;
-                                            }
-                                        });
+                                                    displayDiv.style.display = 'block';
+                                                    document.querySelector('.selAddWrappers').style.display =
+                                                        'none';
+                                                    isVisible = false;
+                                                }
+                                            });
                                         </script>
                                     </div>
                                 </div>
@@ -503,8 +502,8 @@
                                             <div class="form-check text-right">
                                                 <input type="radio" id="featured-{{ $key + 1 }}"
                                                     name="featured-{{ $key + 1 }}" class="address"
-                                                    data-address-id="{{ $addres->id }}"
-                                                    {{ $addres->is_selected == 1 ? 'checked' : '' }}>
+                                                    data-address-id="{{ $addres->id }}" {{ $addres->is_selected == 1 ?
+                                                'checked' : '' }}>
                                                 <label for="featured-{{ $key + 1 }}"></label>
                                             </div>
 
@@ -719,7 +718,7 @@
                                     data['billing_address_id'] = billing_address_id;
                                     data['coupon_code'] = document.getElementById('coupon_codes').value;
                                     data['company_name'] = document.getElementById('company_name')
-                                    .value;
+                                        .value;
                                     data['gst_no'] = document.getElementById('gst_no').value;
 
                                     fetch("{{ route('create.razorpay.order') }}", {
@@ -787,7 +786,8 @@
                                                                     final.redirect_url;
                                                             } else {
                                                                 alert(
-                                                                    "Payment verification failed on server.");
+                                                                    "Payment verification failed on server."
+                                                                    );
                                                                 hideBtnLoader();
                                                             }
                                                         });
@@ -795,7 +795,7 @@
                                                 "modal": {
                                                     "ondismiss": function() {
                                                         console.log(
-                                                        "Payment popup closed.");
+                                                            "Payment popup closed.");
                                                         hideBtnLoader();
                                                         location.reload();
                                                     }
@@ -824,15 +824,14 @@
                                         <h5>Product Details</h5>
                                     </div>
                                     <div class="pro-desc">
-                                        <img 
-                                        {{-- src="{{ asset('storage/app/public/images/' . $images[0]) }}" --}}
-                                        src="{{ rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . ($images[0] ?? 'default.jpg') }}"
-                                        
+                                        <img {{-- src="{{ asset('storage/app/public/images/' . $images[0]) }}" --}}
+                                            src="{{ rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . ($images[0] ?? 'default.jpg') }}"
                                             class="img-fluid" alt="pro-img">
                                         <div class="ml-3">
                                             <a href="{{ url('product/' . $cart->slug) }}">
                                                 <h4 class="proHead">
-                                                    {{ strlen($cart->name) > 40 ? substr($cart->name, 0, 40) . '...' : $cart->name }}
+                                                    {{ strlen($cart->name) > 40 ? substr($cart->name, 0, 40) . '...' :
+                                                    $cart->name }}
                                                 </h4>
                                             </a>
                                             <h4 class="subProHead">₹ {{ $cart->listed_price }}<span>₹
@@ -957,7 +956,9 @@
                                                                 data-code="{{ $coupon->code }}">Apply
                                                                 now</button>
                                                             <p style="font-size: 11px">Valid till :
-                                                                {{ \Carbon\Carbon::parse($coupon->expire_date)->format('d M, Y') }}
+                                                                {{
+                                                                \Carbon\Carbon::parse($coupon->expire_date)->format('d
+                                                                M, Y') }}
                                                             </p>
                                                         </div>
                                                     </div>
@@ -1016,9 +1017,9 @@
                                                 // ✅ Change button text to Applied
                                                 clickedButton.textContent = "Applied";
                                                 clickedButton.disabled =
-                                                true; // optional: disable button
+                                                    true; // optional: disable button
                                                 clickedButton.classList.add(
-                                                "btn-success"); // optional: change style
+                                                    "btn-success"); // optional: change style
                                             })
                                             .catch(error => {
                                                 console.error('Error:', error);
@@ -1031,8 +1032,8 @@
                                     class="offerCoupWrapper offerCoupWrapperboxShadw bg-white cashWrapper mt-2 d-flex align-items-center justify-content-between">
                                     <div>
                                         <h6>Use InteriorChowk Wallet cash</h6>
-                                        <p>Available Balance: <span
-                                                id="wallet_balance">₹{{ $balance ? $balance : 0 }}</span></p>
+                                        <p>Available Balance: <span id="wallet_balance">₹{{ $balance ? $balance : 0
+                                                }}</span></p>
                                     </div>
                                     @if ($balance == 0)
                                     <div>
@@ -1114,8 +1115,8 @@
                                 <hr>
                                 <div class="cillBrkCnt">
                                     <label>Total Amount</label>
-                                    <span id="total-amount"
-                                        class="d-flex">₹{{ $total_variant_mrp - ($total_variant_mrp - $total_listed_price) }}</span>
+                                    <span id="total-amount" class="d-flex">₹{{ $total_variant_mrp - ($total_variant_mrp
+                                        - $total_listed_price) }}</span>
                                 </div>
                             </div>
                         </div>
@@ -1129,6 +1130,311 @@
                         <input type="hidden" name="transaction_id" value="">
                         <button type="submit" class="btn btnPayNow">Pay Now</button>
                     </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- mobile version of the checkout page start here==================================================================== --}}
+    <div class="page-content d-md-none">
+        <div class="container">
+            <div class="row">
+                <div class="col-12 col-sm-12 col-md-12">
+                    <div class="mobileAddrWrapper">
+                        <div class="addrMainWrap">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <h6 class="mb-0">Primary Address</h6>
+                                    <button type="button" class="btn edit-btn"><i class="fas fa-edit"></i></button>
+                                </div>
+                                <button type="button" class="btn btnEdit" data-toggle="modal"
+                                    data-target="#exampleModal">
+                                    Change Address
+                                </button>
+                            </div>
+                            <p>Vivek - 9859658741</p>
+                            <p>Near sardar ji ki chakki, Milan vihar, MORADABAD - 244001, Uttar Pradesh</p>
+                        </div>
+
+                        <div class="addrMainWrap">
+                            <h6 class="mb-1">Billing Address</h6>
+                            <div class="custom_radio">
+                                <div class="form-group position-relative border-bottom-0 selected">
+                                    <div class="form-check pl-0">
+                                        <input type="radio" name="shipAddMob" id="shipAdd3" checked required>
+                                        <label for="shipAdd3" class="mb-0">Same as Shipping address</label>
+                                    </div>
+                                </div>
+
+                                <div class="form-group position-relative">
+                                    <div class="form-check pl-0">
+                                        <input type="radio" name="shipAddMob" id="shipAdd4">
+                                        <label for="shipAdd4" class="mb-0">Use a different billing address</label>
+                                    </div>
+
+                                    <!-- Dropdown Wrapper -->
+                                    <div class="selAddWrappers mob-inp mt-1 mb-1" style="display:none;">
+                                        <select class="form-control">
+                                            <option value="1">Rishi Mathur - Moradabad</option>
+                                            <option value="2">Aman Bhatnagar - Ghaziabad</option>
+                                            <option value="3">Suramya Singh - Noida</option>
+                                        </select>
+
+                                        <!-- Display Selected Address -->
+                                        <div class="displaySelAddr mt-1" style="display:none;">
+                                            <p>Rishi Mathur - 8475863605</p>
+                                            <p>Near sardar ji ki chakki, Milan vihar, MORADABAD - 244001, Uttar Pradesh
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="saveaddress" style="width: 50%; margin: auto; display:none;">
+                                        <img src="{{ asset('public/website/assets/images/nosavedaddress.webp') }}"
+                                            alt="">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="addrMainWrap">
+                            <div class="form-group form-check d-flex align-items-center gstinChkBox mb-0">
+                                <input type="checkbox" class="form-check-input" name="gstCheck">
+                                <label class="form-check-label font-weight-bold ml-2" for="gstCheck">
+                                    Use GSTIN details for this order
+                                </label>
+                            </div>
+                            <div class="mob-inp" style="display: none;">
+                                <div class="form-group mt-1">
+                                    <input type="text" class="form-control" id="company_name"
+                                        placeholder="Company Name">
+                                </div>
+                                <div class="form-group">
+                                    <input type="text" class="form-control" id="gst_no" placeholder="GSTIN">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="addrMainWrap">
+                            <div class="form-group form-check d-flex align-items-center mb-0">
+                                <input type="checkbox" class="form-check-input" name="instant_delivery">
+                                <label class="form-check-label font-weight-bold ml-2" for="instant_delivery">
+                                    Instant Delivery — Get it in 4 hours!
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="addrMainWrap">
+                            <div class="mobProDetails">
+                                <h6 class="proHeading">Product Details</h6>
+                                <div class="d-flex align-items-start">
+                                    <img src="{{ asset('storage/app/public/images/0btyluPOSHE3bm3kqMVO2d9awVwlDZF5oYDOlZAp.jpg') }}"
+                                        class="img-fluid" alt="pro-img">
+                                    <div class="ml-3">
+                                        <a href="#">
+                                            <p class="proName">
+                                                Elegent table lamp for home and office inclui...
+                                            </p>
+                                        </a>
+                                        <p>₹ 1900<span class="text-decoration-line-through">₹ 3000</span></p>
+                                        <label class="offValue">
+                                            25% off
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mobProExtDetails">
+                                <p>Non Returnable</p>
+                                <p>Quantity - 1</p>
+                                <p>Size - Small</p>
+                                <p>Colour - Blue</p>
+                                <p>Variation - Blue</p>
+                                <p>Delivered by - 20th Jan, 2025</p>
+                            </div>
+                        </div>
+
+                        <div class="addrMainWrap">
+                            <h6 class="proHeading">Coupons</h6>
+                            <div class="offerCoupWrapper">
+                                <div class="offCoupLeftWrap">
+                                    <div class="d-flex align-items-start justify-content-between">
+                                        <img src="{{ asset('storage/app/public/images/discount_87.png') }}"
+                                            class="img-fluid" alt="discount">
+                                        <div>
+                                            <h5>OFF10<span>Best offer for
+                                                    you</span></h5>
+                                            <p>Get 10% off on all products</p>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <button type="submit" class="btn btnApply" data-code="">Applied</button>
+                                        <p class="coupValidty">Valid till :
+                                            28 jan 26
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="accordion">
+                                <div class="card">
+                                    <div class="card-header" id="headingMobileOne">
+                                        <h5 class="mb-0">
+                                            <button class="btn viewOffBtn collapsed" data-toggle="collapse" data-target="#collapseMobileOne" aria-expanded="false" aria-controls="collapseMobileOne">
+                                                View More Coupon codes<i class="fa fa-arrow-right" aria-hidden="true"></i>
+                                            </button>
+                                        </h5>
+                                    </div>
+                                     <div id="collapseMobileOne" class="collapse" aria-labelledby="headingMobileOne" data-parent="#accordion">
+                                        <div class="card-body">
+                                            <div class="offerCoupWrapper">
+                                                <div class="offCoupLeftWrap">
+                                                    <div class="d-flex align-items-start justify-content-between">
+                                                        <img src="{{ asset('storage/app/public/images/discount_87.png') }}"
+                                                            class="img-fluid" alt="discount">
+                                                        <div>
+                                                            <h5>OFF10<span>Best offer for
+                                                                    you</span></h5>
+                                                            <p>Get 10% off on all products</p>
+                                                        </div>
+                                                    </div>
+                                                    <div class="text-right">
+                                                        <button type="submit" class="btn btnApply" data-code="">Applied</button>
+                                                        <p class="coupValidty">Valid till :
+                                                            28 jan 26
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="offerCoupWrapper">
+                                                <div class="offCoupLeftWrap">
+                                                    <div class="d-flex align-items-start justify-content-between">
+                                                        <img src="{{ asset('storage/app/public/images/discount_87.png') }}"
+                                                            class="img-fluid" alt="discount">
+                                                        <div>
+                                                            <h5>OFF10<span>Best offer for
+                                                                    you</span></h5>
+                                                            <p>Get 10% off on all products</p>
+                                                        </div>
+                                                    </div>
+                                                    <div class="text-right">
+                                                        <button type="submit" class="btn btnApply" data-code="">Applied</button>
+                                                        <p class="coupValidty">Valid till :
+                                                            28 jan 26
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="offerCoupWrapper">
+                                                <div class="offCoupLeftWrap">
+                                                    <div class="d-flex align-items-start justify-content-between">
+                                                        <img src="{{ asset('storage/app/public/images/discount_87.png') }}"
+                                                            class="img-fluid" alt="discount">
+                                                        <div>
+                                                            <h5>OFF10<span>Best offer for
+                                                                    you</span></h5>
+                                                            <p>Get 10% off on all products</p>
+                                                        </div>
+                                                    </div>
+                                                    <div class="text-right">
+                                                        <button type="submit" class="btn btnApply" data-code="">Applied</button>
+                                                        <p class="coupValidty">Valid till :
+                                                            28 jan 26
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="offerCoupWrapper">
+                                                <div class="offCoupLeftWrap">
+                                                    <div class="d-flex align-items-start justify-content-between">
+                                                        <img src="{{ asset('storage/app/public/images/discount_87.png') }}"
+                                                            class="img-fluid" alt="discount">
+                                                        <div>
+                                                            <h5>OFF10<span>Best offer for
+                                                                    you</span></h5>
+                                                            <p>Get 10% off on all products</p>
+                                                        </div>
+                                                    </div>
+                                                    <div class="text-right">
+                                                        <button type="submit" class="btn btnApply" data-code="">Applied</button>
+                                                        <p class="coupValidty">Valid till :
+                                                            28 jan 26
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="addrMainWrap">
+                            <div
+                                class="offerCoupWrapper offerCoupWrapperboxShadw bg-white cashWrapper mt-2 d-flex align-items-center justify-content-between">
+                                <div>
+                                    <h6>Use InteriorChowk Wallet cash</h6>
+                                    <p>Available Balance: <span>₹47851</span></p>
+                                </div>
+                                <div>
+                                    <button class="btn btnCash">Use Cash</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="addrMainWrap">
+                            <div class="billBreakdownWrapper">
+                                <h6 class="proHeading">Price Breakdown</h6>
+                                <div class="amtBrkdownWrapper">
+                                    <div class="cillBrkCnt">
+                                        <label>Bag Amount</label>
+                                        <span class="d-flex">₹16857.00</span>
+                                    </div>
+                                    <div class="cillBrkCnt">
+                                        <label>Bag Saving</label>
+                                        <span class="d-flex">-₹4571</span>
+                                    </div>
+                                    <hr>
+                                    <div class="cillBrkCnt">
+                                        <label class="d-flex align-items-center justify-content-start">Coupon &
+                                            Voucher<img src="{{ asset('storage/app/public/images/discount_87.png') }}"
+                                                class="img-fluid" alt="voucher" /></label>
+                                        <span class="d-flex">₹0.00</span>
+                                    </div>
+                                    <div class="cillBrkCnt">
+                                        <label>Delivery Charge</label>
+                                        <span class="d-flex">₹0.00</span>
+                                    </div>
+                                    <div class="cillBrkCnt">
+                                        <label>Paid By Wallet</label>
+                                        <span class="d-flex">₹ 0.00</span>
+                                    </div>
+                                    <hr>
+                                    <div class="cillBrkCnt">
+                                        <label>Total Amount</label>
+                                        <span class="d-flex">₹4571 - 7584</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="addrMainWrap">
+                            <h6 class="mb-1">Payment Mode</h6>
+                            <div class="custom_radio">
+                                <div class="form-group position-relative border-bottom-0 selected">
+                                    <div class="form-check pl-0">
+                                        <input type="radio" name="payMode" id="payMode1" checked required>
+                                        <label for="payMode1" class="mb-0">Razorpay Secure (UPI, Cards, Wallets,
+                                            Netbanking)</label>
+                                    </div>
+                                </div>
+
+                                <div class="form-group position-relative">
+                                    <div class="form-check pl-0">
+                                        <input type="radio" name="payMode" id="payMode2">
+                                        <label for="payMode2" class="mb-0">Cash on delivery (COD)</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btnPayNow">Pay Now</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1433,6 +1739,115 @@ $(document).ready(function() {
     });
 });
 </script>
+
+<!-- Modal -->
+<div class="modal chngeAddrModal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Change Address</h5>
+                <h5 class="modal-title d-none">Add a new address</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-md-12">
+                        <button class="btn btnEdit">Add a new address<i
+                                class="fas fa-plus ml-1 bg-white"></i></button>
+                        <div class="selAddWrapper">
+                            <div class="custom_radio">
+                                <div class="form-group position-relative">
+                                    <div class="form-check text-right">
+                                        <input type="radio" name="selectAddress" id="selectAddress1" class="address">
+                                        <label for="selectAddress1"></label>
+                                    </div>
+
+                                    <div class="d-flex align-items-center justify-content-between mb-1">
+                                        <p class="mt-1">Ritik Tandon -
+                                            9857458596
+                                        </p>
+                                    </div>
+                                    <p>Near sardar ji ki chakki, Milan vihar, MORADABAD - 244001, Uttar Pradesh</p>
+                                    <span class="addTag addTagCol1">Home <span>default</span> </span>
+                                </div>
+
+                                <div class="form-group position-relative">
+                                    <div class="form-check text-right">
+                                        <input type="radio" name="selectAddress" id="selectAddress2" class="address">
+                                        <label for="selectAddress2"></label>
+                                    </div>
+
+                                    <div class="d-flex align-items-center justify-content-between mb-1">
+                                        <p class="mt-1">Rishi Mathur -
+                                            8712458596
+                                        </p>
+                                    </div>
+                                    <p>Near sardar ji ki chakki, Milan vihar, MORADABAD - 244001, Uttar Pradesh</p>
+                                    <span class="addTag addTagCol1">Home <span>default</span> </span>
+                                </div>
+                                <div class="form-group position-relative">
+                                    <div class="form-check text-right">
+                                        <input type="radio" name="selectAddress" id="selectAddress3" class="address">
+                                        <label for="selectAddress3"></label>
+                                    </div>
+
+                                    <div class="d-flex align-items-center justify-content-between mb-1">
+                                        <p class="mt-1">Vipin Rawat -
+                                            9568238596
+                                        </p>
+                                    </div>
+                                    <p>Near sardar ji ki chakki, Milan vihar, MORADABAD - 244001, Uttar Pradesh</p>
+                                    <span class="addTag addTagCol1">Home <span>default</span> </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="chngeAddrFormWrapper p-3">
+                            <form>
+                                <input type="text" name="contact_person_name" class="form-control" placeholder="Enter Name"
+                                    required>
+                                <input type="text" name="phone" class="form-control" placeholder="Phone No." required>
+                                <textarea name="address" class="form-control" placeholder="Address" required></textarea>
+                                <input type="text" name="landmark" class="form-control" placeholder="Landmark (optional)">
+                                <input type="text" name="zip" class="form-control" placeholder="Pincode" required>
+                                <input type="text" name="city" class="form-control" placeholder="City" required>
+                                <input type="text" name="state" class="form-control" placeholder="State" required>
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <h6 class="proHeading">Address Type</h6>
+                                    <div class="custom_radio d-flex">
+                                        <div class="form-group position-relative">
+                                            <div class="form-check text-right">
+                                                <input type="radio" name="addressType" id="addressType1" class="address"/>
+                                                <label for="addressType1">Home</label>
+                                            </div>
+                                        </div>
+                                        <div class="form-group position-relative">
+                                            <div class="form-check text-right">
+                                                <input type="radio" name="addressType" id="addressType2" class="address"/>
+                                                <label for="addressType2">Work</label>
+                                            </div>
+                                        </div>
+                                        <div class="form-group position-relative">
+                                            <div class="form-check text-right">
+                                                <input type="radio" name="addressType" id="addressType3" class="address"/>
+                                                <label for="addressType3">Other</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-primary">Update</button>
+            </div>
+        </div>
+    </div>
+</div>
 </body>
 
 </html>

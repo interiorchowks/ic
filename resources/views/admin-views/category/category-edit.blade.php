@@ -159,7 +159,7 @@
                                 <div class="col-12">
                                     <button type="button" class="btn btn--primary" id="btn1">Specificatons</button>
                                     <div class="input-box" id="inputBox1">
-                                        <input type="text" name="specification" required
+                                        <input type="text" name="specification"  @if($subsubcategory) required @endif
                                             placeholder="Enter text for specification key" class="form-control"
                                             value="{{ $category->specification }}">
                                     </div>
@@ -168,7 +168,7 @@
                                 <div class="col-12">
                                     <button type="button" class="btn btn--primary" id="btn2">key features</button>
                                     <div class="input-box" id="inputBox2">
-                                        <input type="text" required name="key_features"
+                                        <input type="text"  @if($subsubcategory) required @endif name="key_features"
                                             placeholder="Enter text for key features" name="" class="form-control"
                                             value="{{ $category->key_features }}">
                                     </div>
@@ -178,7 +178,7 @@
                                     <button type="button" class="btn btn--primary" id="btn3">Technical
                                         Specificatons</button>
                                     <div class="input-box" id="inputBox3">
-                                        <input type="text" required name="technical_specification"
+                                        <input type="text" @if($subsubcategory) required @endif name="technical_specification"
                                             placeholder="Enter text for specification key" class="form-control"
                                             value="{{ $category->technical_specification }}">
                                     </div>
@@ -187,7 +187,7 @@
                                 <div class="col-12">
                                     <button type="button" class="btn btn--primary" id="btn4">Other Details</button>
                                     <div class="input-box" id="inputBox4">
-                                        <input type="text" required name="other_details"
+                                        <input type="text"  @if($subsubcategory) required @endif name="other_details"
                                             placeholder="Enter text for key features" name="" class="form-control"
                                             value="{{ $category->other_details }}">
                                     </div>
@@ -198,7 +198,7 @@
                                     <label class="title-color">{{ \App\CPU\translate('Meta_Title') }}</label>
                                     <span class="text-info"><span class="text-danger">*</span></span>
                                     <div class="custom-file text-left">
-                                        <input type="text" required name="meta_title" id=""
+                                        <input type="text"  @if($subsubcategory) required @endif name="meta_title" id=""
                                             class="form-control" placeholder="meta title"
                                             value="{{ $category->meta_title }}">
                                     </div>
@@ -206,7 +206,7 @@
                                 <div class="col-lg-6 form-group">
                                     <label class="" for="">{{ \App\CPU\translate('meta description') }}
                                         ({{ strtoupper($lang) }})</label>
-                                    <textarea id="" required class="form-control" name="meta_description" rows="4" cols="50">{{ $category->meta_description }}</textarea>
+                                    <textarea id=""  @if($subsubcategory) required @endif class="form-control" name="meta_description" rows="4" cols="50">{{ $category->meta_description }}</textarea>
                                 </div>
                                 <div class="form-group">
                                     <label class="title-color"
@@ -218,7 +218,7 @@
                                                 src="{{ asset('/public/assets/back-end/img/info-circle.svg') }}"
                                                 alt="img">
                                         </span></label>
-                                    <textarea name="page_content" required class="editor textarea" cols="30" rows="10">{{ $category->page_content }}</textarea>
+                                    <textarea name="page_content"  @if($subsubcategory) required @endif class="editor textarea" cols="30" rows="10">{{ $category->page_content }}</textarea>
                                 </div>
 
                                 <div class="col-12">

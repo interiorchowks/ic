@@ -83,9 +83,9 @@
                                 <figure class="slide-image">
                                     <picture>
                                         <source media="(max-width: 480px)"
-                                            srcset="<?php echo e(rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($banner->photo, '/')); ?>">
+                                            srcset="<?php echo e('https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($banner->photo, '/')); ?>">
                                         <a href="<?php echo e($banner->url); ?>">
-                                            <img src="<?php echo e(rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($banner->photo, '/')); ?>"
+                                            <img src="<?php echo e('https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($banner->photo, '/')); ?>"
                                                 alt="BannerIntro">
                                         </a>
                                     </picture>
@@ -100,9 +100,9 @@
                                 <figure class="slide-image">
                                     <picture>
                                         <source media="(max-width: 480px)"
-                                            srcset="<?php echo e(rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($banner->photo, '/')); ?>">
+                                            srcset="<?php echo e('https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' .ltrim($banner->photo, '/')); ?>">
                                         <a href="<?php echo e($banner->url); ?>">
-                                            <img src="<?php echo e(rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($banner->photo, '/')); ?>"
+                                            <img src="<?php echo e('https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($banner->photo, '/')); ?>"
                                                 alt="BannerSlider">
                                         </a>
                                     </picture>
@@ -124,7 +124,7 @@
                                 <div class="product product-4">
                                     <figure class="product-media">
                                         <a href="<?php echo e(url('category/' . $ca->slug)); ?>">
-                                            <img src="<?php echo e($caturl . $ca->icon); ?>" alt="Product img" class="product-image">
+                                            <img src="<?php echo e('https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . $ca->icon); ?>" alt="Product img" class="product-image">
                                         </a>
                                     </figure>
                                     <div class="product-footer">
@@ -147,7 +147,7 @@
                                     <div class="product product-4">
                                         <figure class="product-media" style="margin-bottom: 0px !important;">
                                             <a href="<?php echo e(url('category/' . $ca->slug)); ?>">
-                                                <img src="<?php echo e($caturl . $ca->icon); ?>"
+                                                <img src="<?php echo e('https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev'. $ca->icon); ?>"
                                                     alt="Shop <?php echo e($ca->name); ?> Category" class="product-image">
                                             </a>
                                         </figure>
@@ -179,7 +179,7 @@
                         <div class="col-4 col-lg-4 short-banner">
                             <div class="banner-wrapper tall-banner">
                                 <a href="<?php echo e($Service_Provider_Banner_3->url); ?>">
-                                    <img src="<?php echo e(rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($Service_Provider_Banner_3->photo, '/')); ?>"
+                                    <img src="<?php echo e('https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($Service_Provider_Banner_3->photo, '/')); ?>"
                                         alt="Banner-3">
                                 </a>
                             </div>
@@ -187,7 +187,7 @@
                         <div class="col-4 col-lg-4 short-banner">
                             <div class="banner-wrapper short-banner">
                                 <a href="<?php echo e($Service_Provider_Banner_1->url); ?>">
-                                    <img src="<?php echo e(rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($Service_Provider_Banner_1->photo, '/')); ?>"
+                                    <img src="<?php echo e('https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($Service_Provider_Banner_1->photo, '/')); ?>"
                                         alt="Banner">
                                 </a>
                             </div>
@@ -195,7 +195,7 @@
                         <div class="col-4 col-lg-4 short-banner">
                             <div class="banner-wrapper short-banner">
                                 <a href="<?php echo e($Service_Provider_Banner_2->url); ?>">
-                                    <img src="<?php echo e(rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($Service_Provider_Banner_2->photo, '/')); ?>"
+                                    <img src="<?php echo e('https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($Service_Provider_Banner_2->photo, '/')); ?>"
                                         alt="Banner">
                                 </a>
                             </div>
@@ -210,7 +210,7 @@
                     <div class="col-lg-4 col-4 short-banner">
                         <div class="banner-wrapper tall-banner">
                             <a href="<?php echo e($Service_Provider_Banner_3->url); ?>">
-                                <img src="<?php echo e(rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($Mob_Provider_Banner_3->photo, '/')); ?>"
+                                <img src="<?php echo e('https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($Mob_Provider_Banner_3->photo, '/')); ?>"
                                     alt="Banner">
                             </a>
                         </div>
@@ -218,7 +218,7 @@
                     <div class="col-lg-4 col-4 short-banner">
                         <div class="banner-wrapper short-banner">
                             <a href="<?php echo e($Service_Provider_Banner_1->url); ?>">
-                                <img src="<?php echo e(rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($Mob_Provider_Banner_1->photo, '/')); ?>"
+                                <img src="<?php echo e('https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($Mob_Provider_Banner_1->photo, '/')); ?>"
                                     alt="Banner">
                             </a>
                         </div>
@@ -226,7 +226,7 @@
                     <div class="col-lg-4 col-4 short-banner">
                         <div class="banner-wrapper short-banner">
                             <a href="<?php echo e($Service_Provider_Banner_2->url); ?>">
-                                <img src="<?php echo e(rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($Mob_Provider_Banner_2->photo, '/')); ?>"
+                                <img src="<?php echo e('https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($Mob_Provider_Banner_2->photo, '/')); ?>"
                                     alt="Banner">
                             </a>
                         </div>
@@ -247,9 +247,9 @@
                                         <figure class="slide-image">
                                             <picture>
                                                 <source media="(max-width: 480px)"
-                                                    srcset="<?php echo e(rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($banner->photo, '/')); ?>">
+                                                    srcset="<?php echo e('https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($banner->photo, '/')); ?>">
                                                 <a href="<?php echo e($banner->url); ?>">
-                                                    <img srcset="<?php echo e(rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($banner->photo, '/')); ?>"
+                                                    <img srcset="<?php echo e('https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($banner->photo, '/')); ?>"
                                                         alt="Banner">
                                                 </a>
                                             </picture>
@@ -265,9 +265,9 @@
                                         <figure class="slide-image">
                                             <picture>
                                                 <source media="(max-width: 480px)"
-                                                    srcset="<?php echo e(rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($banner->photo, '/')); ?>">
+                                                    srcset="<?php echo e('https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($banner->photo, '/')); ?>">
                                                 <a href="<?php echo e($banner->url); ?>">
-                                                    <img srcset="<?php echo e(rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($banner->photo, '/')); ?>"
+                                                    <img srcset="<?php echo e('https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($banner->photo, '/')); ?>"
                                                         alt="Banner">
                                                 </a>
                                             </picture>
@@ -316,7 +316,7 @@
                                                     
                                                     <a href="<?php echo e(url('product/' . ($item->slug ?? '#'))); ?>">
                                                         <img src="<?php echo e(!empty($item->thumbnail_image)
-                                                            ? rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($item->thumbnail_image, '/')
+                                                            ? 'https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($item->thumbnail_image, '/')
                                                             : asset('public/website/assets/images/products/product-placeholder.jpg')); ?>"
                                                             alt="<?php echo e($item->name ?? 'Product'); ?>" class="product-image">
                                                     </a>
@@ -362,7 +362,7 @@
             <div class="container instant-delivery-banner-container web-service-provider sectionBannerMargin">
                 <a href="<?php echo e(url('instant-delivery-products')); ?>" aria-label="Browse Instant Delivery Products">
                     <div class="video-banner video-banner-bg text-right instant-delivery-banner"
-                        style="background-image:url('<?php echo e(rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($Instant_Delivery_Banner->photo, '/')); ?>');">
+                        style="background-image:url('<?php echo e('https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($Instant_Delivery_Banner->photo, '/')); ?>');">
                     </div>
                 </a>
             </div>
@@ -370,7 +370,7 @@
             <div class="instant-delivery-banner-container d-none service-mobile-provider sectionMargin">
                 <a href="<?php echo e(url('instant-delivery-products')); ?>" aria-label="Browse Instant Delivery Products">
                     <div class="video-banner video-banner-bg text-right instant-delivery-banner"
-                        style="background-image:url('<?php echo e(rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($Mob_Instant_Delivery_Banner->photo, '/')); ?>');">
+                        style="background-image:url('<?php echo e('https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($Mob_Instant_Delivery_Banner->photo, '/')); ?>');">
                     </div>
                 </a>
             </div>
@@ -381,7 +381,7 @@
             <div class="container instant-delivery-banner-container web-service-provider sectionBannerMargin"
                 style="height:324px;width:1296px !important; margin:auto;">
                 <div class="video-banner video-banner-bg text-right instant-delivery-banner"
-                    style="background-image:url('<?php echo e(rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($desktop1->photo, '/')); ?>'); height:324px;width:1296px !important;">
+                    style="background-image:url('<?php echo e('https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($desktop1->photo, '/')); ?>'); height:324px;width:1296px !important;">
                 </div>
             </div>
         <?php endif; ?>
@@ -390,7 +390,7 @@
             <?php if($related_products->isNotEmpty()): ?>
                 <div class="page-content sectionCrouselMargin relViewItemWrapper">
                     <div class="related-products-section"
-                        style="background-image:url('<?php echo e(rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($Seasonal_Banner[1]->photo, '/')); ?>');">
+                        style="background-image:url('<?php echo e('https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($Seasonal_Banner[1]->photo, '/')); ?>');">
                         <div class="container">
                             <div class="row">
                                 <div class="col-12 col-md-12">
@@ -421,7 +421,7 @@
                                                     <?php endif; ?>
 
                                                     <a href="<?php echo e(url('product/' . $rp->slug)); ?>">
-                                                        <img src="<?php echo e(rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($rp->thumbnail_image, '/')); ?>"
+                                                        <img src="<?php echo e('https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($rp->thumbnail_image, '/')); ?>"
                                                             alt="<?php echo e($rp->name); ?>" class="product-image">
                                                     </a>
                                                 </figure>
@@ -468,7 +468,7 @@
             <?php if($more_related_products->isNotEmpty()): ?>
                 <div class="page-content more-items-section sectionCrouselMargin">
                     <div class="more-related-products-banner"
-                        style="background-image:url('<?php echo e(rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($Seasonal_Banner[0]->photo, '/')); ?>');">
+                        style="background-image:url('<?php echo e('https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($Seasonal_Banner[0]->photo, '/')); ?>');">
                         <div class="container">
                             <div class="row">
                                 <div class="col-12 col-md-12">
@@ -494,7 +494,7 @@
                                                     <?php endif; ?>
 
                                                     <a href="<?php echo e(url('product/' . $mp->slug)); ?>">
-                                                        <img src="<?php echo e(rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($mp->thumbnail_image, '/')); ?>"
+                                                        <img src="<?php echo e('https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($mp->thumbnail_image, '/')); ?>"
                                                             alt="<?php echo e($mp->name); ?>" class="product-image">
                                                     </a>
                                                 </figure>
@@ -544,7 +544,7 @@
             if (!empty($Banner_3->photo)) {
                 $extension = strtolower(pathinfo($Banner_3->photo, PATHINFO_EXTENSION));
                 $isVideo = in_array($extension, ['mp4', 'webm']);
-                $fileUrl = rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($Banner_3->photo, '/');
+                $fileUrl = 'https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($Banner_3->photo, '/');
             }
 
             $MobfileUrl = null;
@@ -553,7 +553,7 @@
             if (!empty($Mob_Banner_3->photo)) {
                 $Mobextension = strtolower(pathinfo($Mob_Banner_3->photo, PATHINFO_EXTENSION));
                 $MobisVideo = in_array($Mobextension, ['mp4', 'webm']);
-                $MobfileUrl = rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($Mob_Banner_3->photo, '/');
+                $MobfileUrl = 'https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($Mob_Banner_3->photo, '/');
             }
         ?>
 
@@ -577,7 +577,7 @@
             <?php if($wishlists->isNotEmpty()): ?>
                 <div class="page-content sectionCrouselMargin wishListWrapper">
                     <div class="wishlist-section"
-                        style="background-image:url('<?php echo e(rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($Seasonal_Banner[1]->photo, '/')); ?>');">
+                        style="background-image:url('<?php echo e('https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($Seasonal_Banner[1]->photo, '/')); ?>');">
                         <div class="container">
 
                             <div class="row">
@@ -611,7 +611,7 @@
                                                     <?php endif; ?>
 
                                                     <img 
-                                                        src="<?php echo e(rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($wishlist->thumbnail_image, '/')); ?>"
+                                                        src="<?php echo e('https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($wishlist->thumbnail_image, '/')); ?>"
                                                         alt="<?php echo e($wishlist->name); ?>" class="product-image loveitgetit">
 
                                                     <div class="media-body">
@@ -648,7 +648,7 @@
         <?php endif; ?>
         <div class="page-content sectionCrouselMargin trenBanWrapper">
             <div class="trending-banner"
-                style="background-image:url('<?php echo e(rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($Seasonal_Banner[0]->photo, '/')); ?>');">
+                style="background-image:url('<?php echo e('https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($Seasonal_Banner[0]->photo, '/')); ?>');">
                 <div class="container">
                     <div class="row">
                         <div class="col-lg-12">
@@ -693,8 +693,7 @@
 
                                                         $productImage =
                                                             !empty($images) && isset($images[0])
-                                                                ? rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') .
-                                                                    '/' .
+                                                                ? 'https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev/' .
                                                                     ltrim($images[0], '/')
                                                                 : asset('storage/images/default.jpg');
                                                     ?>
@@ -799,14 +798,14 @@
             <div class="container instant-delivery-banner-container web-service-provider sectionBannerMargin"
                 style="height:400px;width:1266px !important; margin:auto;">
                 <div class="video-banner video-banner-bg text-right instant-delivery-banner"
-                    style="background-image:url('<?php echo e(rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($Banner_3->photo, '/')); ?>'); height:400px;width:1266px !important;">
+                    style="background-image:url('<?php echo e('https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($Banner_3->photo, '/')); ?>'); height:400px;width:1266px !important;">
                 </div>
             </div>
 
             
             <div class="architect-banner-container sectionBannerMargin arcBanCntWrapper d-block d-lg-none">
                 <a href="<?php echo e($Banner_3->url); ?>">
-                    <img src="<?php echo e(rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($Banner_3->photo, '/')); ?>"
+                    <img src="<?php echo e('https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($Banner_3->photo, '/')); ?>"
                         class="img-fluid w-100 rounded" alt="banner">
                 </a>
             </div>
@@ -820,7 +819,7 @@
                         <div class="category-card text-center">
                             <figure class="product-media">
                                 <a href="<?php echo e(url('category/' . $t_ca->slug)); ?>">
-                                    <img src="<?php echo e($caturl . $t_ca->icon); ?>" alt="<?php echo e($t_ca->name); ?>"
+                                    <img src="<?php echo e('https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . $t_ca->icon); ?>" alt="<?php echo e($t_ca->name); ?>"
                                         class="product-image img-fluid">
                                 </a>
                             </figure>
@@ -867,8 +866,8 @@
                                 <?php $__currentLoopData = $top_brands; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $tb): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                     <div class="brand-card">
                                         <figure class="brand-logo-wrapper">
-                                            <a href="<?php echo e(url('products_2/' . rawurlencode($tb->name))); ?>">
-                                                <img src="<?php echo e(rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($tb->image, '/')); ?>"
+                                            <a href="<?php echo e(url('brand/' . rawurlencode($tb->name))); ?>">
+                                                <img src="<?php echo e('https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($tb->image, '/')); ?>"
                                                     alt="<?php echo e($tb->name); ?>"
                                                     class="brand-logo-img">
                                             </a>
@@ -889,7 +888,7 @@
             <div class="container instant-delivery-banner-container web-service-provider sectionBannerMargin mb-4"
                 style="height:400px;width:1266px !important; margin:auto;">
                 <div class="video-banner video-banner-bg text-right instant-delivery-banner"
-                    style="background-image:url('<?php echo e(rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($Banner_4->photo, '/')); ?>'); height:400px;width:1266px !important;">
+                    style="background-image:url('<?php echo e('https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($Banner_4->photo, '/')); ?>'); height:400px;width:1266px !important;">
                 </div>
             </div>
         <?php endif; ?>
@@ -897,7 +896,7 @@
         <?php if(!empty($mobile3->photo)): ?>
             <div class="architect-banner-container sectionBannerMargin arcBanCntWrapper d-block d-lg-none">
                 <a href="<?php echo e($mobile3->url); ?>">
-                    <img src="<?php echo e(rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($mobile3->photo, '/')); ?>"
+                    <img src="<?php echo e('https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($mobile3->photo, '/')); ?>"
                         class="img-fluid w-100 rounded" alt="banner">
                 </a>
             </div>
@@ -906,7 +905,7 @@
         <?php if(!empty($architects) && count($architects) > 0): ?>
             <div class="page-content sectionMargin topArchWrapper">
                 <div class="section-6 top-interior-section"
-                    style="background-image:url('<?php echo e(rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($Seasonal_Banner[1]->photo, '/')); ?>');">
+                    style="background-image:url('<?php echo e('https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($Seasonal_Banner[1]->photo, '/')); ?>');">
                     <div class="container">
                         <div class="row">
                             <div class="col-md-12">
@@ -972,7 +971,7 @@
             <div class="container instant-delivery-banner-container web-service-provider sectionBannerMargin"
                 style="height:400px;width:1266px !important; margin:auto;">
                 <div class="video-banner video-banner-bg text-right instant-delivery-banner"
-                    style="background-image:url('<?php echo e(rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($Banner_5->photo, '/')); ?>'); height:400px;width:1266px !important;">
+                    style="background-image:url('<?php echo e('https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($Banner_5->photo, '/')); ?>'); height:400px;width:1266px !important;">
                 </div>
             </div>
         <?php endif; ?>
@@ -980,7 +979,7 @@
         <?php if(!empty($mobile4->photo)): ?>
             <div class="architect-banner-container sectionBannerMargin arcBanCntWrapper d-block d-lg-none">
                 <a href="<?php echo e($mobile4->url); ?>">
-                    <img src="<?php echo e(rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($mobile4->photo, '/')); ?>"
+                    <img src="<?php echo e('https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($mobile4->photo, '/')); ?>"
                         class="img-fluid w-100 rounded" alt="banner">
                 </a>
             </div>
@@ -989,7 +988,7 @@
         <?php if(!empty($interior_designer) && count($interior_designer) > 0): ?>
             <div class="page-content sectionMargin topInterDesiWrapper">
                 <div class="section-6 top-interior-section"
-                    style="background-image:url('<?php echo e(rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($Seasonal_Banner[0]->photo, '/')); ?>');">
+                    style="background-image:url('<?php echo e('https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($Seasonal_Banner[0]->photo, '/')); ?>');">
                     <div class="container">
                         <div class="row">
                             <div class="col-md-12">
@@ -1056,7 +1055,7 @@
             <div class="container instant-delivery-banner-container web-service-provider sectionBannerMargin"
                 style="height:400px;width:1266px !important; margin:auto;">
                 <div class="video-banner video-banner-bg text-right instant-delivery-banner"
-                    style="background-image:url('<?php echo e(rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($Desktop5->photo, '/')); ?>'); height:400px;width:1266px !important;">
+                    style="background-image:url('<?php echo e('https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($Desktop5->photo, '/')); ?>'); height:400px;width:1266px !important;">
                 </div>
             </div>
         <?php endif; ?>
@@ -1064,7 +1063,7 @@
         <?php if(!empty($Banner_6->photo)): ?>
             <div class="architect-banner-container sectionBannerMargin arcBanCntWrapper d-block d-lg-none">
                 <a href="<?php echo e($Banner_6->url); ?>">
-                    <img src="<?php echo e(rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($Banner_6->photo, '/')); ?>"
+                    <img src="<?php echo e('https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($Banner_6->photo, '/')); ?>"
                         class="img-fluid w-100 rounded" alt="banner">
                 </a>
             </div>
@@ -1074,7 +1073,7 @@
             <?php
                 $extension = strtolower(pathinfo($Banner_7->photo, PATHINFO_EXTENSION));
                 $isVideo = in_array($extension, ['mp4', 'webm']);
-                $fileUrl = rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($Banner_7->photo, '/');
+                $fileUrl = 'https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($Banner_7->photo, '/');
                 $bannerLink =
                     $Banner_7->resource_type === 'category' ? $Banner_7->url : url('banner_products/' . $Banner_7->id);
             ?>
@@ -1097,7 +1096,7 @@
         <?php if(!empty($contractors) && count($contractors) > 0): ?>
             <div class="page-content sectionMargin topContracWrapper">
                 <div class="section-6 top-interior-section"
-                    style="background-image:url('<?php echo e(rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($Seasonal_Banner[0]->photo, '/')); ?>');">
+                    style="background-image:url('<?php echo e('https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($Seasonal_Banner[0]->photo, '/')); ?>');">
                     <div class="container">
                         <div class="row">
                             <div class="col-md-12">
@@ -1174,7 +1173,7 @@
             <div class="container instant-delivery-banner-container web-service-provider sectionBannerMargin"
                 style="height:400px;width:1266px !important; margin:auto;">
                 <div class="video-banner video-banner-bg text-right instant-delivery-banner"
-                    style="background-image:url('<?php echo e(rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($Banner_7->photo, '/')); ?>'); height:400px;width:1266px !important;">
+                    style="background-image:url('<?php echo e('https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($Banner_7->photo, '/')); ?>'); height:400px;width:1266px !important;">
                 </div>
             </div>
         <?php endif; ?>
@@ -1182,7 +1181,7 @@
         <?php if(!empty($mobile6->photo)): ?>
             <div class="architect-banner-container sectionBannerMargin arcBanCntWrapper d-block d-lg-none">
                 <a href="<?php echo e($mobile6->url); ?>">
-                    <img src="<?php echo e(rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($mobile6->photo, '/')); ?>"
+                    <img src="<?php echo e('https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($mobile6->photo, '/')); ?>"
                         class="img-fluid w-100 rounded" alt="banner">
                 </a>
             </div>
@@ -1191,7 +1190,7 @@
         <?php
             $extension = strtolower(pathinfo($banner->photo, PATHINFO_EXTENSION));
             $isVideo = in_array($extension, ['mp4', 'webm']);
-            $fileUrl = rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($banner->photo, '/');
+            $fileUrl = 'https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($banner->photo, '/');
             $linkUrl = $banner->resource_type === 'brand' ? $banner->url : url('banner_products/' . $banner->id);
 
         ?>
@@ -1199,7 +1198,7 @@
         <?php if(!empty($Day_BG_w)): ?>
             <div class="page-content sectionMargin dealBanWrapper">
                 <div class="deal-banner-wrapper"
-                    style="background-image: url('<?php echo e(rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($Day_BG_w->photo, '/')); ?>');">
+                    style="background-image: url('<?php echo e('https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($Day_BG_w->photo, '/')); ?>');">
                     <div class="row">
                         <div class="col-12 col-lg-12">
                             <div class="tab-content tab-content-carousel">
@@ -1277,7 +1276,7 @@
                                                     <?php if(count($deals) > 1): ?>
                                                         <a href="<?php echo e(url('deals')); ?>" class="d-block w-100 h-100">
                                                             <div>
-                                                                <img src="<?php echo e(rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($Banner_2->photo, '/')); ?>"
+                                                                <img src="<?php echo e('https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($Banner_2->photo, '/')); ?>"
                                                                     alt="banner-img" class="deal-banner-image">
                                                             </div>
                                                         </a>
@@ -1305,7 +1304,7 @@
                     <div class="col-md-12 col-lg-6">
                         <div class="banner banner-big banner-overlay comBanner">
                             <a href="<?php echo e($Discount_1->url); ?>">
-                                <img src="<?php echo e(rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($Discount_1->photo, '/')); ?>"
+                                <img src="<?php echo e('https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($Discount_1->photo, '/')); ?>"
                                     alt="Banner">
                             </a>
                         </div>
@@ -1314,7 +1313,7 @@
                     <div class="col-sm-6 col-lg-3">
                         <div class="banner banner-overlay comBanner">
                             <a href="<?php echo e($Discount_2->url); ?>">
-                                <img src="<?php echo e(rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($Discount_2->photo, '/')); ?>"
+                                <img src="<?php echo e('https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($Discount_2->photo, '/')); ?>"
                                     alt="Banner">
                             </a>
                         </div>
@@ -1324,7 +1323,7 @@
                         <?php $__currentLoopData = [$Discount_3, $Discount_4]; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $discount): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                             <div class="banner banner-small banner-overlay comBanner">
                                 <a href="<?php echo e($discount->url); ?>">
-                                    <img src="<?php echo e(rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($discount->photo, '/')); ?>"
+                                    <img src="<?php echo e('https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($discount->photo, '/')); ?>"
                                         alt="Banner-4">
                                 </a>
                             </div>
@@ -1336,13 +1335,13 @@
                     <div class="col-md-12 col-lg-6 col-6">
                         <div class="banner banner-big banner-overlay comBanner">
                             <a href="<?php echo e($Discount_1->url); ?>">
-                                <img src="<?php echo e(rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($Discount_1->photo, '/')); ?>"
+                                <img src="<?php echo e('https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($Discount_1->photo, '/')); ?>"
                                     alt="Banner">
                             </a>
                         </div>
                         <div class="banner banner-overlay comBanner">
                             <a href="<?php echo e($Discount_2->url); ?>">
-                                <img src="<?php echo e(rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($Discount_2->photo, '/')); ?>"
+                                <img src="<?php echo e('https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($Discount_2->photo, '/')); ?>"
                                     alt="Banner">
                             </a>
                         </div>
@@ -1351,13 +1350,13 @@
                     <div class="col-sm-6 col-lg-3 col-6">
                         <div class="banner banner-overlay comBanner">
                             <a href="<?php echo e($Discount_3); ?>">
-                                <img src="<?php echo e(rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($Discount_2->photo, '/')); ?>"
+                                <img src="<?php echo e('https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($Discount_2->photo, '/')); ?>"
                                     alt="Banner">
                             </a>
                         </div>
                         <div class="banner banner-big banner-overlay comBanner">
                             <a href="<?php echo e(url('discount_products/' . $Discount_1->id)); ?>">
-                                <img src="<?php echo e(rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($Discount_1->photo, '/')); ?>"
+                                <img src="<?php echo e('https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($Discount_1->photo, '/')); ?>"
                                     alt="Banner">
                             </a>
                         </div>
@@ -1370,19 +1369,19 @@
                     <div class="col-6 d-flex flex-column gap-2 respGalPadding"> <!-- gap between banners -->
                         <div class="banner banner-overlay flex-fill comBanner">
                             <a href="<?php echo e($discount_banner_2->url); ?>">
-                                <img src="<?php echo e(rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($discount_banner_2->photo, '/')); ?>"
+                                <img src="<?php echo e('https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($discount_banner_2->photo, '/')); ?>"
                                     class="img-fluid" alt="Banner-2">
                             </a>
                         </div>
                         <div class="banner banner-overlay flex-fill comBanner">
                             <a href="<?php echo e($discount_banner_3->url); ?>">
-                                <img src="<?php echo e(rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($discount_banner_3->photo, '/')); ?>"
+                                <img src="<?php echo e('https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($discount_banner_3->photo, '/')); ?>"
                                     class="img-fluid" alt="Banner-3">
                             </a>
                         </div>
                         <div class="banner banner-overlay flex-fill comBanner">
                             <a href="<?php echo e(url('discount_products/' . ($discount_banner_5->id ?? 0))); ?>">
-                                <img src="<?php echo e(rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($discount_banner_5->photo, '/')); ?>"
+                                <img src="<?php echo e('https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($discount_banner_5->photo, '/')); ?>"
                                     class="img-fluid" alt="Banner-5">
                             </a>
                         </div>
@@ -1392,13 +1391,13 @@
                     <div class="col-6 d-flex flex-column gap-2">
                         <div class="banner banner-overlay flex-fill comBanner">
                             <a href="<?php echo e(url('discount_products/' . ($discount_banner_1->id ?? 0))); ?>">
-                                <img src="<?php echo e(rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($discount_banner_1->photo, '/')); ?>"
+                                <img src="<?php echo e('https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($discount_banner_1->photo, '/')); ?>"
                                     class="img-fluid" alt="Banner-1">
                             </a>
                         </div>
                         <div class="banner banner-overlay flex-fill comBanner">
                             <a href="<?php echo e(url('discount_products/' . ($discount_banner_4->id ?? 0))); ?>">
-                                <img src="<?php echo e(rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($discount_banner_4->photo, '/')); ?>"
+                                <img src="<?php echo e('https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($discount_banner_4->photo, '/')); ?>"
                                     class="img-fluid" alt="Banner-4">
                             </a>
                         </div>
@@ -1411,7 +1410,7 @@
                     <?php
                         $ext = strtolower(pathinfo($Banner_9->photo, PATHINFO_EXTENSION));
                         $isVideo = in_array($ext, ['mp4', 'webm']);
-                        $fileUrl = rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($Banner_9->photo, '/');
+                        $fileUrl = 'https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($Banner_9->photo, '/');
 
                     ?>
                     <a href="<?php echo e($Banner_9->url); ?>">
@@ -1678,7 +1677,7 @@
 
         <div class="page-content sectionMargin luxeBgWrapper">
             <div class="luxe-bg"
-                style="background-image:url('<?php echo e(rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($Luxury_BG->photo, '/')); ?>');">
+                style="background-image:url('<?php echo e('https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($Luxury_BG->photo, '/')); ?>');">
                 <div class="container">
                     <div class="row">
                         <div class="col-md-12">
@@ -1732,7 +1731,7 @@
                                 <?php if(count($luxe_products) > 1): ?>
                                     <?php if(!empty($Banner_2)): ?>
                                         <a href="<?php echo e(url('luxury-products')); ?>" class="luxury-banner-link">
-                                            <img src="<?php echo e(rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($Banner_2->photo, '/')); ?>"
+                                            <img src="<?php echo e('https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($Banner_2->photo, '/')); ?>"
                                                 alt="luxury banner" class="luxury-banner-img">
                                         </a>
                                     <?php endif; ?>
@@ -1747,7 +1746,7 @@
         <?php if(!empty($Banner_8->photo)): ?>
             <div class="architect-banner-container sectionMargin">
                 <a href="<?php echo e($Banner_8->url); ?>">
-                    <img src="<?php echo e(rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($Banner_8->photo, '/')); ?>"
+                    <img src="<?php echo e('https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($Banner_8->photo, '/')); ?>"
                         alt="bannerEight">
                 </a>
             </div>
@@ -1777,7 +1776,7 @@
 
                                             <video width="100%" autoplay muted loop playsinline>
                                                 <source
-                                                    src="<?php echo e(rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($item->photo, '/')); ?>"
+                                                    src="<?php echo e('https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($item->photo, '/')); ?>"
                                                     type="video/mp4">
                                             </video>
 
@@ -1812,7 +1811,7 @@
                 <?php
                     $extension = strtolower(pathinfo($Banner_10->photo, PATHINFO_EXTENSION));
                     $isVideo = in_array($extension, ['mp4', 'webm']);
-                    $fileUrl = rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($Banner_10->photo, '/');
+                    $fileUrl = 'https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($Banner_10->photo, '/');
 
                     $linkUrl =
                         $Banner_10->resource_type == 'category'

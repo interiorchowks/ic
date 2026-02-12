@@ -7,16 +7,16 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 class PasswordResetMail extends Mailable
 {
-    use Queueable, SerializesModels;
-
     public $reset_url;
+    public $seller;
 
-    public function __construct($reset_url)
+    public function __construct($reset_url, $seller)
     {
         $this->reset_url = $reset_url;
+        $this->seller = $seller;
     }
 
-   public function build()
+    public function build()
     {
         return $this->mailer('customer')
             ->from(
@@ -25,10 +25,8 @@ class PasswordResetMail extends Mailable
             )
             ->subject(__('Password Reset'))
             ->view('email-templates.admin-password-reset', [
-                'url' => $this->reset_url
+                'url'    => $this->reset_url,
+                'seller' => $this->seller,
             ]);
     }
-
-
-
 }

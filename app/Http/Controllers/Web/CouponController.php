@@ -215,84 +215,79 @@ class CouponController extends Controller
     // }
 
     public function applys(Request $request)
-{
-    $userId = $request->user()->id;
+    {
+        $userId = $request->user()->id;
 
-    // Count how many times the coupon has been used by this customer
-    $couponLimit = Order::where(['customer_id'=> $userId, 'coupon_code'=> $request['code']])
-        ->groupBy('order_group_id')
-        ->count();
+        $couponLimit = Order::where(['customer_id'=> $userId, 'coupon_code'=> $request['code']])
+            ->groupBy('order_group_id')
+            ->count();
 
-    // Validate coupon existence
-    $coupon_f = Coupon::where(['code' => $request['code']])
-        ->where('status',1)
-        ->whereDate('start_date', '<=', now())
-        ->whereDate('expire_date', '>=', now())
-        ->first();
+        $coupon_f = Coupon::where(['code' => $request['code']])
+            ->where('status',1)
+            ->whereDate('start_date', '<=', now())
+            ->whereDate('expire_date', '>=', now())
+            ->first();
 
-    if (!$coupon_f) {
+        // dd($coupon_f);
+
+        if (!$coupon_f) {
+            return response()->json(translate('invalid_coupon'), 202);
+        }
+
+        if ($coupon_f->coupon_type != 'first_order') {
+            if ($coupon_f->limit <= $couponLimit) {
+                return response()->json(translate('coupon_limit_exceeded'), 202);
+            }
+        }
+
+        if ($coupon_f->coupon_type == 'first_order') {
+            $orders = Order::where(['customer_id'=> $userId])->count();
+            if ($orders > 0) {
+                return response()->json(translate('sorry_this_coupon_is_not_valid_for_this_user'), 202);
+            }
+        }
+
+        $carts = collect(session()->get('cart', []))
+            ->where('is_selected', 1)
+            ->values();
+
+        $total = 0;
+
+        foreach ($carts as $cart) {
+            if (
+                $coupon_f->seller_id == '0' ||
+                (is_null($coupon_f->seller_id) && $cart->seller_is == 'admin') ||
+                ($coupon_f->seller_id == $cart->seller_id && $cart->seller_is == 'seller')
+            ) {
+                $subtotal = ($cart->listed_price ?? 0) * $cart->cart_qty;
+                $total += $subtotal;
+            }
+        }
+
+        if ($total >= $coupon_f->min_purchase) {
+            if ($coupon_f->coupon_type == 'discount_on_purchase' || $coupon_f->coupon_type == 'first_order') {
+                if ($coupon_f->discount_type === 'percentage') {
+                    $discount = min(($total * $coupon_f->discount) / 100, $coupon_f->max_discount);
+                } else {
+                    $discount = $coupon_f->discount;
+                }
+
+                return response()->json([
+                    'coupon_discount' => $discount,
+                    'coupon_code' => $coupon_f->code
+                ], 200);
+            } elseif ($coupon_f->coupon_type == 'free_delivery') {
+                // Free delivery – refund shipping fee
+                $shipping_fee = $request->has('shipping_fee') ? round((float)$request['shipping_fee'], 2) : 0;
+
+                return response()->json([
+                    'coupon_discount' => $shipping_fee,
+                    'coupon_code' => $coupon_f->code
+                ], 200);
+            }
+        }
+
         return response()->json(translate('invalid_coupon'), 202);
     }
-
-    // Apply limit check
-    if ($coupon_f->coupon_type != 'first_order') {
-        if ($coupon_f->limit <= $couponLimit) {
-            return response()->json(translate('coupon_limit_exceeded'), 202);
-        }
-    }
-
-    // First order check
-    if ($coupon_f->coupon_type == 'first_order') {
-        $orders = Order::where(['customer_id'=> $userId])->count();
-        if ($orders > 0) {
-            return response()->json(translate('sorry_this_coupon_is_not_valid_for_this_user'), 202);
-        }
-    }
-
-    // ✅ Fetch checkout page carts directly from session
-    $carts = collect(session()->get('cart', []))
-        ->where('is_selected', 1)
-        ->values();
-
-    $total = 0;
-
-    foreach ($carts as $cart) {
-        // Validate seller match
-        if (
-            $coupon_f->seller_id == '0' ||
-            (is_null($coupon_f->seller_id) && $cart->seller_is == 'admin') ||
-            ($coupon_f->seller_id == $cart->seller_id && $cart->seller_is == 'seller')
-        ) {
-            $subtotal = ($cart->listed_price ?? 0) * $cart->cart_qty;
-            $total += $subtotal;
-        }
-    }
-
-    // Apply discount if purchase requirement met
-    if ($total >= $coupon_f->min_purchase) {
-        if ($coupon_f->coupon_type == 'discount_on_purchase' || $coupon_f->coupon_type == 'first_order') {
-            if ($coupon_f->discount_type === 'percentage') {
-                $discount = min(($total * $coupon_f->discount) / 100, $coupon_f->max_discount);
-            } else {
-                $discount = $coupon_f->discount;
-            }
-
-            return response()->json([
-                'coupon_discount' => $discount,
-                'coupon_code' => $coupon_f->code
-            ], 200);
-        } elseif ($coupon_f->coupon_type == 'free_delivery') {
-            // Free delivery – refund shipping fee
-            $shipping_fee = $request->has('shipping_fee') ? round((float)$request['shipping_fee'], 2) : 0;
-
-            return response()->json([
-                'coupon_discount' => $shipping_fee,
-                'coupon_code' => $coupon_f->code
-            ], 200);
-        }
-    }
-
-    return response()->json(translate('invalid_coupon'), 202);
-}
 
 }

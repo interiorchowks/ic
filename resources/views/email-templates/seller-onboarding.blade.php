@@ -48,9 +48,10 @@
         }
 
         .main-image {
-            width: 100%;
+            width: 95%;
             height: auto;
             display: block;
+            margin: auto;
         }
 
         .content {
@@ -174,7 +175,7 @@
         <div class="header">
             <img src="https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev/mail/logo.png"
                 alt="InteriorChowk Logo">
-            <a href="https://interiorchowk.com/storage/app/public/seller_guide/IC%20Seller%E2%80%99s%20Guide.pdf">
+            <a href="https://interiorchowk.com/storage/app/public/seller_guide/IC%20Seller%E2%80%99s%20Guide.pdf" style="margin-left:345px;">
                 Seller Guide
             </a>
         </div>

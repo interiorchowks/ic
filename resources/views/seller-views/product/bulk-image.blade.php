@@ -120,7 +120,7 @@
                         </div>
                     </form>
 
-                    <div class="card card-body">
+                    {{-- <div class="card card-body">
                         <div class="form-group">
                             <div class="row justify-content-center">
                                 <div class="col-auto">
@@ -128,7 +128,7 @@
                                         @foreach ($images as $image)
                                             <div class="prev-image">
                                                 <img
-                                                    src="{{ rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($image->image_path ?? 'default.jpg', '/') }}">
+                                                    src="{{ 'https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($image->image_path ?? 'default.jpg', '/') }}">
 
                                                 <div class="copy-wrap">
                                                     <span class="copy-text" onclick="copyText(this)">
@@ -144,7 +144,39 @@
                                 </div>
                             </div>
                         </div>
+                    </div> --}}
+
+                    <div class="card card-body">
+                        <div class="form-group">
+                            <div class="row justify-content-center">
+                                <div class="col-auto">
+                                    <div class="bulk-image-row">
+                                        @foreach ($images as $image)
+                                            <div class="prev-image">
+                                                <img
+                                                    src="{{ 'https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev/' . ltrim($image->image_path ?? 'default.jpg', '/') }}">
+
+                                                <div class="copy-wrap">
+                                                    <span class="copy-text" onclick="copyText(this)">
+                                                        {{ $image->image_path }}
+                                                    </span>
+
+                                                    <i class="fa fa-copy copy-icon" onclick="copyIcon(this)"></i>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+
+                                    <div class="mt-4 d-flex justify-content-center">
+                                        {{ $images->links() }}
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
                     </div>
+
+
                 </div>
                 <div class="col-12 mt-2">
                     <div class="card card-body">

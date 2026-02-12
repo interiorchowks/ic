@@ -20,6 +20,7 @@ use App\Http\Controllers\Web\ProductDetailsController;
 use App\Http\Controllers\Web\CouponController;
 use App\Http\Controllers\RazorPayController;
 use App\Http\Controllers\Web\UserWalletController;
+use Illuminate\Support\Facades\Artisan;
 
 Route::get('shiprocket', function(){
     $service = new ShiprocketService;
@@ -140,6 +141,7 @@ Route::group(['namespace' => 'Web','middleware'=>['maintenance_mode']], function
     Route::get('category/{slug}', 'ProductListController@products_1')->name('category');
     Route::get('products_2/', 'ProductListController@products_2')->name('products_2');
     Route::get('/products_2/{brand}', 'ProductListController@products_2')->name('products.by.brand');
+    Route::get('/brand/{brand}', 'ProductListController@products_2')->name('products.by.brand');
     Route::get('top-products', 'ProductListController@top_products')->name('top-products');
     Route::get('deals', 'ProductListController@deal_products')->name('deals');
     Route::get('luxury-products', 'ProductListController@luxe_products')->name('luxury-products');
@@ -476,8 +478,17 @@ Route::get('/mail-test', function () {
 
 Route::get('/env-test', function () {
     return [
-        'MAIL_HOST' => env('MAIL_HOST_CUSTOMER'),
-        'MAIL_USERNAME' => env('MAIL_USERNAME_CUSTOMER'),
+        'MAIL_HOST' => env('MAIL_HOST'),
+        'MAIL_USERNAME' => env('MAIL_USERNAME'),
         'APP_ENV' => env('APP_ENV'),
     ];
+});
+
+Route::get('/clear-cache', function () {
+    Artisan::call('cache:clear');
+    Artisan::call('config:clear');
+    Artisan::call('route:clear');
+    Artisan::call('view:clear');
+
+    return "Sab cache clear ho gaya ✅";
 });

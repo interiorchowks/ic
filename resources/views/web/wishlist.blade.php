@@ -40,7 +40,7 @@
                                 <a href="{{ url('product/' . $wishlist->slug) }}">
                                     <img 
                                     {{-- src="{{ asset('storage/app/public/images/' . $images[0]) }}" --}}
-                                    src="{{ rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . ($images[0] ?? 'default.jpg') }}"
+                                    src="{{'https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ($images[0] ?? 'default.jpg') }}"
                                         alt="{{ $wishlist->name }}" class="product-image rounded-lg"
                                         style="max-width: 100%">
                                 </a>
@@ -121,7 +121,7 @@
 
 
                                         <a href="{{ url('product/' . $item->slug) }}">
-                                            <img src="{{ asset('storage/app/public/images/' . $item->thumbnail_image) }}"
+                                            <img src="{{ 'https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' .  $item->thumbnail_image }}"
                                                 alt="{{ $item->name }}" class="product-image"
                                                 style="max-width: 100%!important;">
                                         </a>

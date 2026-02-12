@@ -169,7 +169,7 @@
                                                             <div class="media">
                                                                 <img 
                                                                 {{-- src="{{ asset('storage/app/public/images/' . $images[0]) }}" --}}
-                                                                src="{{ rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($images[0] ?? 'default.jpg', '/') }}"
+                                                                src="{{ 'https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($images[0] ?? 'default.jpg', '/') }}"
 
                                                                     class="mr-3 rounded-lg" alt="Product Image">
                                                                 <div class="media-body">
@@ -964,7 +964,7 @@
                                                                                 href="{{ url('product/' . $wishlist->slug) }}">
                                                                                 <img 
                                                                                 {{-- src="{{ asset('storage/app/public/images/' . $wishlist->thumbnail_image) }}" --}}
-                                                                                src="{{ rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . ($wishlist->thumbnail_image ?? 'default.jpg') }}"
+                                                                                src="{{ 'https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ($wishlist->thumbnail_image ?? 'default.jpg') }}"
                                                                                     alt="{{ $wishlist->name }}"
                                                                                     class="product-image rounded-lg">
                                                                             </a>
@@ -1063,7 +1063,7 @@
                                                                                         href="{{ url('product/' . $item->slug) }}">
                                                                                         <img 
                                                                                         {{-- src="{{ asset('storage/app/public/images/' . $item->thumbnail_image) }}" --}}
-                                                                                        src="{{ rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . ($item->thumbnail_image ?? 'default.jpg') }}"
+                                                                                        src="{{ 'https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev'  . ($item->thumbnail_image ?? 'default.jpg') }}"
                                                                                             alt="{{ $item->name }}"
                                                                                             class="product-image"
                                                                                             style="max-width: 100%;">
@@ -1137,7 +1137,7 @@
                                                                         <div class="position-relative">
                                                                             <img style="height: 100px;"
                                                                                 {{-- src="{{ asset('storage/app/public/images/' . $images[0]) }}" --}}
-                                                                                src="{{ rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . ($images[0] ?? 'default.jpg') }}"
+                                                                                src="{{ 'https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . ($images[0] ?? 'default.jpg') }}"
                                                                                 class="mr-3"
                                                                                 alt="{{ $cartItem->name }}">
                                                                             {{-- ✅ Checkbox --}}
@@ -1273,9 +1273,6 @@
                                                                     </div>
                                                                 </div>
                                                             </div>
-
-
-
                                                         </div>
                                                     @else
                                                         <div class="col-md-12">
@@ -1571,7 +1568,7 @@
                                                                                         href="{{ url('product/' . $recentItem->slug) }}">
                                                                                         <img 
                                                                                         {{-- src="{{ asset('storage/app/public/images/' . $recentItem->thumbnail_image) }}" --}}
-                                                                                        src="{{ rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . ($recentItem->thumbnail_image ?? 'default.jpg') }}"
+                                                                                        src="{{ 'https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . ($recentItem->thumbnail_image ?? 'default.jpg') }}"
                                                                                             alt="{{ $recentItem->name }}"
                                                                                             class="product-image"
                                                                                             style="max-width: 100%;">

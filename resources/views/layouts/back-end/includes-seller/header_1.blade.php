@@ -46,18 +46,6 @@
                                 width="100">
                         </a>
                         <div class="wishlist del_add">
-
-                            {{-- <a href="javascript:void(0)" title="Choose Delivery Pincode"
-                                style="border-left:1px solid #000; padding-left:15px; height:36px;" data-toggle="modal"
-                                data-target="#pincodeModal">
-                                <div class="icon">
-                                    <span style="font-size:13px;">Deliver to</span>
-                                </div>
-                                <!-- give this span an ID so we can update it dynamically -->
-                                <span id="pincodeDisplay" style="font-size:13px; font-weight:600; margin-bottom:8px;"><i
-                                        class="fa fa-chevron-down" aria-hidden="true"></i>
-                                </span>
-                            </a> --}}
                             <button type="button" title="Choose Delivery Pincode"
                                 style="border-left:1px solid #000; padding-left:15px; height:36px; background:none; border-top:0; border-right:0; border-bottom:0;"
                                 data-toggle="modal" data-target="#pincodeModal">
@@ -140,9 +128,6 @@
                                                 src="{{ asset('/public/website/assets/images/female.webp') }}"
                                                 class="rounded-circle" alt="Profile pic">
                                         @else
-                                            {{-- <img style="width:25px; "
-                                                src="{{ rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($user->image ?? 'default.jpg', '/') }}"
-                                                class="rounded-circle" alt="Profile pic"> --}}
                                                 <i class="fa fa-user" class="rounded-circle" alt="Profile pic"></i>
                                         @endif
                                     </div>
@@ -222,24 +207,6 @@
                         @endphp
 
                         <div class="dropdown cart-dropdown">
-                            {{-- @if ($userId)
-                                <a onclick="window.location.href='{{ url('cart') }}'" class="dropdown-toggle"
-                                    type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
-                                    data-display="static">
-                                @else
-                                    <a href="#" class="dropdown-toggle" data-toggle="modal"
-                                        data-target="#loginModal">
-                            @endif
-
-                            <div class="icon">
-                                <img src="{{ asset('public/website/assets/images/cart.png') }}" alt="Cart"
-                                    width="25">
-                                @if ($cartCount > 0)
-                                    <span class="cart-count badge">{{ $cartCount }}</span>
-                                @endif
-                            </div>
-                            <p>Cart</p>
-                            </a> --}}
                             @if ($userId)
                                 <a href="{{ url('cart') }}" class="dropdown-toggle" aria-label="View Cart"
                                     data-display="static">
@@ -291,8 +258,7 @@
                                                 <figure class="product-image-container">
                                                     <a href="" class="product-image">
                                                         <img 
-                                                        {{-- src="{{ asset('storage/app/public/images/' . $images[0]) }}" --}}
-                                                        src="{{ rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($images[0] ?? 'default.jpg', '/') }}"
+                                                        src="{{ 'https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($images[0] ?? 'default.jpg', '/') }}"
 
                                                             alt="{{ $cartItem->name }}">
                                                     </a>
@@ -334,32 +300,7 @@
                                 style="display: inline-block">product</span></p>
                     </button>
                 </div>
-                <!-- Search Modal -->
-                {{-- <div class="modal fade custom-search-modal" id="searchModal2" tabindex="-1"
-                    aria-labelledby="searchModalLabel" aria-hidden="true">
-                    <div class="modal-dialog"
-                        style="position: fixed; top: 0; left: 50%; transform: translateX(-50%); width: 90%; max-width: 630px;">
-                        <div class="modal-content" style="border-top-left-radius: 0px; border-top-right-radius: 0px;">
-
-                            <!-- Modal Body -->
-                            <div class="modal-body">
-                                <!-- Search Input -->
-                                <div class="custom-search-input">
-                                    <i class="fa-solid fa-magnifying-glass"></i>
-                                    <input type="text" id="searchInputs" placeholder="Search..."
-                                        oninput="hello()">
-
-                                </div> <!-- End of Search Input -->
-                                <div id="list_suggestion"></div>
-
-                                <h6 style="margin-top: 15px;" class="h6">Popular Choices</h6>
-                                <div class="popular-searches">
-                                </div> <!-- End of Popular Searches -->
-                            </div> <!-- End of Modal Body -->
-                        </div> <!-- End of Modal Content -->
-                    </div> <!-- End of Modal Dialog -->
-                </div> <!-- End of Modal --> --}}
-
+              
                 <div class="modal fade custom-search-modal" id="searchModal2" tabindex="-1"
                     aria-labelledby="searchModalLabel" aria-hidden="true">
                     <div class="modal-dialog"
@@ -793,7 +734,7 @@
                                 data-target="#v-pills-{{ $ca->id }}" type="button" role="tab"
                                 aria-controls="v-pills-{{ $ca->id }}"
                                 aria-selected="{{ $loop->first ? 'true' : 'false' }}">
-                                <img src="{{ env('CLOUDFLARE_R2_PUBLIC_URL') }}{{ $ca->icon }}"
+                                <img src="{{ 'https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' }}{{ $ca->icon }}"
                                     alt="{{ $ca->name }}" />
                                 <span>{{ $ca->name }}</span>
                             </button>

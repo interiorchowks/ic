@@ -26,38 +26,282 @@ use function App\CPU\translate;
 
 class ProductListController extends Controller
 {
+    // public function products_1(Request $request, $slug)
+    // {
+    //     /* ================= CATEGORY ================= */
+    //     // $category = DB::table('categories')->where('slug', $slug)->first();
+    //     $category = DB::table('categories')
+    //         ->where('slug', 'LIKE', '%' . $slug . '%')
+    //         ->first();
+
+    //     if (!$category) {
+    //         return response()->view('404', [], 404);
+    //     }
+
+    //     /* ================= SUB / SUB-SUB ================= */
+    //     $query1 = DB::table('categories')->where('sub_parent_id', $category->id);
+    //     $query2 = DB::table('categories')->whereIn('sub_parent_id', function ($q) use ($category) {
+    //         $q->select('id')->from('categories')->where('parent_id', $category->id);
+    //     });
+
+    //     $sub_sub_categories = $query1->union($query2)->get();
+
+    //     if ($sub_sub_categories->isEmpty()) {
+    //         $sub_sub_categories = collect([$category]);
+    //     }
+
+    //     $descendantIds = $sub_sub_categories->pluck('id');
+
+    //     /* ================= BASE PRODUCT QUERY ================= */
+    //     $productsQuery = DB::table('sku_product_new')
+    //         ->join('products', 'sku_product_new.product_id', '=', 'products.id')
+    //         ->join('categories', 'products.sub_sub_category_id', '=', 'categories.id')
+    //         ->leftJoin('key_specification_values as ksv', 'products.id', '=', 'ksv.product_id')
+    //         ->leftjoin('sellers','sku_product_new.seller_id','=','sellers.id')
+    //         ->where('sellers.status','approved')
+    //         ->where('products.status',1)
+    //         ->whereNotNull('sku_product_new.thumbnail_image')
+    //         ->whereIn('products.sub_sub_category_id', $descendantIds)
+    //         ->select(
+    //             'sku_product_new.*',
+    //             'sku_product_new.id as ids',
+    //             'sku_product_new.variation as variations',
+    //             'products.*',
+    //             'sku_product_new.discount as sku_discount',
+    //             'sku_product_new.discount_type as sku_discount_type',
+    //             'categories.specification',
+    //             'categories.key_features',
+    //             'categories.technical_specification',
+    //             'categories.other_details',
+    //             'ksv.specification as ksv_specification',
+    //             'ksv.key_features as ksv_key_features',
+    //             'ksv.technical_specification as ksv_technical_specification',
+    //             'ksv.other_details as ksv_other_details',
+    //             'sellers.status',
+    //             'products.status'
+    //         );
+
+    //     /* ================= PRODUCT TYPE FILTER ================= */
+    //     $selectedProductTypes = $request->input('filters.product-type', []);
+
+    //     if (!empty($selectedProductTypes)) {
+    //         $typeIds = $sub_sub_categories
+    //             ->whereIn('name', $selectedProductTypes)
+    //             ->pluck('id')
+    //             ->toArray();
+
+    //         if ($typeIds) {
+    //             $productsQuery->whereIn('products.sub_sub_category_id', $typeIds);
+    //         }
+    //     }
+
+    //     /* ================= PRICE RANGE ================= */
+    //     $priceCollection = (clone $productsQuery)->get();
+
+    //     $priceRange = [
+    //         'min' => floor($priceCollection->min(fn($i) => (float)$i->listed_price) ?? 0),
+    //         'max' => ceil($priceCollection->max(fn($i) => (float)$i->listed_price) ?? 0),
+    //     ];
+
+    //     $minPrice = (float)$request->input('min_price', $priceRange['min']);
+    //     $maxPrice = (float)$request->input('max_price', $priceRange['max']);
+
+    //     if ($minPrice > $maxPrice) {
+    //         [$minPrice, $maxPrice] = [$maxPrice, $minPrice];
+    //     }
+
+    //     $productsQuery->whereRaw("
+    //         (
+    //             CASE 
+    //                 WHEN sku_product_new.discount_type = 'flat'
+    //                     THEN sku_product_new.variant_mrp - sku_product_new.discount
+    //                 WHEN sku_product_new.discount_type = 'percent'
+    //                     THEN sku_product_new.variant_mrp - (sku_product_new.variant_mrp * sku_product_new.discount / 100)
+    //                 ELSE sku_product_new.variant_mrp
+    //             END
+    //         ) BETWEEN ? AND ?
+    //     ", [$minPrice, $maxPrice]);
+
+    //     /* ================= SIZE & SORT ================= */
+    //     foreach ($request->input('filters', []) as $key => $values) {
+
+    //         if ($key === 'size') {
+    //             $productsQuery->whereIn(
+    //                 'sku_product_new.sizes',
+    //                 array_map(fn($v) => str_replace(' ', '', $v), $values)
+    //             );
+    //         }
+
+    //         if ($key === 'sort') {
+    //             foreach ($values as $sortVal) {
+    //                 if ($sortVal === 'price_asc') {
+    //                     $productsQuery->orderByRaw('CAST(sku_product_new.variant_mrp AS DECIMAL(10,2)) ASC');
+    //                 } elseif ($sortVal === 'price_desc') {
+    //                     $productsQuery->orderByRaw('CAST(sku_product_new.variant_mrp AS DECIMAL(10,2)) DESC');
+    //                 } elseif ($sortVal === 'newest') {
+    //                     $productsQuery->orderBy('products.created_at', 'DESC');
+    //                 } elseif ($sortVal === 'discounted') {
+    //                     $productsQuery->where('sku_product_new.discount', '>', 0);
+    //                 }
+    //             }
+    //         }
+    //     }
+
+    //     /* ================= PAGINATION ================= */
+    //     $products = $productsQuery->paginate(25);
+    //     if ($products->isEmpty()) {
+    //         return response()->view('404', [], 404);
+    //     }
+
+    //     /* ===========================================================
+    //     🔥🔥 MAIN FIX: SPEC COLLECTION AFTER PRODUCT-TYPE FILTER
+    //     =========================================================== */
+    //     $specCollection = (clone $productsQuery)->get();
+
+    //     /* ================= STATIC FILTERS ================= */
+    //     $sizes = $specCollection->pluck('sizes')->filter()->unique()->map(
+    //         fn($s) => $s . ' (' . $specCollection->where('sizes', $s)->count() . ')'
+    //     );
+
+    //     $productTypeCounts = $sub_sub_categories->map(
+    //         fn($cat) => $cat->name . ' (' .
+    //             $specCollection->where('sub_sub_category_id', $cat->id)->count() . ')'
+    //     );
+
+    //     $filters = [
+    //         'product-type' => [
+    //             'title' => 'Product Type',
+    //             'options' => $productTypeCounts->values()
+    //         ],
+    //         'size' => [
+    //             'title' => 'Size',
+    //             'options' => $sizes->values()
+    //         ],
+    //         'sort' => [
+    //             'title' => 'Sort By',
+    //             'options' => [
+    //                 'price_asc' => 'Price: Low → High',
+    //                 'price_desc' => 'Price: High → Low',
+    //                 'newest' => 'Newest First',
+    //                 'discounted' => 'Discounted Products',
+    //             ]
+    //         ],
+    //     ];
+
+    //     /* ================= 🔥 DYNAMIC SPECIFICATIONS ================= */
+    //     $dynamic = [];
+
+    //     foreach ($specCollection as $row) {
+
+    //         $map = [
+    //             'specification' => 'ksv_specification',
+    //             'key_features' => 'ksv_key_features',
+    //             'technical_specification' => 'ksv_technical_specification',
+    //             'other_details' => 'ksv_other_details',
+    //         ];
+
+    //         foreach ($map as $catCol => $ksvCol) {
+
+    //             $labels = $row->{$catCol}
+    //                 ? array_map('trim', explode(',', $row->{$catCol}))
+    //                 : [];
+
+    //             $values = json_decode($row->{$ksvCol} ?? '[]', true) ?: [];
+
+    //             foreach ($labels as $i => $label) {
+
+    //                 $val = $values[$i] ?? null;
+    //                 if (!$label || !$val || in_array($val, ['', 'N/A'])) continue;
+
+    //                 $specSlug = 'spec_' . Str::slug($label);
+
+    //                 $dynamic[$specSlug]['title'] = $label;
+    //                 $dynamic[$specSlug]['options'][$val]['count'] =
+    //                     ($dynamic[$specSlug]['options'][$val]['count'] ?? 0) + 1;
+    //             }
+    //         }
+    //     }
+
+    //     foreach ($dynamic as &$block) {
+    //         $block['options'] = collect($block['options'])
+    //             ->map(fn($item, $val) => $val . ' (' . $item['count'] . ')')
+    //             ->values();
+    //     }
+
+    //     /* ================= COLOR FILTER ================= */
+    //     $colors = [];
+
+    //     foreach ($specCollection as $row) {
+
+    //         $keys = array_map('trim', explode(',', $row->specification ?? ''));
+    //         $vals = json_decode($row->ksv_specification ?? '[]', true);
+    //         $idx = array_search('Color', $keys);
+
+    //         if ($idx === false || empty($vals[$idx])) continue;
+
+    //         $name = trim($vals[$idx]);
+    //         $code = json_decode($row->colors ?? '[]', true)[0] ?? '#000';
+
+    //         $colors[$name]['code'] = $code;
+    //         $colors[$name]['count'] = ($colors[$name]['count'] ?? 0) + 1;
+    //     }
+
+    //     $dynamic['color'] = [
+    //         'title' => 'Color',
+    //         'options' => collect($colors)->map(
+    //             fn($v, $k) => "{$k} ({$v['code']}) ({$v['count']})"
+    //         )->values()
+    //     ];
+
+    //     $filters = array_merge($filters, $dynamic);
+
+    //     /* ================= VIEW ================= */
+    //     return view('web.productList', [
+    //         'subCategory' => $category,
+    //         'sub_sub_categories' => $sub_sub_categories,
+    //         'products' => $products,
+    //         'filters' => $filters,
+    //         'priceRange' => $priceRange,
+    //         'slug' => $slug,
+    //     ]);
+    // }
+
+
     public function products_1(Request $request, $slug)
     {
-        /* ================= CATEGORY ================= */
-        $category = DB::table('categories')->where('slug', $slug)->first();
-        if (!$category) {
-            return response()->view('404', [], 404);
+        $term = trim(str_replace('-', ' ', $slug));
+
+        $category = DB::table('categories')
+            ->where('slug', 'LIKE', '%' . $slug . '%')
+            ->first();
+
+        if ($category) {
+            $query1 = DB::table('categories')->where('sub_parent_id', $category->id);
+
+            $query2 = DB::table('categories')->whereIn('sub_parent_id', function ($q) use ($category) {
+                $q->select('id')->from('categories')->where('parent_id', $category->id);
+            });
+
+            $sub_sub_categories = $query1->union($query2)->get();
+
+            if ($sub_sub_categories->isEmpty()) {
+                $sub_sub_categories = collect([$category]);
+            }
+
+            $descendantIds = $sub_sub_categories->pluck('id');
+        } else {
+            $sub_sub_categories = collect([]);
+            $descendantIds = collect([]);
         }
-
-        /* ================= SUB / SUB-SUB ================= */
-        $query1 = DB::table('categories')->where('sub_parent_id', $category->id);
-        $query2 = DB::table('categories')->whereIn('sub_parent_id', function ($q) use ($category) {
-            $q->select('id')->from('categories')->where('parent_id', $category->id);
-        });
-
-        $sub_sub_categories = $query1->union($query2)->get();
-
-        if ($sub_sub_categories->isEmpty()) {
-            $sub_sub_categories = collect([$category]);
-        }
-
-        $descendantIds = $sub_sub_categories->pluck('id');
-
-        /* ================= BASE PRODUCT QUERY ================= */
+        
         $productsQuery = DB::table('sku_product_new')
             ->join('products', 'sku_product_new.product_id', '=', 'products.id')
             ->join('categories', 'products.sub_sub_category_id', '=', 'categories.id')
             ->leftJoin('key_specification_values as ksv', 'products.id', '=', 'ksv.product_id')
-            ->leftjoin('sellers','sku_product_new.seller_id','=','sellers.id')
-            ->where('sellers.status','approved')
-            ->where('products.status',1)
+            ->leftJoin('sellers', 'sku_product_new.seller_id', '=', 'sellers.id')
+            ->where('sellers.status', 'approved')
+            ->where('products.status', 1)
             ->whereNotNull('sku_product_new.thumbnail_image')
-            ->whereIn('products.sub_sub_category_id', $descendantIds)
             ->select(
                 'sku_product_new.*',
                 'sku_product_new.id as ids',
@@ -77,10 +321,18 @@ class ProductListController extends Controller
                 'products.status'
             );
 
-        /* ================= PRODUCT TYPE FILTER ================= */
+        if ($category) {
+            $productsQuery->whereIn('products.sub_sub_category_id', $descendantIds);
+        } else {
+            $productsQuery->where(function ($q) use ($term) {
+                $q->where('products.name', 'LIKE', '%' . $term . '%')
+                ->orWhere('categories.slug', 'LIKE', '%' . $term . '%');
+            });
+        }
+
         $selectedProductTypes = $request->input('filters.product-type', []);
 
-        if (!empty($selectedProductTypes)) {
+        if ($category && !empty($selectedProductTypes)) {
             $typeIds = $sub_sub_categories
                 ->whereIn('name', $selectedProductTypes)
                 ->pluck('id')
@@ -91,7 +343,6 @@ class ProductListController extends Controller
             }
         }
 
-        /* ================= PRICE RANGE ================= */
         $priceCollection = (clone $productsQuery)->get();
 
         $priceRange = [
@@ -118,7 +369,6 @@ class ProductListController extends Controller
             ) BETWEEN ? AND ?
         ", [$minPrice, $maxPrice]);
 
-        /* ================= SIZE & SORT ================= */
         foreach ($request->input('filters', []) as $key => $values) {
 
             if ($key === 'size') {
@@ -143,18 +393,13 @@ class ProductListController extends Controller
             }
         }
 
-        /* ================= PAGINATION ================= */
         $products = $productsQuery->paginate(25);
         if ($products->isEmpty()) {
             return response()->view('404', [], 404);
         }
 
-        /* ===========================================================
-        🔥🔥 MAIN FIX: SPEC COLLECTION AFTER PRODUCT-TYPE FILTER
-        =========================================================== */
         $specCollection = (clone $productsQuery)->get();
 
-        /* ================= STATIC FILTERS ================= */
         $sizes = $specCollection->pluck('sizes')->filter()->unique()->map(
             fn($s) => $s . ' (' . $specCollection->where('sizes', $s)->count() . ')'
         );
@@ -184,7 +429,6 @@ class ProductListController extends Controller
             ],
         ];
 
-        /* ================= 🔥 DYNAMIC SPECIFICATIONS ================= */
         $dynamic = [];
 
         foreach ($specCollection as $row) {
@@ -224,7 +468,6 @@ class ProductListController extends Controller
                 ->values();
         }
 
-        /* ================= COLOR FILTER ================= */
         $colors = [];
 
         foreach ($specCollection as $row) {
@@ -251,7 +494,6 @@ class ProductListController extends Controller
 
         $filters = array_merge($filters, $dynamic);
 
-        /* ================= VIEW ================= */
         return view('web.productList', [
             'subCategory' => $category,
             'sub_sub_categories' => $sub_sub_categories,
@@ -259,8 +501,13 @@ class ProductListController extends Controller
             'filters' => $filters,
             'priceRange' => $priceRange,
             'slug' => $slug,
+            'searchTerm' => $term,
         ]);
     }
+
+
+
+
 
     public function search_product(Request $request)
     {

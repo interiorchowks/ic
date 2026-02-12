@@ -94,8 +94,7 @@ class RegisterController extends Controller
                 'data' => $data
             ]);
         }
-
-        // POST logic
+        
         $this->validate($request, [
             'shop_name'     => 'required',
             'shop_address'  => 'required',
@@ -112,28 +111,25 @@ class RegisterController extends Controller
             $shop->seller_id = $request->seller_id;
         }
         if (strlen($request->gst) === 15) {
-            $pan = substr($request->gst, 2, 10);  // start from index 2, take 10 characters
+            $pan = substr($request->gst, 2, 10);
         } else {
-            $pan = null; // or handle error
+            $pan = null;
         }
 
         $seller = Seller::find($request->seller_id);
 
         $shop->name         = $request->shop_name;
-        $shop->address      = $request->shop_address;     // use `address` consistently
+        $shop->address      = $request->shop_address;
         $shop->country      = 'India';
         $shop->acc_no       = $request->acc_no;
         $shop->bank_name    = $request->bank_name;
         $shop->bank_holder_name = $request->name_at_bank;
         $shop->ifsc         = $request->ifsc;
-        $shop->gst_no        = $request->gst;              // fixed field name
+        $shop->gst_no        = $request->gst;
         $shop->pan           = substr($request->gst, 2, 10);;
         $shop->contact      = $seller->phone ?? null;
-        // dd($request->all());
-
         $shop->save();
 
-        // Send onboarding mail
         Mail::to($seller->email)->send(new \App\Mail\SellerOnboardingMail($seller)); 
 
         Toastr::success('<strong>Congratulations!</strong> Shop registered successfully!');
@@ -150,17 +146,14 @@ class RegisterController extends Controller
         ]);
 
         $shop = Shop::where('seller_id',$request->seller_id)->first();
-       // Upload GST Certificate
         $gstCertFile = $request->file('gst_cert_image');
         $gstCertExtension = strtolower($gstCertFile->getClientOriginalExtension());
         $shop->gst_cert_image = ImageManager::upload('shop/', $gstCertExtension, $gstCertFile);
         
-        // Upload PAN Image
         $panImageFile = $request->file('pan_image');
         $panImageExtension = strtolower($panImageFile->getClientOriginalExtension());
         $shop->pan_image = ImageManager::upload('shop/', $panImageExtension, $panImageFile);
         
-        // Upload Cheque Image
         $chequeImageFile = $request->file('cheque');
         $chequeImageExtension = strtolower($chequeImageFile->getClientOriginalExtension());
         $shop->cheque_image = ImageManager::upload('shop/', $chequeImageExtension, $chequeImageFile);
@@ -184,11 +177,9 @@ class RegisterController extends Controller
 
         
         if($seller->status == 'approved'){
-            // Toastr::success('Shop apply successfully!');
             Toastr::success('<strong>Congratulations!</strong> Your registration has been completed successfully. Now you can <strong>LOGIN</strong> and start your seller journey with us.');
              return back();
          }else{
-             //Toastr::success('Shop apply successfully!');
              Toastr::success('<strong>Congratulations!</strong> Your registration has been completed successfully. Now you can <strong>LOGIN</strong> and start your seller journey with us.');
  
              return redirect()->route('seller.auth.seller-login');
@@ -204,6 +195,7 @@ class RegisterController extends Controller
         if ($seller == null) {
         session()->forget('otp_send');
          $otp = rand(1111,9999);
+        //  print_r($otp);
          session()->put('otp_send', $otp);
           $curl = curl_init();
             curl_setopt_array($curl, array(
@@ -221,6 +213,7 @@ class RegisterController extends Controller
               ),
             ));
             $response = curl_exec($curl);
+            // dd($response);
             curl_close($curl);
           
             if($response){

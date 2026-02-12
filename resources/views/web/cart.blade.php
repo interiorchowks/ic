@@ -151,7 +151,7 @@ a.btn.btn-primary.saving.mt-2 {
                 <div class="position-relative">
                     <img class="cart-img" 
                     {{-- src="{{ asset('storage/app/public/images/' . $images[0]) }}"  --}}
-                    src="{{ rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . ($images[0] ?? 'default.jpg') }}"
+                    src="{{ 'https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($images[0] ?? 'default.jpg', '/') }}"
                     class="mr-3"
                         alt="{{ $cartItem->name }}">
                     {{-- ✅ Checkbox --}}

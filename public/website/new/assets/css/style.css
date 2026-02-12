@@ -8579,15 +8579,6 @@ small.form-text {
     color: #eaeaea
 }
 
-.modal-backdrop {
-    background-color: #2e6cb2;
-    display: none !important
-}
-
-.modal-backdrop.show {
-    opacity: .7
-}
-
 .modal-body .close {
     position: absolute;
     right: 1.5rem;
@@ -27681,15 +27672,6 @@ small.form-text {
     color: #eaeaea
 }
 
-.modal-backdrop {
-    background-color: #2e6cb2;
-    display: none !important
-}
-
-.modal-backdrop.show {
-    opacity: .7
-}
-
 .modal-body .close {
     position: absolute;
     right: 1.5rem;
@@ -36414,11 +36396,6 @@ a.regular-del:hover {
         object-position: left
     }
 
-    #loginModal .modal-dialog {
-        width: calc(100% - 50px);
-        margin: 20px auto
-    }
-
     .mt-330-minus {
         margin-top: -330px !important
     }
@@ -37198,27 +37175,10 @@ body.modal-open::before {
     z-index: 1040
 }
 
-.slide-section {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    transition: .5s ease-in-out;
-    opacity: 0;
-    transform: translateX(100%);
-    z-index: 0
-}
-
 .slide-section.active {
     opacity: 1;
     transform: translateX(0);
     z-index: 1
-}
-
-.slide-section.out-left {
-    transform: translateX(-100%);
-    opacity: 0;
-    z-index: 0
 }
 
 .dot-nav {
@@ -37443,10 +37403,6 @@ ul.faq_list {
     margin-bottom: 8px
 }
 
-.modal-body .row.otpBoxAlign {
-    flex-direction: row
-}
-
 .affix {
     top: 20px
 }
@@ -37578,12 +37534,6 @@ ul.faq_list {
         min-height: 250px
     }
 
-    .header-intro-clearance div.icon,
-    .loginMdlRespo .modal-dialog-centered.modal-dialog-scrollable,
-    figure.product-media {
-        height: unset
-    }
-
     .loginMdlRespo .modal-body,
     .walletFaq {
         padding: 0
@@ -37605,11 +37555,6 @@ ul.faq_list {
         height: 32px;
         padding: .25rem .5rem;
         font-size: 1.2rem
-    }
-
-    .loginMdlRespo .slide-section .form-control.otp-input {
-        width: 36px;
-        text-align: center
     }
 
     .loginMdlRespo .agreeFont {

@@ -829,7 +829,7 @@
                                                 <h5>Product Details</h5>
                                             </div>
                                             <div class="pro-desc">
-                                                <img src="{{ 'https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($images[0] ?? 'default.jpg', '/') }}"
+                                                <img src="{{ rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($images[0] ?? 'default.jpg', '/') }}"
                                                     class="img-fluid" alt="pro-img">
                                                 <div class="ml-3">
                                                     <a href="{{ url('product/' . $cart->slug) }}">
@@ -1332,7 +1332,7 @@
                                     <div class="mobProDetails">
                                         <h6 class="proHeading">Product Details</h6>
                                         <div class="d-flex align-items-start">
-                                            <img src="{{ 'https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($images[0] ?? 'default.jpg', '/') }}"
+                                            <img src="{{ rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($images[0] ?? 'default.jpg', '/') }}"
                                                 class="img-fluid" alt="pro-img">
                                             <div class="ml-3">
                                                 <a href="{{ url('product/' . $cart->slug) }}">
@@ -1411,25 +1411,21 @@
                                 @endif
 
                                 @if ($coupon_discount->count() > 1)
-                                    <!-- Button trigger modal -->
-                                    <button type="button" class="btn viewOffBtn" data-toggle="modal"
-                                        data-target="#couponsModal">
-                                        View More Coupon codes<i class="fa fa-arrow-right" aria-hidden="true"></i>
-                                    </button>
-
-                                    <!-- Modal -->
-                                    <div class="modal couponsModal fade" id="couponsModal" tabindex="-1"
-                                        aria-labelledby="couponsModalLabel" aria-hidden="true">
-                                        <div class="modal-dialog">
-                                            <div class="modal-content">
-                                                <div class="modal-header">
-                                                    <h6 class="modal-title" id="couponsModalLabel">Coupons</h6>
-                                                    <button type="button" class="close" data-dismiss="modal"
-                                                        aria-label="Close">
-                                                        <span aria-hidden="true">&times;</span>
+                                    <div id="accordion">
+                                        <div class="card">
+                                            <div class="card-header" id="headingMobileOne">
+                                                <h5 class="mb-0">
+                                                    <button class="btn viewOffBtn collapsed" data-toggle="collapse"
+                                                        data-target="#collapseMobileOne" aria-expanded="false"
+                                                        aria-controls="collapseMobileOne">
+                                                        View More Coupon codes<i class="fa fa-arrow-right"
+                                                            aria-hidden="true"></i>
                                                     </button>
-                                                </div>
-                                                <div class="modal-body">
+                                                </h5>
+                                            </div>
+                                            <div id="collapseMobileOne" class="collapse"
+                                                aria-labelledby="headingMobileOne" data-parent="#accordion">
+                                                <div class="card-body">
                                                     @foreach ($coupon_discount->skip(1) as $mCoupon)
                                                         <div class="offerCoupWrapper">
                                                             <div class="offCoupLeftWrap">
@@ -2398,20 +2394,19 @@
                     <div class="row g-3">
                         <div class="col-md-12">
                             <button class="btn btnEdit">Add a new address<i
-                                    class="fas fa-plus ml-1 mr-0 bg-white"></i></button>
+                                    class="fas fa-plus ml-1 bg-white"></i></button>
                             <div class="selAddWrapper">
                                 <div class="custom_radio">
                                     @if (!empty($mobileAddresses) && count($mobileAddresses) > 0)
                                         @foreach ($mobileAddresses as $key => $addres)
-                                            {{-- @dd($addres); --}}
+                                        {{-- @dd($addres); --}}
                                             <div class="form-group position-relative">
                                                 <div class="form-check text-right">
                                                     <input type="radio" name="selectAddress"
                                                         id="selectAddress{{ $key + 1 }}" class="address"
                                                         value="{{ $addres->id ?? $key + 1 }}"
                                                         {{ $addres->is_selected == 1 ? 'checked' : '' }}>
-                                                    <label for="selectAddress{{ $key + 1 }}"
-                                                        {{ $addres->is_selected == 1 ? 'checked' : '' }}></label>
+                                                    <label for="selectAddress{{ $key + 1 }}" {{ $addres->is_selected == 1 ? 'checked' : '' }}></label>
                                                 </div>
 
                                                 <div class="d-flex align-items-center justify-content-between mb-1">
@@ -2444,7 +2439,7 @@
                                         placeholder="Enter Name" required>
                                     <input type="text" name="phone" class="form-control" placeholder="Phone No."
                                         required>
-                                    <textarea name="address" class="form-control" rows="10" placeholder="Address" required></textarea>
+                                    <textarea name="address" class="form-control" placeholder="Address" required></textarea>
                                     <input type="text" name="landmark" class="form-control"
                                         placeholder="Landmark (optional)">
                                     <input type="text" name="zip" class="form-control" placeholder="Pincode"
@@ -2485,7 +2480,7 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="submit" class="btn btnEdit">Add</button>
+                    <button type="submit" class="btn btn-primary">Update</button>
                 </div>
             </div>
         </div>
@@ -2501,8 +2496,8 @@
         }
 
         .chngeAddrFormWrapper.p-3 {
-            overflow: scroll;
-        }
+    overflow: scroll;
+}
     </style>
 
     <script>

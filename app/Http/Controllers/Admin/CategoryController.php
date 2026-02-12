@@ -115,7 +115,8 @@ class CategoryController extends Controller
     public function edit(Request $request, $id)
     {
         $category = Category::with('translations')->withoutGlobalScopes()->find($id);
-        return view('admin-views.category.category-edit', compact('category'));
+        $subsubcategory = Category::where('sub_parent_id', '!=', 0)->find($id);
+        return view('admin-views.category.category-edit', compact('category','subsubcategory'));
     }
 
     public function update(Request $request)

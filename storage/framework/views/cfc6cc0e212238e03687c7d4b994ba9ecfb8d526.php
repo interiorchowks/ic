@@ -44,8 +44,6 @@
                                 width="100">
                         </a>
                         <div class="wishlist del_add">
-
-                            
                             <button type="button" title="Choose Delivery Pincode"
                                 style="border-left:1px solid #000; padding-left:15px; height:36px; background:none; border-top:0; border-right:0; border-bottom:0;"
                                 data-toggle="modal" data-target="#pincodeModal">
@@ -128,7 +126,6 @@
                                                 src="<?php echo e(asset('/public/website/assets/images/female.webp')); ?>"
                                                 class="rounded-circle" alt="Profile pic">
                                         <?php else: ?>
-                                            
                                                 <i class="fa fa-user" class="rounded-circle" alt="Profile pic"></i>
                                         <?php endif; ?>
                                     </div>
@@ -208,7 +205,6 @@
                         ?>
 
                         <div class="dropdown cart-dropdown">
-                            
                             <?php if($userId): ?>
                                 <a href="<?php echo e(url('cart')); ?>" class="dropdown-toggle" aria-label="View Cart"
                                     data-display="static">
@@ -263,8 +259,7 @@
                                                 <figure class="product-image-container">
                                                     <a href="" class="product-image">
                                                         <img 
-                                                        
-                                                        src="<?php echo e(rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($images[0] ?? 'default.jpg', '/')); ?>"
+                                                        src="<?php echo e('https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($images[0] ?? 'default.jpg', '/')); ?>"
 
                                                             alt="<?php echo e($cartItem->name); ?>">
                                                     </a>
@@ -306,9 +301,7 @@
                                 style="display: inline-block">product</span></p>
                     </button>
                 </div>
-                <!-- Search Modal -->
-                
-
+              
                 <div class="modal fade custom-search-modal" id="searchModal2" tabindex="-1"
                     aria-labelledby="searchModalLabel" aria-hidden="true">
                     <div class="modal-dialog"
@@ -742,7 +735,7 @@
                                 data-target="#v-pills-<?php echo e($ca->id); ?>" type="button" role="tab"
                                 aria-controls="v-pills-<?php echo e($ca->id); ?>"
                                 aria-selected="<?php echo e($loop->first ? 'true' : 'false'); ?>">
-                                <img src="<?php echo e(env('CLOUDFLARE_R2_PUBLIC_URL')); ?><?php echo e($ca->icon); ?>"
+                                <img src="<?php echo e('https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev'); ?><?php echo e($ca->icon); ?>"
                                     alt="<?php echo e($ca->name); ?>" />
                                 <span><?php echo e($ca->name); ?></span>
                             </button>

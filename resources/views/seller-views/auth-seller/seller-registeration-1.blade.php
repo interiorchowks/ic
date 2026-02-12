@@ -160,10 +160,11 @@
 
                 return false;
             }
+        
 
             $.ajax({
-                url: "{{ route('shop.send_otp') }}", // Replace with your PHP script URL{{ route('shop.apply') }}
-                type: 'POST', // or 'GET' depending on your PHP script
+                url: "{{ route('shop.send_otp') }}",
+                type: 'POST',
                 data: data,
                 success: function(response) {
                     if (response == 1) {

@@ -54,14 +54,7 @@ class ForgotPasswordController extends Controller
                     'created_at' => now(),
                 ]);
                 $reset_url = url('/') . '/seller/auth/reset-passwords?token=' . $token;
-                // Mail::to($seller['email'])->send(new \App\Mail\PasswordResetMail($reset_url));
-                Mail::raw('Final SMTP test', function ($m) {
-    $m->to('suramyainteriorchowk@gmail.com')
-      ->from('support@interiorchowk.com', 'InteriorChowk Support')
-      ->subject('SMTP Working');
-});
-
-                
+                Mail::to($seller['email'])->send(new \App\Mail\PasswordResetMail($reset_url,$seller));                
     
                 Toastr::success('Check your email. Password reset url sent.');
                 return back();

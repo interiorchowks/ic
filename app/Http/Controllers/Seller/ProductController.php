@@ -35,6 +35,14 @@ use Maatwebsite\Excel\Facades\Excel;
 use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 use Maatwebsite\Excel\Concerns\FromArray;
 use Maatwebsite\Excel\Concerns\WithTitle;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+
+
 
 class ProductController extends Controller
 {
@@ -1547,479 +1555,1022 @@ class ProductController extends Controller
     }
 
 
-    public function bulk_import_data(Request $request)
-    {
-        try {
-            $spreadsheet = IOFactory::load($request->file('products_file')->getRealPath());
-            $sheet = $spreadsheet->getActiveSheet();
-            $data = $sheet->toArray(null, true, true, true);
+    // public function bulk_import_data(Request $request)
+    // {
+    //     try {
+    //         $spreadsheet = IOFactory::load($request->file('products_file')->getRealPath());
+    //         $sheet = $spreadsheet->getActiveSheet();
+    //         $data = $sheet->toArray(null, true, true, true);
 
-            $headers    = array_map('trim', $data[1]);
-            $dimheaders = array_map('trim', $data[2]);
+    //         $headers    = array_map('trim', $data[1]);
+    //         $dimheaders = array_map('trim', $data[2]);
 
-            $rows       = [];
-            $dimensions = [];
+    //         $rows       = [];
+    //         $dimensions = [];
 
-            foreach (array_slice($data, 3) as $index => $row) {
-                $clean = array_map('trim', $row);
+    //         foreach (array_slice($data, 3) as $index => $row) {
+    //             $clean = array_map('trim', $row);
 
-                if (count($clean) == count($headers)) {
-                    $rows[$index] = array_combine($headers, $clean);
-                }
+    //             if (count($clean) == count($headers)) {
+    //                 $rows[$index] = array_combine($headers, $clean);
+    //             }
 
-                if (count($clean) == count($dimheaders)) {
-                    $dimensions[$index] = array_combine($dimheaders, $clean);
-                }
-            }
-        } catch (\Exception $e) {
-            Toastr::error('File Error: ' . $e->getMessage());
+    //             if (count($clean) == count($dimheaders)) {
+    //                 $dimensions[$index] = array_combine($dimheaders, $clean);
+    //             }
+    //         }
+    //     } catch (\Exception $e) {
+    //         Toastr::error('File Error: ' . $e->getMessage());
+    //         return back();
+    //     }
+
+    //     $dbColors = DB::table('colors')->pluck('code', 'name')->toArray();
+
+    //     $groupedProducts = [];
+
+    //     foreach ($rows as $i => $row) {
+    //         if (empty($row['Product Title'])) continue;
+
+    //         $title     = trim($row['Product Title']);
+    //         $colorName = trim($row['Colour'] ?? '');
+    //         $size      = trim($row['Size'] ?? '');
+
+    //         $dimRow = $dimensions[$i] ?? [];
+
+    //         $packaging_dimensions = [
+    //             'length'  => (float)($dimRow['Length (CM)'] ?? 0),
+    //             'breadth' => (float)($dimRow['Breadth (CM)'] ?? 0),
+    //             'height'  => (float)($dimRow['Height (CM)'] ?? 0),
+    //             'weight'  => (float)($dimRow['Weight (KG)'] ?? 0),
+    //         ];
+
+    //         $colorNames = [
+    //             'Colour_Name'        => ($dimRow['Colour Name'] ?? 0),
+    //             'Rename_Colour_Name' => ($dimRow['Rename Colour Name'] ?? 0),
+    //         ];
+
+    //         // Description + Bullet Points yahi se aa rahe hain (dimRow)
+    //         $descriptionParts = [
+    //             'Description'     => $dimRow['Description']     ?? null,
+    //             'Bullet Point 1'  => $dimRow['Bullet Point 1']  ?? null,
+    //             'Bullet Point 2'  => $dimRow['Bullet Point 2']  ?? null,
+    //             'Bullet Point 3'  => $dimRow['Bullet Point 3']  ?? null,
+    //             'Bullet Point 4'  => $dimRow['Bullet Point 4']  ?? null,
+    //             'Bullet Point 5'  => $dimRow['Bullet Point 5']  ?? null,
+    //         ];
+
+    //         $colorCode = $dbColors[$colorName] ?? '#000000';
+
+    //         if (!isset($groupedProducts[$title])) {
+    //             $groupedProducts[$title] = [
+    //                 'product_data' => [
+    //                     'title'               => $title,
+    //                     'brand'               => $row['Brands'] ?? null,
+    //                     'description'         => $row['Product Description'] ?? null,
+    //                     'description_parts'   => $descriptionParts,        // 👈 store kiya
+    //                     'packaging_dimensions'=> $packaging_dimensions,
+    //                     'RenameColour'        => $colorNames,
+    //                     'full_row'            => $row,
+    //                 ],
+    //                 'variations'  => [],
+    //                 'colors'      => [],
+    //                 'color_names' => [],
+    //             ];
+    //         }
+
+    //         $variationType = trim($colorName . '-' . $size);
+
+    //         $mrp          = (float)($row['MRP (INR)'] ?? 0);
+    //         $tax          = (float)($row['Tax'] ?? 0);
+    //         $discountType = $row['Discount Type'] ?? null;
+    //         $discountVal  = $row['Discount'] ?? 0;
+
+    //         $discountAmount = ($mrp * $tax) / 100;
+
+    //         $listedPrice = 0;
+    //         if ($discountType === 'percent') {
+    //             $listedPrice = $mrp - (($mrp * (float)$discountVal) / 100);
+    //         } elseif ($discountType === 'flat') {
+    //             $listedPrice = $mrp - (float)$discountVal;
+    //         } else {
+    //             $listedPrice = (float)($variation['price'] ?? 0);
+    //         }
+
+    //         $groupedProducts[$title]['variations'][] = [
+    //             'type'          => $variationType,
+    //             'price'         => $listedPrice,
+    //             'sku'           => $row['Seller SKU ID'] ?? null,
+    //             'qty'           => (int)($row['Stock'] ?? 0),
+    //             'size'          => $size,
+    //             '_full_row'     => $row,
+    //             '_dimensions'   => $packaging_dimensions,
+    //             '_color_name'   => $colorName,
+    //             '_color_rename' => $colorNames,
+    //             '_color_code'   => $colorCode,
+    //             '_size'         => $size,
+    //         ];
+
+    //         if (!in_array($colorCode, $groupedProducts[$title]['colors'])) {
+    //             $groupedProducts[$title]['colors'][] = $colorCode;
+    //         }
+    //         if (!in_array($colorName, $groupedProducts[$title]['color_names'])) {
+    //             $groupedProducts[$title]['color_names'][] = $colorName;
+    //         }
+    //     }
+
+    //     $countRow = 0;
+
+    //     DB::beginTransaction();
+    //     try {
+    //         foreach ($groupedProducts as $title => $data) {
+    //             $row = $data['product_data']['full_row'];
+    //             $dim = $data['product_data']['packaging_dimensions'];
+
+    //             $category_id = DB::table('categories')
+    //                 ->where('name', $row['Product Category'] ?? null)
+    //                 ->where('parent_id', 0)
+    //                 ->value('id');
+
+    //             $sub_category_id = DB::table('categories')
+    //                 ->where('name', $row['Product Sub Category'] ?? null)
+    //                 ->where('parent_id', $category_id)
+    //                 ->value('id');
+
+    //             $sub_category_row = DB::table('categories')->where('id', $sub_category_id)->first();
+    //             $commission_fee   = $sub_category_row->commission ?? 0;
+
+    //             $sub_sub_category_id = DB::table('categories')
+    //                 ->where('name', $row['Product Sub Sub Category'] ?? null)
+    //                 ->where('sub_parent_id', $sub_category_id)
+    //                 ->value('id');
+
+    //             $brand_id = DB::table('brands')
+    //                 ->where('name', $row['Brands'] ?? null)
+    //                 ->value('id');
+
+    //             $replacement = '';
+    //             if (!empty($row['Return Days']) && strtoupper($row['Return Days']) != 'NO') {
+    //                 $replacement = $row['Return Days'];
+    //             } else {
+    //                 $replacement = $row['Replacement Days'] ?? null;
+    //             }
+
+    //             $freeDel = '';
+    //             if ($row['Free Delivery'] == 'No') {
+    //                 $freeDel = 0;
+    //             } elseif ($row['Free Delivery'] == 'Yes') {
+    //                 $freeDel = 1;
+    //             }
+
+    //             $product = new Product();
+    //             $product->added_by = 'seller';
+    //             $product->user_id  = auth('seller')->id();
+    //             $product->name     = $title;
+    //             $product->HSN_code = $row['HSN'] ?? null;
+    //             $product->slug     = Str::slug($title);
+
+    //             $product->category_ids = json_encode([
+    //                 ['id' => (string)$category_id,      'position' => 1],
+    //                 ['id' => (string)$sub_category_id,  'position' => 2],
+    //                 ['id' => (string)$sub_sub_category_id, 'position' => 3],
+    //             ]);
+
+    //             $product->category_id        = $category_id;
+    //             $product->sub_category_id    = $sub_category_id;
+    //             $product->sub_sub_category_id= $sub_sub_category_id;
+    //             $product->brand_id           = $brand_id;
+    //             $product->cities             = '[""]';
+    //             $product->product_type       = "physical";
+    //             $product->add_warehouse      = $row['Warehouse'] ?? null;
+    //             $product->Return_days        = $row['Return Days'] ?? null;
+    //             $product->replacement_days   = $replacement;
+    //             $product->thumbnail          = isset($row['Thumbnail Image name']) ? $row['Thumbnail Image name'] : null;
+    //             $product->images             = isset($row['Other Image name']) ? json_encode(array_filter(explode(',', $row['Other Image name']))) : null;
+
+    //             // --------- DESCRIPTION + BULLET POINTS → HTML ----------
+    //             $descParts = $data['product_data']['description_parts'] ?? [];
+
+    //             $mainDescription = trim($descParts['Description'] ?? '');
+
+    //             $bulletPoints = [];
+    //             $bpKeys = [
+    //                 'Bullet Point 1',
+    //                 'Bullet Point 2',
+    //                 'Bullet Point 3',
+    //                 'Bullet Point 4',
+    //                 'Bullet Point 5',
+    //             ];
+
+    //             foreach ($bpKeys as $key) {
+    //                 if (!empty(trim($descParts[$key] ?? ''))) {
+    //                     $bulletPoints[] = trim($descParts[$key]);
+    //                 }
+    //             }
+
+    //             $detailsHtml = '';
+
+    //             if ($mainDescription !== '') {
+    //                 $detailsHtml .= '<p>' . htmlspecialchars($mainDescription, ENT_QUOTES, 'UTF-8') . '</p>';
+    //             }
+
+    //             if (!empty($bulletPoints)) {
+    //                 $detailsHtml .= '<ul>';
+    //                 foreach ($bulletPoints as $bp) {
+    //                     $detailsHtml .= '<li>' . htmlspecialchars($bp, ENT_QUOTES, 'UTF-8') . '</li>';
+    //                 }
+    //                 $detailsHtml .= '</ul>';
+    //             }
+
+    //             // Fallback: agar naya format empty hai to purana Product Description use karo
+    //             if ($detailsHtml === '' && !empty($row['Product Description'] ?? '')) {
+    //                 $detailsHtml = '<p>' . htmlspecialchars($row['Product Description'], ENT_QUOTES, 'UTF-8') . '</p>';
+    //             }
+
+    //             $product->details = $detailsHtml;
+    //             // -------------------------------------------------------
+
+    //             $product->unit          = $row['Unit'] ?? 'pc';
+    //             $product->min_qty       = $row['MOQ'] ?? 1;
+    //             $product->free_shipping = (strtolower($row['Free Delivery'] ?? 'no') === 'yes') ? 1 : 0;
+    //             $product->video_provider= 'youtube';
+    //             $product->video_url     = $row['Video URL'] ?? null;
+    //             $product->colors        = json_encode($data['colors']);
+    //             $product->length        = $dim['length'];
+    //             $product->breadth       = $dim['breadth'];
+    //             $product->height        = $dim['height'];
+    //             $product->weight        = $dim['weight'];
+    //             $product->free_delivery = $freeDel;
+
+    //             $product->status    = 0;
+    //             $product->published = 1;
+
+    //             $all_color_names = array_values(array_filter(array_unique($data['color_names'])));
+    //             $all_sizes       = array_values(array_filter(array_unique(array_column($data['variations'], '_size'))));
+
+    //             $choice_options = [];
+    //             if (count($all_sizes) > 0) {
+    //                 $choice_options[] = [
+    //                     'name'    => 'choice_1',
+    //                     'title'   => 'Size',
+    //                     'options' => $all_sizes,
+    //                 ];
+    //             }
+
+    //             $product->choice_options = json_encode($choice_options);
+    //             $product->attributes     = json_encode([1]);
+
+    //             $options = [];
+    //             if (count($all_color_names) > 0) {
+    //                 $options[] = $all_color_names; // Color
+    //             }
+    //             if (count($all_sizes) > 0) {
+    //                 $options[] = $all_sizes; // Size
+    //             }
+
+    //             $combinations = [];
+    //             if (!empty($options)) {
+    //                 if (class_exists('Helpers') && method_exists('Helpers', 'combinations')) {
+    //                     $combinations = Helpers::combinations($options);
+    //                 } else {
+    //                     $combinations = [[]];
+    //                     foreach ($options as $optionSet) {
+    //                         $new = [];
+    //                         foreach ($combinations as $comb) {
+    //                             foreach ($optionSet as $opt) {
+    //                                 $new[] = array_merge($comb, [$opt]);
+    //                             }
+    //                         }
+    //                         $combinations = $new;
+    //                     }
+    //                 }
+    //             }
+
+    //             $finalVariations = [];
+    //             $stock_count     = 0;
+
+    //             if (!empty($combinations)) {
+    //                 foreach ($combinations as $combination) {
+    //                     $type = implode('-', $combination);
+
+    //                     $matched = null;
+    //                     foreach ($data['variations'] as $v) {
+    //                         if (trim($v['type']) === trim($type)) {
+    //                             $matched = $v;
+    //                             break;
+    //                         }
+    //                     }
+
+    //                     if ($matched) {
+    //                         $finalVariations[] = [
+    //                             'type'  => $matched['type'],
+    //                             'price' => $matched['price'],
+    //                             'sku'   => $matched['sku'],
+    //                             'qty'   => $matched['qty'],
+    //                         ];
+    //                         $stock_count += (int)$matched['qty'];
+    //                     } else {
+    //                         $finalVariations[] = [
+    //                             'type'  => $type,
+    //                             'price' => 0,
+    //                             'sku'   => null,
+    //                             'qty'   => 0,
+    //                         ];
+    //                     }
+    //                 }
+    //             } else {
+    //                 if (!empty($data['variations'])) {
+    //                     $sumQty = 0;
+    //                     foreach ($data['variations'] as $v) {
+    //                         $finalVariations[] = [
+    //                             'type'  => $v['type'],
+    //                             'price' => $v['price'],
+    //                             'sku'   => $v['sku'],
+    //                             'qty'   => $v['qty'],
+    //                         ];
+    //                         $sumQty += (int)$v['qty'];
+    //                     }
+    //                     $stock_count = $sumQty;
+    //                 } else {
+    //                     $finalVariations[] = [
+    //                         'type'  => $title,
+    //                         'price' => 0,
+    //                         'sku'   => null,
+    //                         'qty'   => 0,
+    //                     ];
+    //                 }
+    //             }
+
+    //             $product->variation     = json_encode($finalVariations);
+    //             $product->current_stock = (int)$stock_count;
+
+    //             $product->save();
+
+    //             foreach ($data['variations'] as $variation) {
+    //                 $vrow = $variation['_full_row'];
+    //                 $vdim = $variation['_dimensions'];
+    //                 $vcol = $variation['_color_rename'];
+
+    //                 $mrp          = (float)($vrow['MRP (INR)'] ?? 0);
+    //                 $tax          = (float)($vrow['Tax'] ?? 0);
+    //                 $discountType = $vrow['Discount Type'] ?? null;
+    //                 $discountVal  = $vrow['Discount'] ?? 0;
+
+    //                 $discountAmount = ($mrp * $tax) / 100;
+
+    //                 $listedPrice = 0;
+    //                 if ($discountType === 'percent') {
+    //                     $listedPrice = $mrp - (($mrp * (float)$discountVal) / 100);
+    //                 } elseif ($discountType === 'flat') {
+    //                     $listedPrice = $mrp - (float)$discountVal;
+    //                 } else {
+    //                     $listedPrice = (float)($variation['price'] ?? 0);
+    //                 }
+
+    //                 $listedPercent = ($listedPrice * $tax) / 100;
+
+    //                 DB::table('sku_product_new')->insert([
+    //                     'seller_id'          => auth('seller')->id(),
+    //                     'product_id'         => $product->id,
+    //                     'commission_fee'     => $commission_fee ?? 0, // (same as your old code)
+    //                     'sku'               => $variation['sku'],
+    //                     'variation'         => $variation['type'],
+    //                     'variant_mrp'       => $mrp,
+    //                     'discount_percent'  => $discountAmount,
+    //                     'gst_percent'       => max(0, $mrp - $discountAmount),
+    //                     'discount_type'     => $discountType,
+    //                     'discount'          => $vrow['Discount'] ?? 0,
+    //                     'listed_price'      => $listedPrice,
+    //                     'listed_percent'    => $listedPercent,
+    //                     'listed_gst_percent'=> max(0, $listedPrice - $listedPercent),
+    //                     'sizes'             => $variation['size'],
+    //                     'quantity'          => $variation['qty'],
+    //                     'color_name'        => $vcol['Rename_Colour_Name'] ?? null,
+    //                     'tax'               => $tax,
+    //                     'length'            => $vdim['length'],
+    //                     'breadth'           => $vdim['breadth'],
+    //                     'height'            => $vdim['height'],
+    //                     'weight'            => $vdim['weight'],
+    //                     'image'             => isset($vrow['Other Image name']) ? json_encode(array_filter(explode(',', $vrow['Other Image name']))) : null,
+    //                     'thumbnail_image'   => $vrow['Thumbnail Image name'] ?? null,
+    //                 ]);
+    //             }
+
+    //             $category = DB::table('categories')->where('id', $sub_sub_category_id)->first();
+
+    //             $allowedSpec    = array_map('trim', explode(',', $category->specification ?? ''));
+    //             $allowedFeatures= array_map('trim', explode(',', $category->key_features ?? ''));
+    //             $allowedTech    = array_map('trim', explode(',', $category->technical_specification ?? ''));
+    //             $allowedOther   = array_map('trim', explode(',', $category->other_details ?? ''));
+
+    //             $allowed = [
+    //                 'specification'           => $allowedSpec,
+    //                 'key_features'            => $allowedFeatures,
+    //                 'technical_specification' => $allowedTech,
+    //                 'other_details'           => $allowedOther,
+    //             ];
+
+    //             $normalized = $this->normalizeSpecifications($row, $allowed);
+
+    //             DB::table('key_specification_values')->updateOrInsert(
+    //                 ['product_id' => $product->id],
+    //                 [
+    //                     'seller_id'               => auth('seller')->id(),
+    //                     'specification'           => json_encode($normalized['specification']),
+    //                     'key_features'            => json_encode($normalized['key_features']),
+    //                     'technical_specification' => json_encode($normalized['technical_specification']),
+    //                     'other_details'           => json_encode($normalized['other_details']),
+    //                     'created_at'              => now(),
+    //                     'updated_at'              => now(),
+    //                 ]
+    //             );
+
+    //             if (!empty($row['Search Tags'])) {
+    //                 $tagNames = array_map('trim', explode(',', $row['Search Tags']));
+    //                 $tag_ids  = [];
+
+    //                 foreach ($tagNames as $tagName) {
+    //                     if ($tagName === '') {
+    //                         continue;
+    //                     }
+
+    //                     if (mb_strlen($tagName) > 50) {
+    //                         continue;
+    //                     }
+
+    //                     $tag = Tag::firstOrCreate([
+    //                         'tag' => $tagName,
+    //                     ]);
+
+    //                     $tag_ids[] = $tag->id;
+    //                 }
+
+    //                 if (!empty($tag_ids) && method_exists($product, 'tags')) {
+    //                     $product->tags()->sync($tag_ids);
+    //                 }
+    //             }
+
+    //             $countRow++;
+    //         }
+
+    //         DB::commit();
+    //     } catch (\Exception $e) {
+    //         DB::rollBack();
+    //         Toastr::error('Import Error: ' . $e->getMessage());
+    //         return back();
+    //     }
+
+    //     Toastr::success($countRow . ' Products Imported Successfully!');
+    //     return back();
+    // }
+
+
+
+
+public function bulk_import_data(Request $request)
+{
+    // Validate that file is present & is a spreadsheet
+    $request->validate([
+        'products_file' => 'required|file|mimes:xlsx,xls,csv',
+    ]);
+
+    if (!$request->hasFile('products_file')) {
+        Toastr::error('Please upload the products_file file.');
+        return back();
+    }
+
+    try {
+        $file = $request->file('products_file');
+
+        // Optional: you can check validity
+        if (!$file->isValid()) {
+            Toastr::error('Uploaded file is not valid.');
             return back();
         }
 
-        $dbColors = DB::table('colors')->pluck('code', 'name')->toArray();
+        // Load spreadsheet
+        $spreadsheet = IOFactory::load($file->getRealPath());
 
-        $groupedProducts = [];
-
-        foreach ($rows as $i => $row) {
-            if (empty($row['Product Title'])) continue;
-
-            $title     = trim($row['Product Title']);
-            $colorName = trim($row['Colour'] ?? '');
-            $size      = trim($row['Size'] ?? '');
-
-            $dimRow = $dimensions[$i] ?? [];
-
-            $packaging_dimensions = [
-                'length'  => (float)($dimRow['Length (CM)'] ?? 0),
-                'breadth' => (float)($dimRow['Breadth (CM)'] ?? 0),
-                'height'  => (float)($dimRow['Height (CM)'] ?? 0),
-                'weight'  => (float)($dimRow['Weight (KG)'] ?? 0),
-            ];
-
-            $colorNames = [
-                'Colour_Name'        => ($dimRow['Colour Name'] ?? 0),
-                'Rename_Colour_Name' => ($dimRow['Rename Colour Name'] ?? 0),
-            ];
-
-            // Description + Bullet Points yahi se aa rahe hain (dimRow)
-            $descriptionParts = [
-                'Description'     => $dimRow['Description']     ?? null,
-                'Bullet Point 1'  => $dimRow['Bullet Point 1']  ?? null,
-                'Bullet Point 2'  => $dimRow['Bullet Point 2']  ?? null,
-                'Bullet Point 3'  => $dimRow['Bullet Point 3']  ?? null,
-                'Bullet Point 4'  => $dimRow['Bullet Point 4']  ?? null,
-                'Bullet Point 5'  => $dimRow['Bullet Point 5']  ?? null,
-            ];
-
-            $colorCode = $dbColors[$colorName] ?? '#000000';
-
-            if (!isset($groupedProducts[$title])) {
-                $groupedProducts[$title] = [
-                    'product_data' => [
-                        'title'               => $title,
-                        'brand'               => $row['Brands'] ?? null,
-                        'description'         => $row['Product Description'] ?? null,
-                        'description_parts'   => $descriptionParts,        // 👈 store kiya
-                        'packaging_dimensions'=> $packaging_dimensions,
-                        'RenameColour'        => $colorNames,
-                        'full_row'            => $row,
-                    ],
-                    'variations'  => [],
-                    'colors'      => [],
-                    'color_names' => [],
-                ];
-            }
-
-            $variationType = trim($colorName . '-' . $size);
-
-            $mrp          = (float)($row['MRP (INR)'] ?? 0);
-            $tax          = (float)($row['Tax'] ?? 0);
-            $discountType = $row['Discount Type'] ?? null;
-            $discountVal  = $row['Discount'] ?? 0;
-
-            $discountAmount = ($mrp * $tax) / 100;
-
-            $listedPrice = 0;
-            if ($discountType === 'percent') {
-                $listedPrice = $mrp - (($mrp * (float)$discountVal) / 100);
-            } elseif ($discountType === 'flat') {
-                $listedPrice = $mrp - (float)$discountVal;
-            } else {
-                $listedPrice = (float)($variation['price'] ?? 0);
-            }
-
-            $groupedProducts[$title]['variations'][] = [
-                'type'          => $variationType,
-                'price'         => $listedPrice,
-                'sku'           => $row['Seller SKU ID'] ?? null,
-                'qty'           => (int)($row['Stock'] ?? 0),
-                'size'          => $size,
-                '_full_row'     => $row,
-                '_dimensions'   => $packaging_dimensions,
-                '_color_name'   => $colorName,
-                '_color_rename' => $colorNames,
-                '_color_code'   => $colorCode,
-                '_size'         => $size,
-            ];
-
-            if (!in_array($colorCode, $groupedProducts[$title]['colors'])) {
-                $groupedProducts[$title]['colors'][] = $colorCode;
-            }
-            if (!in_array($colorName, $groupedProducts[$title]['color_names'])) {
-                $groupedProducts[$title]['color_names'][] = $colorName;
-            }
+        // Sirf Product_Bulk sheet se data lo (Guideline ignore)
+        $productBulkSheet = $spreadsheet->getSheetByName('Product_Bulk');
+        if (!$productBulkSheet) {
+            // Fallback: Active sheet, but warning bhi de do
+            Toastr::warning('Product_Bulk sheet not found. Using active sheet. Please do not rename the "Product_Bulk" sheet in the template.');
+            $sheet = $spreadsheet->getActiveSheet();
+        } else {
+            $sheet = $productBulkSheet;
         }
 
-        $countRow = 0;
+        $data = $sheet->toArray(null, true, true, true);
 
-        DB::beginTransaction();
-        try {
-            foreach ($groupedProducts as $title => $data) {
-                $row = $data['product_data']['full_row'];
-                $dim = $data['product_data']['packaging_dimensions'];
+        $headers    = array_map('trim', $data[1]);
+        $dimheaders = array_map('trim', $data[2]);
 
-                $category_id = DB::table('categories')
-                    ->where('name', $row['Product Category'] ?? null)
-                    ->where('parent_id', 0)
-                    ->value('id');
+        $rows       = [];
+        $dimensions = [];
 
-                $sub_category_id = DB::table('categories')
-                    ->where('name', $row['Product Sub Category'] ?? null)
-                    ->where('parent_id', $category_id)
-                    ->value('id');
+        foreach (array_slice($data, 3) as $index => $row) {
+            $clean = array_map('trim', $row);
 
-                $sub_sub_category_id = DB::table('categories')
-                    ->where('name', $row['Product Sub Sub Category'] ?? null)
-                    ->where('sub_parent_id', $sub_category_id)
-                    ->value('id');
+            if (count($clean) == count($headers)) {
+                $rows[$index] = array_combine($headers, $clean);
+            }
 
-                $brand_id = DB::table('brands')
-                    ->where('name', $row['Brands'] ?? null)
-                    ->value('id');
+            if (count($clean) == count($dimheaders)) {
+                $dimensions[$index] = array_combine($dimheaders, $clean);
+            }
+        }
+    } catch (\Exception $e) {
+        Toastr::error('File Error: ' . $e->getMessage());
+        return back();
+    }
 
-                $replacement = '';
-                if (!empty($row['Return Days']) && strtoupper($row['Return Days']) != 'NO') {
-                    $replacement = $row['Return Days'];
-                } else {
-                    $replacement = $row['Replacement Days'] ?? null;
+    $dbColors = DB::table('colors')->pluck('code', 'name')->toArray();
+
+    $groupedProducts = [];
+
+    foreach ($rows as $i => $row) {
+        if (empty($row['Product Title'])) continue;
+
+        $title  = trim($row['Product Title']);
+
+        $dimRow = $dimensions[$i] ?? [];
+
+        // ✅ Colour & size correctly mapped from your Excel headers
+        $colorName = trim(
+            $row['Colour']
+            ?? $dimRow['Colour Name']
+            ?? ''
+        );
+
+        $size = trim(
+            $row['Size']
+            ?? $dimRow['Add size']
+            ?? ''
+        );
+
+        $packaging_dimensions = [
+            'length'  => (float)($dimRow['Length (CM)'] ?? 0),
+            'breadth' => (float)($dimRow['Breadth (CM)'] ?? 0),
+            'height'  => (float)($dimRow['Height (CM)'] ?? 0),
+            'weight'  => (float)($dimRow['Weight (KG)'] ?? 0),
+        ];
+
+        $colorNames = [
+            'Colour_Name'        => $colorName,
+            'Rename_Colour_Name' => trim($dimRow['Rename Colour Name'] ?? $colorName),
+        ];
+
+        // Description + Bullet Points yahi se aa rahe hain (dimRow)
+        $descriptionParts = [
+            'Description'     => $dimRow['Description']     ?? null,
+            'Bullet Point 1'  => $dimRow['Bullet Point 1']  ?? null,
+            'Bullet Point 2'  => $dimRow['Bullet Point 2']  ?? null,
+            'Bullet Point 3'  => $dimRow['Bullet Point 3']  ?? null,
+            'Bullet Point 4'  => $dimRow['Bullet Point 4']  ?? null,
+            'Bullet Point 5'  => $dimRow['Bullet Point 5']  ?? null,
+        ];
+
+        $colorCode = $dbColors[$colorName] ?? '#000000';
+
+        if (!isset($groupedProducts[$title])) {
+            $groupedProducts[$title] = [
+                'product_data' => [
+                    'title'                => $title,
+                    'brand'                => $row['Brands'] ?? null,
+                    'description'          => $row['Product Description'] ?? null,
+                    'description_parts'    => $descriptionParts,
+                    'packaging_dimensions' => $packaging_dimensions,
+                    'RenameColour'         => $colorNames,
+                    'full_row'             => $row,
+                ],
+                'variations'  => [],
+                'colors'      => [],
+                'color_names' => [],
+            ];
+        }
+
+        $variationType = trim($colorName . '-' . $size);
+
+        $mrp          = (float)($row['MRP (INR)'] ?? 0);
+        $tax          = (float)($row['Tax'] ?? 0);
+        $discountType = $row['Discount Type'] ?? null;
+        $discountVal  = $row['Discount'] ?? 0;
+
+        $discountAmount = ($mrp * $tax) / 100;
+
+        $listedPrice = 0;
+        if ($discountType === 'percent') {
+            $listedPrice = $mrp - (($mrp * (float)$discountVal) / 100);
+        } elseif ($discountType === 'flat') {
+            $listedPrice = $mrp - (float)$discountVal;
+        } else {
+            // Safe fallback: use MRP
+            $listedPrice = $mrp;
+        }
+
+        $groupedProducts[$title]['variations'][] = [
+            'type'          => $variationType,
+            'price'         => $listedPrice,
+            'sku'           => $row['Seller SKU ID'] ?? null,
+            'qty'           => (int)($row['Stock'] ?? 0),
+            'size'          => $size,
+            '_full_row'     => $row,
+            '_dimensions'   => $packaging_dimensions,
+            '_color_name'   => $colorName,
+            '_color_rename' => $colorNames,
+            '_color_code'   => $colorCode,
+            '_size'         => $size,
+        ];
+
+        if (!in_array($colorCode, $groupedProducts[$title]['colors'])) {
+            $groupedProducts[$title]['colors'][] = $colorCode;
+        }
+        $renameColor = $colorNames['Rename_Colour_Name'] ?? $colorName;
+        if (!in_array($renameColor, $groupedProducts[$title]['color_names'])) {
+            $groupedProducts[$title]['color_names'][] = $renameColor;
+        }
+    }
+
+    $countRow = 0;
+
+    DB::beginTransaction();
+    try {
+        foreach ($groupedProducts as $title => $data) {
+            $row = $data['product_data']['full_row'];
+            $dim = $data['product_data']['packaging_dimensions'];
+
+            $category_id = DB::table('categories')
+                ->where('name', $row['Product Category'] ?? null)
+                ->where('parent_id', 0)
+                ->value('id');
+
+            $sub_category_id = DB::table('categories')
+                ->where('name', $row['Product Sub Category'] ?? null)
+                ->where('parent_id', $category_id)
+                ->value('id');
+
+            $sub_category_row = DB::table('categories')->where('id', $sub_category_id)->first();
+            $commission_fee   = optional($sub_category_row)->commission ?? 0;
+
+            $sub_sub_category_id = DB::table('categories')
+                ->where('name', $row['Product Sub Sub Category'] ?? null)
+                ->where('sub_parent_id', $sub_category_id)
+                ->value('id');
+
+            $brand_id = DB::table('brands')
+                ->where('name', $row['Brands'] ?? null)
+                ->value('id');
+
+            $replacement = '';
+            if (!empty($row['Return Days']) && strtoupper($row['Return Days']) != 'NO') {
+                $replacement = $row['Return Days'];
+            } else {
+                $replacement = $row['Replacement Days'] ?? null;
+            }
+
+            $freeDel = '';
+            if (($row['Free Delivery'] ?? '') == 'No') {
+                $freeDel = 0;
+            } elseif (($row['Free Delivery'] ?? '') == 'Yes') {
+                $freeDel = 1;
+            }
+
+            $product = new Product();
+            $product->added_by = 'seller';
+            $product->user_id  = auth('seller')->id();
+            $product->name     = $title;
+            $product->HSN_code = $row['HSN'] ?? null;
+            $product->slug     = Str::slug($title);
+
+            $product->category_ids = json_encode([
+                ['id' => (string)$category_id,         'position' => 1],
+                ['id' => (string)$sub_category_id,     'position' => 2],
+                ['id' => (string)$sub_sub_category_id, 'position' => 3],
+            ]);
+
+            $product->category_id         = $category_id;
+            $product->sub_category_id     = $sub_category_id;
+            $product->sub_sub_category_id = $sub_sub_category_id;
+            $product->brand_id            = $brand_id;
+            $product->cities              = '[""]';
+            $product->product_type        = "physical";
+            $product->add_warehouse       = $row['Warehouse'] ?? null;
+            $product->Return_days         = $row['Return Days'] ?? null;
+            $product->replacement_days    = $replacement;
+            $product->thumbnail           = isset($row['Thumbnail Image name']) ? $row['Thumbnail Image name'] : null;
+            $product->images              = isset($row['Other Image name']) ? json_encode(array_filter(explode(',', $row['Other Image name']))) : null;
+
+            // --------- DESCRIPTION + BULLET POINTS → HTML ----------
+            $descParts = $data['product_data']['description_parts'] ?? [];
+
+            $mainDescription = trim($descParts['Description'] ?? '');
+
+            $bulletPoints = [];
+            $bpKeys = [
+                'Bullet Point 1',
+                'Bullet Point 2',
+                'Bullet Point 3',
+                'Bullet Point 4',
+                'Bullet Point 5',
+            ];
+
+            foreach ($bpKeys as $key) {
+                if (!empty(trim($descParts[$key] ?? ''))) {
+                    $bulletPoints[] = trim($descParts[$key]);
                 }
+            }
 
-                $freeDel = '';
-                if ($row['Free Delivery'] == 'No') {
-                    $freeDel = 0;
-                } elseif ($row['Free Delivery'] == 'Yes') {
-                    $freeDel = 1;
+            $detailsHtml = '';
+
+            if ($mainDescription !== '') {
+                $detailsHtml .= '<p>' . htmlspecialchars($mainDescription, ENT_QUOTES, 'UTF-8') . '</p>';
+            }
+
+            if (!empty($bulletPoints)) {
+                $detailsHtml .= '<ul>';
+                foreach ($bulletPoints as $bp) {
+                    $detailsHtml .= '<li>' . htmlspecialchars($bp, ENT_QUOTES, 'UTF-8') . '</li>';
                 }
+                $detailsHtml .= '</ul>';
+            }
 
-                $product = new Product();
-                $product->added_by = 'seller';
-                $product->user_id  = auth('seller')->id();
-                $product->name     = $title;
-                $product->HSN_code = $row['HSN'] ?? null;
-                $product->slug     = Str::slug($title);
+            // Fallback: agar naya format empty hai to purana Product Description use karo
+            if ($detailsHtml === '' && !empty($row['Product Description'] ?? '')) {
+                $detailsHtml = '<p>' . htmlspecialchars($row['Product Description'], ENT_QUOTES, 'UTF-8') . '</p>';
+            }
 
-                $product->category_ids = json_encode([
-                    ['id' => (string)$category_id,      'position' => 1],
-                    ['id' => (string)$sub_category_id,  'position' => 2],
-                    ['id' => (string)$sub_sub_category_id, 'position' => 3],
-                ]);
+            $product->details = $detailsHtml;
+            // -------------------------------------------------------
 
-                $product->category_id        = $category_id;
-                $product->sub_category_id    = $sub_category_id;
-                $product->sub_sub_category_id= $sub_sub_category_id;
-                $product->brand_id           = $brand_id;
-                $product->cities             = '[""]';
-                $product->product_type       = "physical";
-                $product->add_warehouse      = $row['Warehouse'] ?? null;
-                $product->Return_days        = $row['Return Days'] ?? null;
-                $product->replacement_days   = $replacement;
-                $product->thumbnail          = isset($row['Thumbnail Image name']) ? $row['Thumbnail Image name'] : null;
-                $product->images             = isset($row['Other Image name']) ? json_encode(array_filter(explode(',', $row['Other Image name']))) : null;
+            $product->unit           = $row['Unit'] ?? 'pc';
+            $product->min_qty        = $row['MOQ'] ?? 1;
+            $product->free_shipping  = (strtolower($row['Free Delivery'] ?? 'no') === 'yes') ? 1 : 0;
+            $product->video_provider = 'youtube';
+            $product->video_url      = $row['Video URL'] ?? null;
+            $product->colors         = json_encode($data['colors']);
+            $product->length         = $dim['length'];
+            $product->breadth        = $dim['breadth'];
+            $product->height         = $dim['height'];
+            $product->weight         = $dim['weight'];
+            $product->free_delivery  = $freeDel;
 
-                // --------- DESCRIPTION + BULLET POINTS → HTML ----------
-                $descParts = $data['product_data']['description_parts'] ?? [];
+            $product->status    = 0;
+            $product->published = 1;
 
-                $mainDescription = trim($descParts['Description'] ?? '');
+            $all_color_names = array_values(array_filter(array_unique($data['color_names'])));
+            $all_sizes       = array_values(array_filter(array_unique(array_column($data['variations'], '_size'))));
 
-                $bulletPoints = [];
-                $bpKeys = [
-                    'Bullet Point 1',
-                    'Bullet Point 2',
-                    'Bullet Point 3',
-                    'Bullet Point 4',
-                    'Bullet Point 5',
+            $choice_options = [];
+            if (count($all_sizes) > 0) {
+                $choice_options[] = [
+                    'name'    => 'choice_1',
+                    'title'   => 'Size',
+                    'options' => $all_sizes,
                 ];
+            }
 
-                foreach ($bpKeys as $key) {
-                    if (!empty(trim($descParts[$key] ?? ''))) {
-                        $bulletPoints[] = trim($descParts[$key]);
-                    }
-                }
+            $product->choice_options = json_encode($choice_options);
+            $product->attributes     = json_encode([1]);
 
-                $detailsHtml = '';
+            $options = [];
+            if (count($all_color_names) > 0) {
+                $options[] = $all_color_names; // Color
+            }
+            if (count($all_sizes) > 0) {
+                $options[] = $all_sizes; // Size
+            }
 
-                if ($mainDescription !== '') {
-                    $detailsHtml .= '<p>' . htmlspecialchars($mainDescription, ENT_QUOTES, 'UTF-8') . '</p>';
-                }
-
-                if (!empty($bulletPoints)) {
-                    $detailsHtml .= '<ul>';
-                    foreach ($bulletPoints as $bp) {
-                        $detailsHtml .= '<li>' . htmlspecialchars($bp, ENT_QUOTES, 'UTF-8') . '</li>';
-                    }
-                    $detailsHtml .= '</ul>';
-                }
-
-                // Fallback: agar naya format empty hai to purana Product Description use karo
-                if ($detailsHtml === '' && !empty($row['Product Description'] ?? '')) {
-                    $detailsHtml = '<p>' . htmlspecialchars($row['Product Description'], ENT_QUOTES, 'UTF-8') . '</p>';
-                }
-
-                $product->details = $detailsHtml;
-                // -------------------------------------------------------
-
-                $product->unit          = $row['Unit'] ?? 'pc';
-                $product->min_qty       = $row['MOQ'] ?? 1;
-                $product->free_shipping = (strtolower($row['Free Delivery'] ?? 'no') === 'yes') ? 1 : 0;
-                $product->video_provider= 'youtube';
-                $product->video_url     = $row['Video URL'] ?? null;
-                $product->colors        = json_encode($data['colors']);
-                $product->length        = $dim['length'];
-                $product->breadth       = $dim['breadth'];
-                $product->height        = $dim['height'];
-                $product->weight        = $dim['weight'];
-                $product->free_delivery = $freeDel;
-
-                $product->status    = 0;
-                $product->published = 1;
-
-                $all_color_names = array_values(array_filter(array_unique($data['color_names'])));
-                $all_sizes       = array_values(array_filter(array_unique(array_column($data['variations'], '_size'))));
-
-                $choice_options = [];
-                if (count($all_sizes) > 0) {
-                    $choice_options[] = [
-                        'name'    => 'choice_1',
-                        'title'   => 'Size',
-                        'options' => $all_sizes,
-                    ];
-                }
-
-                $product->choice_options = json_encode($choice_options);
-                $product->attributes     = json_encode([1]);
-
-                $options = [];
-                if (count($all_color_names) > 0) {
-                    $options[] = $all_color_names; // Color
-                }
-                if (count($all_sizes) > 0) {
-                    $options[] = $all_sizes; // Size
-                }
-
-                $combinations = [];
-                if (!empty($options)) {
-                    if (class_exists('Helpers') && method_exists('Helpers', 'combinations')) {
-                        $combinations = Helpers::combinations($options);
-                    } else {
-                        $combinations = [[]];
-                        foreach ($options as $optionSet) {
-                            $new = [];
-                            foreach ($combinations as $comb) {
-                                foreach ($optionSet as $opt) {
-                                    $new[] = array_merge($comb, [$opt]);
-                                }
-                            }
-                            $combinations = $new;
-                        }
-                    }
-                }
-
-                $finalVariations = [];
-                $stock_count     = 0;
-
-                if (!empty($combinations)) {
-                    foreach ($combinations as $combination) {
-                        $type = implode('-', $combination);
-
-                        $matched = null;
-                        foreach ($data['variations'] as $v) {
-                            if (trim($v['type']) === trim($type)) {
-                                $matched = $v;
-                                break;
-                            }
-                        }
-
-                        if ($matched) {
-                            $finalVariations[] = [
-                                'type'  => $matched['type'],
-                                'price' => $matched['price'],
-                                'sku'   => $matched['sku'],
-                                'qty'   => $matched['qty'],
-                            ];
-                            $stock_count += (int)$matched['qty'];
-                        } else {
-                            $finalVariations[] = [
-                                'type'  => $type,
-                                'price' => 0,
-                                'sku'   => null,
-                                'qty'   => 0,
-                            ];
-                        }
-                    }
+            $combinations = [];
+            if (!empty($options)) {
+                if (class_exists('Helpers') && method_exists('Helpers', 'combinations')) {
+                    $combinations = Helpers::combinations($options);
                 } else {
-                    if (!empty($data['variations'])) {
-                        $sumQty = 0;
-                        foreach ($data['variations'] as $v) {
-                            $finalVariations[] = [
-                                'type'  => $v['type'],
-                                'price' => $v['price'],
-                                'sku'   => $v['sku'],
-                                'qty'   => $v['qty'],
-                            ];
-                            $sumQty += (int)$v['qty'];
+                    $combinations = [[]];
+                    foreach ($options as $optionSet) {
+                        $new = [];
+                        foreach ($combinations as $comb) {
+                            foreach ($optionSet as $opt) {
+                                $new[] = array_merge($comb, [$opt]);
+                            }
                         }
-                        $stock_count = $sumQty;
+                        $combinations = $new;
+                    }
+                }
+            }
+
+            $finalVariations = [];
+            $stock_count     = 0;
+
+            if (!empty($combinations)) {
+                foreach ($combinations as $combination) {
+                    $type = implode('-', $combination);
+
+                    $matched = null;
+                    foreach ($data['variations'] as $v) {
+                        if (trim($v['type']) === trim($type)) {
+                            $matched = $v;
+                            break;
+                        }
+                    }
+
+                    if ($matched) {
+                        $finalVariations[] = [
+                            'type'  => $matched['type'],
+                            'price' => $matched['price'],
+                            'sku'   => $matched['sku'],
+                            'qty'   => $matched['qty'],
+                        ];
+                        $stock_count += (int)$matched['qty'];
                     } else {
                         $finalVariations[] = [
-                            'type'  => $title,
+                            'type'  => $type,
                             'price' => 0,
                             'sku'   => null,
                             'qty'   => 0,
                         ];
                     }
                 }
-
-                $product->variation     = json_encode($finalVariations);
-                $product->current_stock = (int)$stock_count;
-
-                $product->save();
-
-                foreach ($data['variations'] as $variation) {
-                    $vrow = $variation['_full_row'];
-                    $vdim = $variation['_dimensions'];
-                    $vcol = $variation['_color_rename'];
-
-                    $mrp          = (float)($vrow['MRP (INR)'] ?? 0);
-                    $tax          = (float)($vrow['Tax'] ?? 0);
-                    $discountType = $vrow['Discount Type'] ?? null;
-                    $discountVal  = $vrow['Discount'] ?? 0;
-
-                    $discountAmount = ($mrp * $tax) / 100;
-
-                    $listedPrice = 0;
-                    if ($discountType === 'percent') {
-                        $listedPrice = $mrp - (($mrp * (float)$discountVal) / 100);
-                    } elseif ($discountType === 'flat') {
-                        $listedPrice = $mrp - (float)$discountVal;
-                    } else {
-                        $listedPrice = (float)($variation['price'] ?? 0);
+            } else {
+                if (!empty($data['variations'])) {
+                    $sumQty = 0;
+                    foreach ($data['variations'] as $v) {
+                        $finalVariations[] = [
+                            'type'  => $v['type'],
+                            'price' => $v['price'],
+                            'sku'   => $v['sku'],
+                            'qty'   => $v['qty'],
+                        ];
+                        $sumQty += (int)$v['qty'];
                     }
-
-                    $listedPercent = ($listedPrice * $tax) / 100;
-
-                    DB::table('sku_product_new')->insert([
-                        'seller_id'          => auth('seller')->id(),
-                        'product_id'         => $product->id,
-                        'commission_fee'     => $category_id->commission ?? 0, // (same as your old code)
-                        'sku'               => $variation['sku'],
-                        'variation'         => $variation['type'],
-                        'variant_mrp'       => $mrp,
-                        'discount_percent'  => $discountAmount,
-                        'gst_percent'       => max(0, $mrp - $discountAmount),
-                        'discount_type'     => $discountType,
-                        'discount'          => $vrow['Discount'] ?? 0,
-                        'listed_price'      => $listedPrice,
-                        'listed_percent'    => $listedPercent,
-                        'listed_gst_percent'=> max(0, $listedPrice - $listedPercent),
-                        'sizes'             => $variation['size'],
-                        'quantity'          => $variation['qty'],
-                        'color_name'        => $vcol['Rename_Colour_Name'] ?? null,
-                        'tax'               => $tax,
-                        'length'            => $vdim['length'],
-                        'breadth'           => $vdim['breadth'],
-                        'height'            => $vdim['height'],
-                        'weight'            => $vdim['weight'],
-                        'image'             => isset($vrow['Other Image name']) ? json_encode(array_filter(explode(',', $vrow['Other Image name']))) : null,
-                        'thumbnail_image'   => $vrow['Thumbnail Image name'] ?? null,
-                    ]);
+                    $stock_count = $sumQty;
+                } else {
+                    $finalVariations[] = [
+                        'type'  => $title,
+                        'price' => 0,
+                        'sku'   => null,
+                        'qty'   => 0,
+                    ];
                 }
-
-                $category = DB::table('categories')->where('id', $sub_sub_category_id)->first();
-
-                $allowedSpec    = array_map('trim', explode(',', $category->specification ?? ''));
-                $allowedFeatures= array_map('trim', explode(',', $category->key_features ?? ''));
-                $allowedTech    = array_map('trim', explode(',', $category->technical_specification ?? ''));
-                $allowedOther   = array_map('trim', explode(',', $category->other_details ?? ''));
-
-                $allowed = [
-                    'specification'           => $allowedSpec,
-                    'key_features'            => $allowedFeatures,
-                    'technical_specification' => $allowedTech,
-                    'other_details'           => $allowedOther,
-                ];
-
-                $normalized = $this->normalizeSpecifications($row, $allowed);
-
-                DB::table('key_specification_values')->updateOrInsert(
-                    ['product_id' => $product->id],
-                    [
-                        'seller_id'               => auth('seller')->id(),
-                        'specification'           => json_encode($normalized['specification']),
-                        'key_features'            => json_encode($normalized['key_features']),
-                        'technical_specification' => json_encode($normalized['technical_specification']),
-                        'other_details'           => json_encode($normalized['other_details']),
-                        'created_at'              => now(),
-                        'updated_at'              => now(),
-                    ]
-                );
-
-                if (!empty($row['Search Tags'])) {
-                    $tagNames = array_map('trim', explode(',', $row['Search Tags']));
-                    $tag_ids  = [];
-
-                    foreach ($tagNames as $tagName) {
-                        if ($tagName === '') {
-                            continue;
-                        }
-
-                        if (mb_strlen($tagName) > 50) {
-                            continue;
-                        }
-
-                        $tag = Tag::firstOrCreate([
-                            'tag' => $tagName,
-                        ]);
-
-                        $tag_ids[] = $tag->id;
-                    }
-
-                    if (!empty($tag_ids) && method_exists($product, 'tags')) {
-                        $product->tags()->sync($tag_ids);
-                    }
-                }
-
-                $countRow++;
             }
 
-            DB::commit();
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Toastr::error('Import Error: ' . $e->getMessage());
-            return back();
+            $product->variation     = json_encode($finalVariations);
+            $product->current_stock = (int)$stock_count;
+
+            $product->save();
+
+            foreach ($data['variations'] as $variation) {
+                $vrow = $variation['_full_row'];
+                $vdim = $variation['_dimensions'];
+                $vcol = $variation['_color_rename'];
+
+                $mrp          = (float)($vrow['MRP (INR)'] ?? 0);
+                $tax          = (float)($vrow['Tax'] ?? 0);
+                $discountType = $vrow['Discount Type'] ?? null;
+                $discountVal  = $vrow['Discount'] ?? 0;
+
+                $discountAmount = ($mrp * $tax) / 100;
+
+                $listedPrice = 0;
+                if ($discountType === 'percent') {
+                    $listedPrice = $mrp - (($mrp * (float)$discountVal) / 100);
+                } elseif ($discountType === 'flat') {
+                    $listedPrice = $mrp - (float)$discountVal;
+                } else {
+                    $listedPrice = (float)($variation['price'] ?? $mrp);
+                }
+
+                $listedPercent = ($listedPrice * $tax) / 100;
+
+                DB::table('sku_product_new')->insert([
+                    'seller_id'           => auth('seller')->id(),
+                    'product_id'          => $product->id,
+                    'commission_fee'      => $commission_fee ?? 0,
+                    'sku'                 => $variation['sku'],
+                    'variation'           => $variation['type'],
+                    'variant_mrp'         => $mrp,
+                    'discount_percent'    => $discountAmount,
+                    'gst_percent'         => max(0, $mrp - $discountAmount),
+                    'discount_type'       => $discountType,
+                    'discount'            => $vrow['Discount'] ?? 0,
+                    'listed_price'        => $listedPrice,
+                    'listed_percent'      => $listedPercent,
+                    'listed_gst_percent'  => max(0, $listedPrice - $listedPercent),
+                    'sizes'               => $variation['size'],
+                    'quantity'            => $variation['qty'],
+                    'color_name'          => $vcol['Rename_Colour_Name'] ?? null,
+                    'tax'                 => $tax,
+                    'length'              => $vdim['length'],
+                    'breadth'             => $vdim['breadth'],
+                    'height'              => $vdim['height'],
+                    'weight'              => $vdim['weight'],
+                    'image'               => isset($vrow['Other Image name']) ? json_encode(array_filter(explode(',', $vrow['Other Image name']))) : null,
+                    'thumbnail_image'     => $vrow['Thumbnail Image name'] ?? null,
+                ]);
+            }
+
+            $category = DB::table('categories')->where('id', $sub_sub_category_id)->first();
+
+            $allowedSpec     = array_map('trim', explode(',', $category->specification ?? ''));
+            $allowedFeatures = array_map('trim', explode(',', $category->key_features ?? ''));
+            $allowedTech     = array_map('trim', explode(',', $category->technical_specification ?? ''));
+            $allowedOther    = array_map('trim', explode(',', $category->other_details ?? ''));
+
+            $allowed = [
+                'specification'           => $allowedSpec,
+                'key_features'            => $allowedFeatures,
+                'technical_specification' => $allowedTech,
+                'other_details'           => $allowedOther,
+            ];
+
+            $normalized = $this->normalizeSpecifications($row, $allowed);
+
+            DB::table('key_specification_values')->updateOrInsert(
+                ['product_id' => $product->id],
+                [
+                    'seller_id'               => auth('seller')->id(),
+                    'specification'           => json_encode($normalized['specification']),
+                    'key_features'            => json_encode($normalized['key_features']),
+                    'technical_specification' => json_encode($normalized['technical_specification']),
+                    'other_details'           => json_encode($normalized['other_details']),
+                    'created_at'              => now(),
+                    'updated_at'              => now(),
+                ]
+            );
+
+            if (!empty($row['Search Tags'])) {
+                $tagNames = array_map('trim', explode(',', $row['Search Tags']));
+                $tag_ids  = [];
+
+                foreach ($tagNames as $tagName) {
+                    if ($tagName === '') {
+                        continue;
+                    }
+
+                    if (mb_strlen($tagName) > 50) {
+                        continue;
+                    }
+
+                    $tag = Tag::firstOrCreate([
+                        'tag' => $tagName,
+                    ]);
+
+                    $tag_ids[] = $tag->id;
+                }
+
+                if (!empty($tag_ids) && method_exists($product, 'tags')) {
+                    $product->tags()->sync($tag_ids);
+                }
+            }
+
+            $countRow++;
         }
 
-        Toastr::success($countRow . ' Products Imported Successfully!');
+        DB::commit();
+    } catch (\Exception $e) {
+        DB::rollBack();
+        Toastr::error('Import Error: ' . $e->getMessage());
         return back();
     }
+
+    Toastr::success($countRow . ' Products Imported Successfully!');
+    return back();
+}
+
+
+
+
+
+    
+
+
+
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+    
 
     public function bulk_image()
     {
         $images = DB::table('bulk_image')
             ->where('seller_id', auth('seller')->id())
-            ->get();
+            ->orderBy('id', 'desc')
+            ->paginate(14); // ✅ per page 14 records
 
         return view('seller-views.product.bulk-image', compact('images'));
     }
+
 
     public function bulk_image_import(Request $request)
     {
@@ -2087,193 +2638,233 @@ class ProductController extends Controller
         }
         return back()->with('error', 'No images found.');
     }
+    
 
     // public function bulk_export_data_category_wise()
     // {
-    //     $category_id = session('category_id');
-    //     $sub_category_id = session('sub_category_id');
-    //     $sub_sub_category_id = session('sub_sub_category_id');
-    //     $product_id = session('product_id');
-    //     $brand_id = session('brand_id');
-    //     $tax = session('tax');
-    //     $procurement_time = session('procurement_time');
-    //     $hsn_code = session('hsn_code');
+    //     $category_id          = session('category_id');
+    //     $sub_category_id      = session('sub_category_id');
+    //     $sub_sub_category_id  = session('sub_sub_category_id');
+    //     $product_id           = session('product_id');
+    //     $brand_id             = session('brand_id');
+    //     $tax                  = session('tax');
+    //     $procurement_time     = session('procurement_time');
+    //     $hsn_code             = session('hsn_code');
 
     //     $seller_id = auth('seller')->id();
-    //     $commission_fee = DB::table('sellers')->where('id', $seller_id)->first();
+    //     $commission_fee = DB::table('categories')->where('id', $sub_category_id)->first();
 
     //     $commission_type = match ($commission_fee->commission_fee ?? 1) {
-    //     1 => 'Default',
-    //     2 => 'In Percent',
-    //     default => 'Transfer Price',
+    //         1       => 'Default',
+    //         2       => 'In Percent',
+    //         default => 'Transfer Price',
     //     };
 
-    //     $category = DB::table('categories')->where('id', $category_id)->first();
-    //     $product = Product::where('id', $product_id)->first() ?? new Product();
-    //     $skuProduct = DB::table('sku_product_new')->where('product_id', $product_id)->first();
-    //     $sub_category = DB::table('categories')->where('id', $sub_category_id)->first();
-    //     $sub_sub_category = DB::table('categories')->where('id', $sub_sub_category_id)->first();
-    //     $brand_name = DB::table('brands')->where('id', $brand_id)->first();
+    //     $category          = DB::table('categories')->where('id', $category_id)->first();
+    //     $product           = Product::where('id', $product_id)->first() ?? new Product();
+    //     $skuProduct        = DB::table('sku_product_new')->where('product_id', $product_id)->first();
+    //     $sub_category      = DB::table('categories')->where('id', $sub_category_id)->first();
+    //     $sub_sub_category  = DB::table('categories')->where('id', $sub_sub_category_id)->first();
+    //     $brand_name        = DB::table('brands')->where('id', $brand_id)->first();
 
-    //     $specifications = !empty($sub_sub_category->specification) ? explode(',',
-    //     $sub_sub_category->specification) : [];
-    //     $key_features = !empty($sub_sub_category->key_features) ? explode(',',
-    //     $sub_sub_category->key_features) : [];
-    //     $technical_specifications = !empty($sub_sub_category->technical_specification) ? explode(',',
-    //     $sub_sub_category->technical_specification) : [];
-    //     $other_details = !empty($sub_sub_category->other_details) ? explode(',',
-    //     $sub_sub_category->other_details) : [];
+    //     $specifications           = !empty($sub_sub_category->specification) ? explode(',', $sub_sub_category->specification) : [];
+    //     $key_features             = !empty($sub_sub_category->key_features) ? explode(',', $sub_sub_category->key_features) : [];
+    //     $technical_specifications = !empty($sub_sub_category->technical_specification) ? explode(',', $sub_sub_category->technical_specification) : [];
+    //     $other_details            = !empty($sub_sub_category->other_details) ? explode(',', $sub_sub_category->other_details) : [];
 
     //     $colors = DB::table('colors')->pluck('name')->toArray();
 
     //     $baseData = [
-    //     'InteriorChowk Product Code' => '',
-    //     'Catelogue QC Status' => '',
-    //     'QC Failed Reason (if any)' => $product->qc_failed_reason ?? '',
-    //     'Product Category' => $category->name ?? '',
-    //     'Product Sub Category' => $sub_category->name ?? '',
-    //     'Product Sub Sub Category' => $sub_sub_category->name ?? '',
-    //     'Brands' => $brand_name->name ?? '',
-    //     'Seller SKU ID' => '',
-    //     'Commission Type' => $commission_type,
-    //     'Commission Fee' => $commission_fee->fee ?? '',
-    //     'Listing Status' => '',
-    //     'MRP (INR)' => $skuProduct->variant_mrp ?? '',
-    //     'Discount Type' => $skuProduct->discount_type ?? '',
-    //     'Discount' => $skuProduct->discount ?? '',
-    //     // 👇 Formula directly
-    //     'Your selling price (INR)' => '=IF(M2="Flat", MAX(0, L2-N2), IF(M2="Percent", MAX(0,
-    //     L2-(L2*N2/100)), ""))',
-    //     'Product Title' => '',
-    //     'Product Description' => '',
-    //     'Colour' => implode(', ', $colors),
-    //     'Size' => '',
-    //     'Return Days' => '',
-    //     'Replacement Days' => '',
-    //     'Unit' => '',
-    //     'Free Delivery' => '',
-    //     'Self Delivery' => '',
-    //     'Warehouse' => 'Noida warehouse',
-    //     'Procurement SLA (DAY)' => $procurement_time,
-    //     'Stock' => '',
-    //     'MOQ' => '',
-    //     'Packaging Dimensions' => '',
-    //     'HSN' => $hsn_code,
-    //     'Tax' => $tax,
-    //     'Thumbnail Image name' => '',
-    //     'Other Image name' => '',
-    //     'Video URL' => '',
-    //     'PDF URL' => '',
-    //     'Search Tags' => '',
-    //     'Excel error status' => '',
+    //         'InteriorChowk Product Code' => '',
+    //         'Catelogue QC Status'        => '',
+    //         'QC Failed Reason (if any)'  => $product->qc_failed_reason ?? '',
+    //         'Product Category'           => $category->name ?? '',
+    //         'Product Sub Category'       => $sub_category->name ?? '',
+    //         'Product Sub Sub Category'   => $sub_sub_category->name ?? '',
+    //         'Brands'                     => $brand_name->name ?? '',
+    //         'Seller SKU ID'              => '',
+    //         'Commission Type'            => $commission_type,
+    //         'Commission Fee'             => $commission_fee->commission ?? '',
+    //         'Listing Status'             => '',
+    //         'MRP (INR)'                  => $skuProduct->variant_mrp ?? '',
+    //         'Discount Type'              => $skuProduct->discount_type ?? '',
+    //         'Discount'                   => $skuProduct->discount ?? '',
+    //         'Your selling price (INR)'   => '=IF(M2="Flat", MAX(0, L2-N2), IF(M2="Percent", MAX(0, L2-(L2*N2/100)), ""))',
+    //         'Product Title'              => '',
+    //         'Product Description'        => '',
+    //         'Colour'                     => implode(', ', $colors),
+    //         'Size'                       => '',
+    //         'Return Days'                => '',
+    //         'Replacement Days'           => '',
+    //         'Unit'                       => '',
+    //         'Free Delivery'              => '',
+    //         'Self Delivery'              => '',
+    //         'Warehouse'                  => 'Noida warehouse',
+    //         'Procurement SLA (DAY)'      => $procurement_time,
+    //         'Stock'                      => '',
+    //         'MOQ'                        => '',
+    //         'Packaging Dimensions'       => '',
+    //         'HSN'                        => $hsn_code,
+    //         'Tax'                        => $tax,
+    //         'Thumbnail Image name'       => '',
+    //         'Other Image name'           => '',
+    //         'Video URL'                  => '',
+    //         'PDF URL'                    => '',
+    //         'Search Tags'                => '',
+    //         'Excel error status'         => '',
     //     ];
 
-
     //     foreach ($specifications as $spec) {
-    //     $baseData['Specification: ' . trim($spec)] = '';
+    //         $baseData['Specification: ' . trim($spec)] = '';
     //     }
     //     foreach ($key_features as $feature) {
-    //     $baseData['Key features: ' . trim($feature)] = '';
+    //         $baseData['Key features: ' . trim($feature)] = '';
     //     }
     //     foreach ($technical_specifications as $tech) {
-    //     $baseData['Technical specification: ' . trim($tech)] = '';
+    //         $baseData['Technical specification: ' . trim($tech)] = '';
     //     }
     //     foreach ($other_details as $other) {
-    //     $baseData['Other details: ' . trim($other)] = '';
+    //         $baseData['Other details: ' . trim($other)] = '';
     //     }
 
     //     $baseData = array_merge($baseData, [
-    //     'Return Days' => '',
-    //     'Replacement Days' => '',
-    //     'Unit' => '',
-    //     'Free Delivery' => '',
-    //     'Self Delivery' => '',
-    //     'Warehouse' => 'Noida warehouse',
-    //     'Procurement SLA (DAY)' => $procurement_time,
-    //     'Stock' => '',
-    //     'MOQ' => '',
-    //     'Packaging Dimensions' => '',
-    //     'HSN' => $hsn_code,
-    //     'Tax' => $tax,
-    //     'Thumbnail Image name' => '',
-    //     'Other Image name' => '',
-    //     'Video URL' => '',
-    //     'PDF URL' => '',
-    //     'Search Tags' => '',
-    //     'Excel error status' => '',
+    //         'Return Days'           => '',
+    //         'Replacement Days'      => '',
+    //         'Unit'                  => '',
+    //         'Free Delivery'         => '',
+    //         'Self Delivery'         => '',
+    //         'Warehouse'             => 'Noida warehouse',
+    //         'Procurement SLA (DAY)' => $procurement_time,
+    //         'Stock'                 => '',
+    //         'MOQ'                   => '',
+    //         'Packaging Dimensions'  => '',
+    //         'HSN'                   => $hsn_code,
+    //         'Tax'                   => $tax,
+    //         'Thumbnail Image name'  => '',
+    //         'Other Image name'      => '',
+    //         'Video URL'             => '',
+    //         'PDF URL'               => '',
+    //         'Search Tags'           => '',
+    //         'Excel error status'    => '',
     //     ]);
 
     //     $map = [
-    //     'InteriorChowk Product Code' => ['', 'To be filled by InteriorChowk'],
-    //     'Catelogue QC Status' => ['', 'To be filled by InteriorChowk'],
-    //     'QC Failed Reason (if any)' => ['', 'To be filled by InteriorChowk'],
-    //     'Product Category' => ['', 'To be filled by InteriorChowk'],
-    //     'Product Sub Category' => ['', 'To be filled by InteriorChowk'],
-    //     'Product Sub Sub Category' => ['', 'To be filled by InteriorChowk'],
-    //     'Brands' => ['', 'To be filled by InteriorChowk'],
-    //     'Seller SKU ID' => ['Text - limited to 64 characters (including spaces)', 'Seller SKU ID is the
-    //     identification number maintained by seller to keep track of SKUs. This will be mapped with
-    //     InteriorChowk product code.'],
-    //     'Commission Type' => ['', 'To be filled by InteriorChowk'],
-    //     'Commission Fee' => ['', 'To be filled by InteriorChowk'],
-    //     'Listing Status' => ['Single - Text', 'Inactive listings are not available for buyers on
-    //     InteriorChowk'],
-    //     'MRP (INR)' => ['Single - Positive_integer', 'Maximum retail price of the product'],
-    //     'Discount Type' => ['-', 'Write flat or percent'],
-    //     'Discount' => ['-', 'In Rs. Or In %'],
-    //     'Your selling price (INR)' => ['Single - Positive_integer', 'Price at which you want to sell this
-    //     listing'],
-    //     'Product Title' => ['Single - Text Used For: Title', 'Product Title is the identity of the product
-    //     that helps in distinguishing it from other products.'],
-    //     'Product Description' => [[
-    //       'Description',
-    //       'Bullet 1',
-    //       'Bullet 2',
-    //       'Bullet 3',
-    //       'Bullet 4',
-    //       'Bullet 5',
-    //     ], ['Please write few lines describing your product...','Bullet 1',
-    //       'Bullet 2',
-    //       'Bullet 3',
-    //       'Bullet 4',
-    //       'Bullet 5',]],
-    //     'Colour' => [['Colour Name','Rename Colour Name'], ['Eg. Silver','Eg. Matt Finish']],
-    //     'Size' => ['Add size', 'Eg. S, M, L or custom size'],
-    //     'Specification' => [['Brand','Product Dimensions','Wattage','Voltage'],['-','-','-','-']],
-    //     'Key Features' => [['Manufacturer','Packer','Net Quantity','Included
-    //     Components'],['-','-','-','-']],
-    //     'Technical Specification' => [['A','B','C','D'],['-','-','-','-']],
-    //     'Other Details' => [['A','B','C','D'],['-','-','-','-']],
-    //     'Return Days' => ['Number', '-'],
-    //     'Replacement Days' => ['Number', 'Enter number of days only if you want to offer replacement only
-    //     (no return).'],
-    //     'Unit' => ['-', 'Eg. - Kg, pc, gms, lts, set, Pair, Sqft, Sq Mtr., Box'],
-    //     'Free Delivery' => ['-', 'Yes / No'],
-    //     'Self Delivery' => ['-', 'If this product is heavy flammable fragile etc. Please enter yes.'],
-    //     'Warehouse' => ['Noida warehouse', "Fill your warehouse name here."],
-    //     'Procurement SLA (DAY)' => ['Single - Number', 'Time required to keep the product ready for
-    //     dispatch.'],
-    //     'Stock' => ['Number', 'Number of items you have in stock. Add minimum 5 quantity to ensure listing
-    //     visibility'],
-    //     'MOQ' => ['Number', 'Write a minimum order quantity'],
-    //     'Packaging Dimensions' => [['Length (CM)','Breadth (CM)','Height (CM)','Weight (KG)'], ['Length of
-    //     the package in cms','Breadth of the package in cms','Height of the package in cms','Weight of the
-    //     final package in kgs']],
-    //     'HSN' => ['Single - Text', 'To be filled by InteriorChowk'],
-    //     'Tax' => ['Single - Text',"InteriorChowk's tax code which decides the GST for the listing"],
-    //     'Thumbnail Image name' => ['Image name', '1st Image (Thumbnail): Front View – Minimum resolution
-    //     100x500'],
-    //     'Other Image name' => ['Eg.TABLELAMP01.webp,TABLELAMP02.webp', 'Upload images in order (2nd – Back,
-    //     3rd – Open, 4th – Side, 5th – Lifestyle, 6th – Detail).'],
-    //     'Video URL' => ['URL', 'See the summary sheet for Video URL guidelines.'],
-    //     'PDF URL' => ['URL', 'See the summary sheet for PDF URL guidelines.'],
-    //     'Search Tags' => ['-', 'Write search keywords and tags for the product'],
-    //     'Excel error status' => ['-', '❌ Error if missing, ✅ OK when all details are filled.'],
+    //         'InteriorChowk Product Code' => ['', 'To be filled by InteriorChowk'],
+    //         'Catelogue QC Status'        => ['', 'To be filled by InteriorChowk'],
+    //         'QC Failed Reason (if any)'  => ['', 'To be filled by InteriorChowk'],
+    //         'Product Category'           => ['', 'To be filled by InteriorChowk'],
+    //         'Product Sub Category'       => ['', 'To be filled by InteriorChowk'],
+    //         'Product Sub Sub Category'   => ['', 'To be filled by InteriorChowk'],
+    //         'Brands'                     => ['', 'To be filled by InteriorChowk'],
+    //         'Seller SKU ID'              => [
+    //             'Text - limited to 64 characters (including spaces)',
+    //             'Seller SKU ID is the identification number maintained by seller to keep track of SKUs. This will be mapped with InteriorChowk product code.'
+    //         ],
+    //         'Commission Type'            => ['', 'To be filled by InteriorChowk'],
+    //         'Commission Fee'            => ['', 'To be filled by InteriorChowk'],
+    //         'Listing Status'            => ['Single - Text', 'Inactive listings are not available for buyers on InteriorChowk'],
+    //         'MRP (INR)'                 => ['Single - Positive_integer', 'Maximum retail price of the product'],
+    //         'Discount Type'             => ['-', 'Write flat or percent'],
+    //         'Discount'                  => ['-', 'In Rs. Or In %'],
+    //         'Your selling price (INR)'  => ['Single - Positive_integer', 'Price at which you want to sell this listing'],
+    //         'Product Title'             => [
+    //             'Single - Text Used For: Title',
+    //             'Product Title is the identity of the product that helps in distinguishing it from other products.'
+    //         ],
+    //         'Product Description'       => [
+    //             [
+    //                 'Description',
+    //                 'Bullet Point 1',
+    //                 'Bullet Point 2',
+    //                 'Bullet Point 3',
+    //                 'Bullet Point 4',
+    //                 'Bullet Point 5',
+    //             ],
+    //             [
+    //                 'Please write few lines describing your product...',
+    //                 'Bullet Point 1',
+    //                 'Bullet Point 2',
+    //                 'Bullet Point 3',
+    //                 'Bullet Point 4',
+    //                 'Bullet Point 5',
+    //             ]
+    //         ],
+    //         'Colour'                    => [
+    //             ['Colour Name', 'Rename Colour Name'],
+    //             ['Eg. Silver', 'Eg. Matt Finish']
+    //         ],
+    //         'Size'                      => ['Add size', 'Eg. S, M, L or custom size'],
+
+    //         'Specification'             => [
+    //             ['Brand', 'Product Dimensions', 'Wattage', 'Voltage'],
+    //             [
+    //                 'If data is not available, mention N/A.',
+    //                 'If data is not available, mention N/A.',
+    //                 'If data is not available, mention N/A.',
+    //                 'If data is not available, mention N/A.',
+    //             ]
+    //         ],
+    //         'Key Features'              => [
+    //             ['Manufacturer', 'Packer', 'Net Quantity', 'Included Components'],
+    //             [
+    //                 'If data is not available, mention N/A.',
+    //                 'If data is not available, mention N/A.',
+    //                 'If data is not available, mention N/A.',
+    //                 'If data is not available, mention N/A.',
+    //             ]
+    //         ],
+    //         'Technical Specification'   => [
+    //             ['A', 'B', 'C', 'D'],
+    //             [
+    //                 'If data is not available, mention N/A.',
+    //                 'If data is not available, mention N/A.',
+    //                 'If data is not available, mention N/A.',
+    //                 'If data is not available, mention N/A.',
+    //             ]
+    //         ],
+    //         'Other Details'             => [
+    //             ['A', 'B', 'C', 'D'],
+    //             [
+    //                 'If data is not available, mention N/A.',
+    //                 'If data is not available, mention N/A.',
+    //                 'If data is not available, mention N/A.',
+    //                 'If data is not available, mention N/A.',
+    //             ]
+    //         ],
+
+    //         'Return Days'               => ['Number', 'Enter the number of days you want to accept returns.(Min. 3 days required)'],
+    //         'Replacement Days'          => ['Number', 'Enter the number of days you want to accept replacement.'],
+    //         'Unit'                      => ['-', 'Eg. - Kg, pc, gms, lts, set, Pair, Sqft, Sq Mtr., Box'],
+    //         'Free Delivery'             => ['-', 'Yes / No'],
+    //         'Self Delivery'             => ['-', 'If this product is heavy flammable fragile etc. Please enter yes.'],
+    //         'Warehouse'                 => ['Noida warehouse', "Fill your warehouse id here."],
+    //         'Procurement SLA (DAY)'     => ['Single - Number', 'Time required to keep the product ready for dispatch.'],
+    //         'Stock'                     => ['Number', 'Number of items you have in stock. Add minimum 5 quantity to ensure listing visibility'],
+    //         'MOQ'                       => ['Number', 'Write a minimum order quantity'],
+    //         'Packaging Dimensions'      => [
+    //             ['Length (CM)', 'Breadth (CM)', 'Height (CM)', 'Weight (KG)'],
+    //             [
+    //                 'Length of the package in cms',
+    //                 'Breadth of the package in cms',
+    //                 'Height of the package in cms',
+    //                 'Weight of the final package in kgs'
+    //             ]
+    //         ],
+    //         'HSN'                       => ['Single - Text', 'To be filled by InteriorChowk'],
+    //         'Tax'                       => ['Single - Text', "InteriorChowk's tax code which decides the GST for the listing"],
+    //         'Thumbnail Image name'      => ['Image name', '1st Image (Thumbnail): Front View – Minimum resolution 100x500'],
+    //         'Other Image name'          => [
+    //             'Eg.TABLELAMP01.webp,TABLELAMP02.webp',
+    //             'Upload images in order (2nd – Back, 3rd – Open, 4th – Side, 5th – Lifestyle, 6th – Detail).'
+    //         ],
+    //         'Video URL'                 => ['URL', 'See the summary sheet for Video URL guidelines.'],
+    //         'PDF URL'                   => ['URL', 'See the summary sheet for PDF URL guidelines.'],
+    //         'Search Tags'               => ['-', 'Write search keywords and tags for the product'],
+    //         'Excel error status'        => ['-', '❌ Error if missing, ✅ OK when all details are filled.'],
     //     ];
 
     //     $keys = array_keys($baseData);
 
-    //     // --- Export Excel
     //     $filename = "products_bulk.xls";
     //     header("Content-Type: application/vnd.ms-excel; charset=UTF-8");
     //     header("Content-Disposition: attachment; filename=\"$filename\"");
@@ -2281,465 +2872,2040 @@ class ProductController extends Controller
 
     //     echo '<table border="1" cellspacing="0" cellpadding="5">';
 
-    //         // Row 1: Headers
-    //         echo '<tr
-    //             style="background-color:#c4d79b; color:#000; vertical-align:middle; font-weight:bold; text-align:center;">
-    //             ';
-    //             foreach ($keys as $key) {
-    //             if (isset($map[$key]) && is_array($map[$key][0])) {
+    //     echo '<tr style="background-color:#c4d79b; color:#000; vertical-align:middle; font-weight:bold; text-align:center;">';
+    //     foreach ($keys as $key) {
+    //         if (isset($map[$key]) && is_array($map[$key][0])) {
     //             $colspan = count($map[$key][0]);
-    //             echo "<td colspan=\"$colspan\">{$key}</td>";
-    //             } else {
+    //             echo "<td colspan=\"{$colspan}\">{$key}</td>";
+    //         } else {
     //             echo "<td>{$key}</td>";
-    //             }
-    //             }
-    //             echo '</tr>';
+    //         }
+    //     }
+    //     echo '</tr>';
 
-    //         // Row 2: Instruction 1
-    //         echo '<tr
-    //             style="background-color:#ffff00; color:#000; vertical-align:middle; font-weight:bold; text-align:center;">
-    //             ';
-    //             foreach ($keys as $key) {
-    //             if (isset($map[$key])) {
+    //     echo '<tr style="background-color:#ffff00; color:#000; vertical-align:middle; font-weight:bold; text-align:center;">';
+    //     foreach ($keys as $key) {
+    //         if (isset($map[$key])) {
     //             $inst1 = $map[$key][0];
     //             if (is_array($inst1)) {
-    //             foreach ($inst1 as $sub) {
-    //             echo "<td>{$sub}</td>";
-    //             }
+    //                 foreach ($inst1 as $sub) {
+    //                     echo "<td>{$sub}</td>";
+    //                 }
     //             } else {
-    //             echo "<td>{$inst1}</td>";
+    //                 echo "<td>{$inst1}</td>";
     //             }
-    //             } else {
+    //         } else {
     //             echo "<td>-</td>";
-    //             }
-    //             }
-    //             echo '</tr>';
+    //         }
+    //     }
+    //     echo '</tr>';
 
-    //         // Row 3: Instruction 2
-    //         echo '<tr
-    //             style="background-color:#fcd5b4; color:#ff0000; font-weight:bold; text-align:center; vertical-align:middle;">
-    //             ';
-    //             foreach ($keys as $key) {
-    //             if (isset($map[$key])) {
+    //     echo '<tr style="background-color:#fcd5b4; color:#ff0000; font-weight:bold; text-align:center; vertical-align:middle;">';
+    //     foreach ($keys as $key) {
+
+    //         if (
+    //             strpos($key, 'Specification:') === 0 ||
+    //             strpos($key, 'Key features:') === 0 ||
+    //             strpos($key, 'Technical specification:') === 0 ||
+    //             strpos($key, 'Other details:') === 0
+    //         ) {
+    //             echo "<td>If data is not available, mention N/A.</td>";
+    //         } elseif (isset($map[$key])) {
     //             $inst2 = $map[$key][1];
     //             if (is_array($inst2)) {
-    //             foreach ($inst2 as $sub) {
-    //             echo "<td>{$sub}</td>";
-    //             }
+    //                 foreach ($inst2 as $sub) {
+    //                     echo "<td>{$sub}</td>";
+    //                 }
     //             } else {
-    //             echo "<td>{$inst2}</td>";
+    //                 echo "<td>{$inst2}</td>";
     //             }
-    //             } else {
+    //         } else {
     //             echo "<td>-</td>";
-    //             }
-    //             }
-    //             echo '</tr>';
+    //         }
+    //     }
+    //     echo '</tr>';
 
-    //         // Row 4: Data
-    //         echo '<tr>';
-    //             foreach ($baseData as $key => $value) {
-    //             if (isset($map[$key]) && is_array($map[$key][0])) {
+    //     echo '<tr>';
+    //     foreach ($baseData as $key => $value) {
+    //         if (isset($map[$key]) && is_array($map[$key][0])) {
     //             foreach ($map[$key][0] as $sub) {
+    //                 echo "<td style='text-align:center; vertical-align:middle;'>{$value}</td>";
+    //             }
+    //         } else {
     //             echo "<td style='text-align:center; vertical-align:middle;'>{$value}</td>";
-    //             }
-    //             } else {
-    //             echo "<td style='text-align:center; vertical-align:middle;'>{$value}</td>";
-    //             }
-    //             }
-    //             echo '</tr>';
+    //         }
+    //     }
+    //     echo '</tr>';
 
-    //         echo '</table>';
+    //     echo '</table>';
     // }
 
 
+    
 
+    public function bulk_export_data_category_wise()
+    {
+        $category_id          = session('category_id');
+        $sub_category_id      = session('sub_category_id');
+        $sub_sub_category_id  = session('sub_sub_category_id');
+        $product_id           = session('product_id');
+        $brand_id             = session('brand_id');
+        $tax                  = session('tax');
+        $procurement_time     = session('procurement_time');
+        $hsn_code             = session('hsn_code');
 
-public function bulk_export_data_category_wise()
-{
-    $category_id        = session('category_id');
-    $sub_category_id    = session('sub_category_id');
-    $sub_sub_category_id = session('sub_sub_category_id');
-    $product_id         = session('product_id');
-    $brand_id           = session('brand_id');
-    $tax                = session('tax');
-    $procurement_time   = session('procurement_time');
-    $hsn_code           = session('hsn_code');
+        $seller_id = auth('seller')->id();
+        $commission_fee = DB::table('categories')->where('id', $sub_category_id)->first();
 
-    $seller_id      = auth('seller')->id();
-    $commission_fee = DB::table('sellers')->where('id', $seller_id)->first();
+        $commission_type = match ($commission_fee->commission_fee ?? 1) {
+            1       => 'Default',
+            2       => 'In Percent',
+            default => 'Transfer Price',
+        };
 
-    $commission_type = match ($commission_fee->commission_fee ?? 1) {
-        1       => 'Default',
-        2       => 'In Percent',
-        default => 'Transfer Price',
-    };
+        $category          = DB::table('categories')->where('id', $category_id)->first();
+        $product           = Product::where('id', $product_id)->first() ?? new Product();
+        $skuProduct        = DB::table('sku_product_new')->where('product_id', $product_id)->first();
+        $sub_category      = DB::table('categories')->where('id', $sub_category_id)->first();
+        $sub_sub_category  = DB::table('categories')->where('id', $sub_sub_category_id)->first();
+        $brand_name        = DB::table('brands')->where('id', $brand_id)->first();
 
-    $category        = DB::table('categories')->where('id', $category_id)->first();
-    $product         = Product::where('id', $product_id)->first() ?? new Product();
-    $skuProduct      = DB::table('sku_product_new')->where('product_id', $product_id)->first();
-    $sub_category    = DB::table('categories')->where('id', $sub_category_id)->first();
-    $sub_sub_category= DB::table('categories')->where('id', $sub_sub_category_id)->first();
-    $brand_name      = DB::table('brands')->where('id', $brand_id)->first();
+        $specifications           = !empty($sub_sub_category->specification) ? explode(',', $sub_sub_category->specification) : [];
+        $key_features             = !empty($sub_sub_category->key_features) ? explode(',', $sub_sub_category->key_features) : [];
+        $technical_specifications = !empty($sub_sub_category->technical_specification) ? explode(',', $sub_sub_category->technical_specification) : [];
+        $other_details            = !empty($sub_sub_category->other_details) ? explode(',', $sub_sub_category->other_details) : [];
 
-    $specifications           = !empty($sub_sub_category->specification) ? explode(',', $sub_sub_category->specification) : [];
-    $key_features             = !empty($sub_sub_category->key_features) ? explode(',', $sub_sub_category->key_features) : [];
-    $technical_specifications = !empty($sub_sub_category->technical_specification) ? explode(',', $sub_sub_category->technical_specification) : [];
-    $other_details            = !empty($sub_sub_category->other_details) ? explode(',', $sub_sub_category->other_details) : [];
+        $colors = DB::table('colors')->pluck('name')->toArray();
 
-    $colors = DB::table('colors')->pluck('name')->toArray();
+        // ----------------- SHEET 1 BASE DATA -----------------
+        $baseData = [
+            'InteriorChowk Product Code' => '',
+            'Catelogue QC Status'        => '',
+            'QC Failed Reason (if any)'  => $product->qc_failed_reason ?? '',
+            'Product Category'           => $category->name ?? '',
+            'Product Sub Category'       => $sub_category->name ?? '',
+            'Product Sub Sub Category'   => $sub_sub_category->name ?? '',
+            'Brands'                     => $brand_name->name ?? '',
+            'Seller SKU ID'              => '',
+            'Commission Type'            => $commission_type,
+            'Commission Fee'             => $commission_fee->commission ?? '',
+            'Listing Status'             => '',
+            'MRP (INR)'                  => $skuProduct->variant_mrp ?? '',
+            'Discount Type'              => $skuProduct->discount_type ?? '',
+            'Discount'                   => $skuProduct->discount ?? '',
+            'Your selling price (INR)'   => '=IF(M2="Flat", MAX(0, L2-N2), IF(M2="Percent", MAX(0, L2-(L2*N2/100)), ""))',
+            'Product Title'              => '',
+            'Product Description'        => '',
+            'Colour'                     => implode(', ', $colors),
+            'Size'                       => '',
+            'Return Days'                => '',
+            'Replacement Days'           => '',
+            'Unit'                       => '',
+            'Free Delivery'              => '',
+            'Self Delivery'              => '',
+            'Warehouse'                  => 'Noida warehouse',
+            'Procurement SLA (DAY)'      => $procurement_time,
+            'Stock'                      => '',
+            'MOQ'                        => '',
+            'Packaging Dimensions'       => '',
+            'HSN'                        => $hsn_code,
+            'Tax'                        => $tax,
+            'Thumbnail Image name'       => '',
+            'Other Image name'           => '',
+            'Video URL'                  => '',
+            'PDF URL'                    => '',
+            'Search Tags'                => '',
+            'Excel error status'         => '',
+        ];
 
-    $baseData = [
-        'InteriorChowk Product Code'   => '',
-        'Catelogue QC Status'          => '',
-        'QC Failed Reason (if any)'    => $product->qc_failed_reason ?? '',
-        'Product Category'             => $category->name ?? '',
-        'Product Sub Category'         => $sub_category->name ?? '',
-        'Product Sub Sub Category'     => $sub_sub_category->name ?? '',
-        'Brands'                       => $brand_name->name ?? '',
-        'Seller SKU ID'                => '',
-        'Commission Type'              => $commission_type,
-        'Commission Fee'               => $commission_fee->fee ?? '',
-        'Listing Status'               => '',
-        'MRP (INR)'                    => $skuProduct->variant_mrp ?? '',
-        'Discount Type'                => $skuProduct->discount_type ?? '',
-        'Discount'                     => $skuProduct->discount ?? '',
-        // Formula directly
-        'Your selling price (INR)'     => '=IF(M2="Flat", MAX(0, L2-N2), IF(M2="Percent", MAX(0, L2-(L2*N2/100)), ""))',
-        'Product Title'                => '',
-        'Product Description'          => '',
-        'Colour'                       => implode(', ', $colors),
-        'Size'                         => '',
-        'Return Days'                  => '',
-        'Replacement Days'             => '',
-        'Unit'                         => '',
-        'Free Delivery'                => '',
-        'Self Delivery'                => '',
-        'Warehouse'                    => 'Noida warehouse',
-        'Procurement SLA (DAY)'        => $procurement_time,
-        'Stock'                        => '',
-        'MOQ'                          => '',
-        'Packaging Dimensions'         => '',
-        'HSN'                          => $hsn_code,
-        'Tax'                          => $tax,
-        'Thumbnail Image name'         => '',
-        'Other Image name'             => '',
-        'Video URL'                    => '',
-        'PDF URL'                      => '',
-        'Search Tags'                  => '',
-        'Excel error status'           => '',
-    ];
-
-    foreach ($specifications as $spec) {
-        $baseData['Specification: ' . trim($spec)] = '';
-    }
-    foreach ($key_features as $feature) {
-        $baseData['Key features: ' . trim($feature)] = '';
-    }
-    foreach ($technical_specifications as $tech) {
-        $baseData['Technical specification: ' . trim($tech)] = '';
-    }
-    foreach ($other_details as $other) {
-        $baseData['Other details: ' . trim($other)] = '';
-    }
-
-    $baseData = array_merge($baseData, [
-        'Return Days'            => '',
-        'Replacement Days'       => '',
-        'Unit'                   => '',
-        'Free Delivery'          => '',
-        'Self Delivery'          => '',
-        'Warehouse'              => 'Noida warehouse',
-        'Procurement SLA (DAY)'  => $procurement_time,
-        'Stock'                  => '',
-        'MOQ'                    => '',
-        'Packaging Dimensions'   => '',
-        'HSN'                    => $hsn_code,
-        'Tax'                    => $tax,
-        'Thumbnail Image name'   => '',
-        'Other Image name'       => '',
-        'Video URL'              => '',
-        'PDF URL'                => '',
-        'Search Tags'            => '',
-        'Excel error status'     => '',
-    ]);
-
-    $map = [
-        'InteriorChowk Product Code' => ['', 'To be filled by InteriorChowk'],
-        'Catelogue QC Status'        => ['', 'To be filled by InteriorChowk'],
-        'QC Failed Reason (if any)'  => ['', 'To be filled by InteriorChowk'],
-        'Product Category'           => ['', 'To be filled by InteriorChowk'],
-        'Product Sub Category'       => ['', 'To be filled by InteriorChowk'],
-        'Product Sub Sub Category'   => ['', 'To be filled by InteriorChowk'],
-        'Brands'                     => ['', 'To be filled by InteriorChowk'],
-        'Seller SKU ID'              => [
-            'Text - limited to 64 characters (including spaces)',
-            'Seller SKU ID is the identification number maintained by seller to keep track of SKUs. This will be mapped with InteriorChowk product code.',
-        ],
-        'Commission Type'            => ['', 'To be filled by InteriorChowk'],
-        'Commission Fee'             => ['', 'To be filled by InteriorChowk'],
-        'Listing Status'             => [
-            'Single - Text',
-            'Inactive listings are not available for buyers on InteriorChowk',
-        ],
-        'MRP (INR)'                  => [
-            'Single - Positive_integer',
-            'Maximum retail price of the product',
-        ],
-        'Discount Type'              => ['-', 'Write flat or percent'],
-        'Discount'                   => ['-', 'In Rs. Or In %'],
-        'Your selling price (INR)'   => [
-            'Single - Positive_integer',
-            'Price at which you want to sell this listing',
-        ],
-        'Product Title'              => [
-            'Single - Text Used For: Title',
-            'Product Title is the identity of the product that helps in distinguishing it from other products.',
-        ],
-        'Product Description'        => [
-            [
-                'Description',
-                'Bullet 1',
-                'Bullet 2',
-                'Bullet 3',
-                'Bullet 4',
-                'Bullet 5',
-            ],
-            [
-                'Please write few lines describing your product...',
-                'Bullet 1',
-                'Bullet 2',
-                'Bullet 3',
-                'Bullet 4',
-                'Bullet 5',
-            ],
-        ],
-        'Colour' => [
-            ['Colour Name', 'Rename Colour Name'],
-            ['Eg. Silver', 'Eg. Matt Finish'],
-        ],
-        'Size' => ['Add size', 'Eg. S, M, L or custom size'],
-        'Specification' => [
-            ['Brand', 'Product Dimensions', 'Wattage', 'Voltage'],
-            ['-', '-', '-', '-'],
-        ],
-        'Key Features' => [
-            ['Manufacturer', 'Packer', 'Net Quantity', 'Included Components'],
-            ['-', '-', '-', '-'],
-        ],
-        'Technical Specification' => [
-            ['A', 'B', 'C', 'D'],
-            ['-', '-', '-', '-'],
-        ],
-        'Other Details' => [
-            ['A', 'B', 'C', 'D'],
-            ['-', '-', '-', '-'],
-        ],
-        'Return Days' => ['Number', '-'],
-        'Replacement Days' => [
-            'Number',
-            'Enter number of days only if you want to offer replacement only (no return).',
-        ],
-        'Unit' => [
-            '-',
-            'Eg. - Kg, pc, gms, lts, set, Pair, Sqft, Sq Mtr., Box',
-        ],
-        'Free Delivery' => ['-', 'Yes / No'],
-        'Self Delivery' => [
-            '-',
-            'If this product is heavy flammable fragile etc. Please enter yes.',
-        ],
-        'Warehouse' => ['Noida warehouse', 'Fill your warehouse name here.'],
-        'Procurement SLA (DAY)' => [
-            'Single - Number',
-            'Time required to keep the product ready for dispatch.',
-        ],
-        'Stock' => [
-            'Number',
-            'Number of items you have in stock. Add minimum 5 quantity to ensure listing visibility',
-        ],
-        'MOQ' => ['Number', 'Write a minimum order quantity'],
-        'Packaging Dimensions' => [
-            ['Length (CM)', 'Breadth (CM)', 'Height (CM)', 'Weight (KG)'],
-            [
-                'Length of the package in cms',
-                'Breadth of the package in cms',
-                'Height of the package in cms',
-                'Weight of the final package in kgs',
-            ],
-        ],
-        'HSN' => ['Single - Text', 'To be filled by InteriorChowk'],
-        'Tax' => [
-            'Single - Text',
-            "InteriorChowk's tax code which decides the GST for the listing",
-        ],
-        'Thumbnail Image name' => [
-            'Image name',
-            '1st Image (Thumbnail): Front View – Minimum resolution 100x500',
-        ],
-        'Other Image name' => [
-            'Eg.TABLELAMP01.webp,TABLELAMP02.webp',
-            'Upload images in order (2nd – Back, 3rd – Open, 4th – Side, 5th – Lifestyle, 6th – Detail).',
-        ],
-        'Video URL' => ['URL', 'See the summary sheet for Video URL guidelines.'],
-        'PDF URL'   => ['URL', 'See the summary sheet for PDF URL guidelines.'],
-        'Search Tags' => ['-', 'Write search keywords and tags for the product'],
-        'Excel error status' => ['-', '❌ Error if missing, ✅ OK when all details are filled.'],
-    ];
-
-    $keys = array_keys($baseData);
-
-    /*
-     * -------- Sheet 1: product_bulk (same structure as your HTML table) --------
-     */
-    $sheet1Rows = [];
-
-    // Row 1: Headers (with "colspan" expanded into multiple columns)
-    $row1 = [];
-    foreach ($keys as $key) {
-        if (isset($map[$key]) && is_array($map[$key][0])) {
-            $colspan = count($map[$key][0]);
-            $row1[]  = $key;
-            for ($i = 1; $i < $colspan; $i++) {
-                $row1[] = ''; // filler cells
-            }
-        } else {
-            $row1[] = $key;
+        foreach ($specifications as $spec) {
+            $baseData['Specification: ' . trim($spec)] = '';
         }
-    }
-    $sheet1Rows[] = $row1;
+        foreach ($key_features as $feature) {
+            $baseData['Key features: ' . trim($feature)] = '';
+        }
+        foreach ($technical_specifications as $tech) {
+            $baseData['Technical specification: ' . trim($tech)] = '';
+        }
+        foreach ($other_details as $other) {
+            $baseData['Other details: ' . trim($other)] = '';
+        }
 
-    // Row 2: Instruction 1 (yellow row in old design)
-    $row2 = [];
-    foreach ($keys as $key) {
-        if (isset($map[$key])) {
-            $inst1 = $map[$key][0];
-            if (is_array($inst1)) {
-                foreach ($inst1 as $sub) {
-                    $row2[] = $sub;
+        // Re-add some keys at the end (same as aapke code me tha – overwrite same values)
+        $baseData = array_merge($baseData, [
+            'Return Days'           => '',
+            'Replacement Days'      => '',
+            'Unit'                  => '',
+            'Free Delivery'         => '',
+            'Self Delivery'         => '',
+            'Warehouse'             => 'Noida warehouse',
+            'Procurement SLA (DAY)' => $procurement_time,
+            'Stock'                 => '',
+            'MOQ'                   => '',
+            'Packaging Dimensions'  => '',
+            'HSN'                   => $hsn_code,
+            'Tax'                   => $tax,
+            'Thumbnail Image name'  => '',
+            'Other Image name'      => '',
+            'Video URL'             => '',
+            'PDF URL'               => '',
+            'Search Tags'           => '',
+            'Excel error status'    => '',
+        ]);
+
+        // MAP – same as aapka code
+        $map = [
+            'InteriorChowk Product Code' => ['', 'To be filled by InteriorChowk'],
+            'Catelogue QC Status'        => ['', 'To be filled by InteriorChowk'],
+            'QC Failed Reason (if any)'  => ['', 'To be filled by InteriorChowk'],
+            'Product Category'           => ['', 'To be filled by InteriorChowk'],
+            'Product Sub Category'       => ['', 'To be filled by InteriorChowk'],
+            'Product Sub Sub Category'   => ['', 'To be filled by InteriorChowk'],
+            'Brands'                     => ['', 'To be filled by InteriorChowk'],
+            'Seller SKU ID'              => [
+                'Text - limited to 64 characters (including spaces)',
+                'Seller SKU ID is the identification number maintained by seller to keep track of SKUs. This will be mapped with InteriorChowk product code.'
+            ],
+            'Commission Type'            => ['', 'To be filled by InteriorChowk'],
+            'Commission Fee'            => ['', 'To be filled by InteriorChowk'],
+            'Listing Status'            => ['Single - Text', 'Inactive listings are not available for buyers on InteriorChowk'],
+            'MRP (INR)'                 => ['Single - Positive_integer', 'Maximum retail price of the product'],
+            'Discount Type'             => ['-', 'Write flat or percent'],
+            'Discount'                  => ['-', 'In Rs. Or In %'],
+            'Your selling price (INR)'  => ['Single - Positive_integer', 'Price at which you want to sell this listing'],
+            'Product Title'             => [
+                'Single - Text Used For: Title',
+                'Product Title is the identity of the product that helps in distinguishing it from other products.'
+            ],
+            'Product Description'       => [
+                [
+                    'Description',
+                    'Bullet Point 1',
+                    'Bullet Point 2',
+                    'Bullet Point 3',
+                    'Bullet Point 4',
+                    'Bullet Point 5',
+                ],
+                [
+                    'Please write few lines describing your product...',
+                    'Bullet Point 1',
+                    'Bullet Point 2',
+                    'Bullet Point 3',
+                    'Bullet Point 4',
+                    'Bullet Point 5',
+                ]
+            ],
+            'Colour'                    => [
+                ['Colour Name', 'Rename Colour Name'],
+                ['Eg. Silver', 'Eg. Matt Finish']
+            ],
+            'Size'                      => ['Add size', 'Eg. S, M, L or custom size'],
+
+            'Specification'             => [
+                ['Brand', 'Product Dimensions', 'Wattage', 'Voltage'],
+                [
+                    'If data is not available, mention N/A.',
+                    'If data is not available, mention N/A.',
+                    'If data is not available, mention N/A.',
+                    'If data is not available, mention N/A.',
+                ]
+            ],
+            'Key Features'              => [
+                ['Manufacturer', 'Packer', 'Net Quantity', 'Included Components'],
+                [
+                    'If data is not available, mention N/A.',
+                    'If data is not available, mention N/A.',
+                    'If data is not available, mention N/A.',
+                    'If data is not available, mention N/A.',
+                ]
+            ],
+            'Technical Specification'   => [
+                ['A', 'B', 'C', 'D'],
+                [
+                    'If data is not available, mention N/A.',
+                    'If data is not available, mention N/A.',
+                    'If data is not available, mention N/A.',
+                    'If data is not available, mention N/A.',
+                ]
+            ],
+            'Other Details'             => [
+                ['A', 'B', 'C', 'D'],
+                [
+                    'If data is not available, mention N/A.',
+                    'If data is not available, mention N/A.',
+                    'If data is not available, mention N/A.',
+                    'If data is not available, mention N/A.',
+                ]
+            ],
+
+            'Return Days'               => ['Number', 'Enter the number of days you want to accept returns.(Min. 3 days required)'],
+            'Replacement Days'          => ['Number', 'Enter the number of days you want to accept replacement.'],
+            'Unit'                      => ['-', 'Eg. - Kg, pc, gms, lts, set, Pair, Sqft, Sq Mtr., Box'],
+            'Free Delivery'             => ['-', 'Yes / No'],
+            'Self Delivery'             => ['-', 'If this product is heavy flammable fragile etc. Please enter yes.'],
+            'Warehouse'                 => ['Noida warehouse', "Fill your warehouse id here."],
+            'Procurement SLA (DAY)'     => ['Single - Number', 'Time required to keep the product ready for dispatch.'],
+            'Stock'                     => ['Number', 'Number of items you have in stock. Add minimum 5 quantity to ensure listing visibility'],
+            'MOQ'                       => ['Number', 'Write a minimum order quantity'],
+            'Packaging Dimensions'      => [
+                ['Length (CM)', 'Breadth (CM)', 'Height (CM)', 'Weight (KG)'],
+                [
+                    'Length of the package in cms',
+                    'Breadth of the package in cms',
+                    'Height of the package in cms',
+                    'Weight of the final package in kgs'
+                ]
+            ],
+            'HSN'                       => ['Single - Text', 'To be filled by InteriorChowk'],
+            'Tax'                       => ['Single - Text', "InteriorChowk's tax code which decides the GST for the listing"],
+            'Thumbnail Image name'      => ['Image name', '1st Image (Thumbnail): Front View – Minimum resolution 100x500'],
+            'Other Image name'          => [
+                'Eg.TABLELAMP01.webp,TABLELAMP02.webp',
+                'Upload images in order (2nd – Back, 3rd – Open, 4th – Side, 5th – Lifestyle, 6th – Detail).'
+            ],
+            'Video URL'                 => ['URL', 'See the summary sheet for Video URL guidelines.'],
+            'PDF URL'                   => ['URL', 'See the summary sheet for PDF URL guidelines.'],
+            'Search Tags'               => ['-', 'Write search keywords and tags for the product'],
+            'Excel error status'        => ['-', '❌ Error if missing, ✅ OK when all details are filled.'],
+        ];
+
+        // ----------------- CREATE SPREADSHEET -----------------
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+
+        // SHEET 1: BULK UPLOAD
+        $sheet1 = $spreadsheet->getActiveSheet();
+        $sheet1->setTitle('Product_Bulk');
+
+        $keys = array_keys($baseData);
+
+        $headerRow  = 1; // Green row
+        $instRow1   = 2; // Yellow row
+        $instRow2   = 3; // Orange row
+        $dataRow    = 4; // Default data row
+
+        $colIndex = 1;
+
+        foreach ($keys as $key) {
+            $value = $baseData[$key];
+
+            // Grouped columns (jahan map me [ [..], [..] ] hai )
+            if (isset($map[$key]) && is_array($map[$key][0])) {
+                $subHeaders = $map[$key][0];
+                $subInst    = $map[$key][1];
+
+                $startCol = $colIndex;
+                $endCol   = $colIndex + count($subHeaders) - 1;
+
+                // Merge header (row 1)
+                $sheet1->mergeCellsByColumnAndRow($startCol, $headerRow, $endCol, $headerRow);
+                $sheet1->setCellValueByColumnAndRow($startCol, $headerRow, $key);
+
+                // Row 2 – sub headers
+                foreach ($subHeaders as $subHeader) {
+                    $sheet1->setCellValueByColumnAndRow($colIndex, $instRow1, $subHeader);
+                    $colIndex++;
                 }
-            } else {
-                $row2[] = $inst1;
-            }
-        } else {
-            $row2[] = '-';
-        }
-    }
-    $sheet1Rows[] = $row2;
 
-    // Row 3: Instruction 2 (orange/red row in old design)
-    $row3 = [];
-    foreach ($keys as $key) {
-        if (isset($map[$key])) {
-            $inst2 = $map[$key][1];
-            if (is_array($inst2)) {
-                foreach ($inst2 as $sub) {
-                    $row3[] = $sub;
+                // Row 3 – sub instructions
+                $tempCol = $startCol;
+                foreach ($subInst as $sub) {
+                    $sheet1->setCellValueByColumnAndRow($tempCol, $instRow2, $sub);
+                    $tempCol++;
                 }
+
+                // Row 4 – same default value repeat
+                $tempCol = $startCol;
+                foreach ($subHeaders as $subHeader) {
+                    $sheet1->setCellValueByColumnAndRow($tempCol, $dataRow, $value);
+                    $tempCol++;
+                }
+
             } else {
-                $row3[] = $inst2;
+                // Simple single column
+                $sheet1->setCellValueByColumnAndRow($colIndex, $headerRow, $key);
+
+                if (isset($map[$key])) {
+                    $inst1 = $map[$key][0];
+                    $inst2 = $map[$key][1];
+
+                    // Row 2
+                    if (is_array($inst1)) {
+                        // Agar array aaya bhi toh newline join
+                        $sheet1->setCellValueByColumnAndRow($colIndex, $instRow1, implode("\n", $inst1));
+                    } else {
+                        $sheet1->setCellValueByColumnAndRow($colIndex, $instRow1, $inst1);
+                    }
+
+                    // Row 3
+                    if (is_array($inst2)) {
+                        $sheet1->setCellValueByColumnAndRow($colIndex, $instRow2, implode("\n", $inst2));
+                    } else {
+                        $sheet1->setCellValueByColumnAndRow($colIndex, $instRow2, $inst2);
+                    }
+                } else {
+                    // No map entry
+                    $sheet1->setCellValueByColumnAndRow($colIndex, $instRow1, '-');
+
+                    if (
+                        strpos($key, 'Specification:') === 0 ||
+                        strpos($key, 'Key features:') === 0 ||
+                        strpos($key, 'Technical specification:') === 0 ||
+                        strpos($key, 'Other details:') === 0
+                    ) {
+                        $sheet1->setCellValueByColumnAndRow($colIndex, $instRow2, 'If data is not available, mention N/A.');
+                    } else {
+                        $sheet1->setCellValueByColumnAndRow($colIndex, $instRow2, '-');
+                    }
+                }
+
+                // Default value row
+                $sheet1->setCellValueByColumnAndRow($colIndex, $dataRow, $value);
+                $colIndex++;
             }
-        } else {
-            $row3[] = '-';
         }
-    }
-    $sheet1Rows[] = $row3;
 
-    // Row 4: Data row
-    $row4 = [];
-    foreach ($baseData as $key => $value) {
-        if (isset($map[$key]) && is_array($map[$key][0])) {
-            foreach ($map[$key][0] as $sub) {
-                $row4[] = $value;
-            }
-        } else {
-            $row4[] = $value;
+        $lastColIndex = $colIndex - 1;
+        $lastColLetter = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($lastColIndex);
+
+        // STYLING SHEET 1
+        // Header row (Row 1 – Green)
+        $sheet1->getStyle("A{$headerRow}:{$lastColLetter}{$headerRow}")->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 11,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+                'wrapText'   => true,
+            ],
+            'fill' => [
+                'fillType'   => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'C4D79B'],
+            ],
+        ]);
+
+        // Row 2 – Yellow
+        $sheet1->getStyle("A{$instRow1}:{$lastColLetter}{$instRow1}")->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 10,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+                'wrapText'   => true,
+            ],
+            'fill' => [
+                'fillType'   => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'FFFF00'],
+            ],
+        ]);
+
+        // Row 3 – Orange + Red text
+        $sheet1->getStyle("A{$instRow2}:{$lastColLetter}{$instRow2}")->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 10,
+                'name' => 'Calibri',
+                'color' => ['rgb' => 'FF0000'],
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+                'wrapText'   => true,
+            ],
+            'fill' => [
+                'fillType'   => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'FCD5B4'],
+            ],
+        ]);
+
+        // Row 4 – data row
+        $sheet1->getStyle("A{$dataRow}:{$lastColLetter}{$dataRow}")->applyFromArray([
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+                'wrapText'   => true,
+            ],
+            'font' => [
+                'size' => 10,
+                'name' => 'Calibri',
+            ],
+        ]);
+
+        // Column autosize
+        for ($i = 1; $i <= $lastColIndex; $i++) {
+            $sheet1->getColumnDimensionByColumn($i)->setAutoSize(true);
         }
+
+        // ----------------- SHEET 2: GUIDELINE (AS-IS FROM YOUR CODE) -----------------
+        $sheet2 = $spreadsheet->createSheet();
+        $sheet2->setTitle('Guideline');
+
+        // Columns width
+        $sheet2->getColumnDimension('A')->setWidth(80);
+        $sheet2->getColumnDimension('B')->setWidth(45);
+
+        // ROW 1
+        $sheet2->mergeCells('A1:B1');
+        $sheet2->setCellValue(
+            'A1',
+            '📘 InteriorChowk Bulk Product Listing – Seller Guidelines'
+        );
+
+        $sheet2->getStyle('A1')->applyFromArray([
+            'font' => [
+                'bold'  => true,
+                'size'  => 24,
+                'name'  => 'Calibri',
+                'color' => ['rgb' => '000000'],
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+                'wrapText'   => true,
+            ],
+            'fill' => [
+                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+            ],
+        ]);
+        $sheet2->getRowDimension(1)->setRowHeight(24);
+
+        $sheet2->mergeCells('A2:B3');
+        $sheet2->setCellValue(
+            'A2',
+            "Please read these instructions carefully before filling and uploading the bulk product listing Excel file.Following these guidelines will help your products go live faster and avoid QC rejections."
+        );
+
+        $sheet2->getStyle('A2')->applyFromArray([
+            'font' => [
+                'bold'  => true,
+                'size'  => 11,
+                'name'  => 'Calibri',
+                'color' => ['rgb' => '000000'],
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_TOP,
+                'wrapText'   => true,
+            ],
+        ]);
+
+        $sheet2->getRowDimension(2)->setRowHeight(30);
+
+        //Row 2
+        $sheet2->mergeCells('A5:B5');
+        $sheet2->setCellValue('A5', 'IMPORTANT GENERAL RULES');
+
+        $sheet2->getStyle('A5')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 14,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+            ],
+        ]);
+
+        $sheet2->getRowDimension(5)->setRowHeight(24);
+
+        $sheet2->mergeCells('A6:B6');
+
+        $rulesText =
+            "- Do not change any prefilled columns.\n" .
+            "- One Excel file supports only ONE category at a time.\n" .
+            "- Each SKU, color, and size variation must be added in a separate row.\n" .
+            "- Ensure all mandatory fields are filled correctly before upload.\n" .
+            "- Incorrect or missing data may cause QC failure or upload errors.";
+
+        $sheet2->setCellValue('A6', $rulesText);
+
+        $sheet2->getStyle('A6')->applyFromArray([
+            'font' => [
+                'bold' => false,
+                'size' => 11,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_TOP,
+                'wrapText'   => true,
+            ],
+            'fill' => [
+                'fillType'   => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'FFFFFF'],
+            ],
+        ]);
+
+        for ($r = 6; $r <= 6; $r++) {
+            $sheet2->getRowDimension($r)->setRowHeight(70);
+        }
+
+        // ROW 3
+        $sheet2->mergeCells('A9:B9');
+        $sheet2->setCellValue('A9', 'COLUMNS PREFILLED / MANAGED BY INTERIORCHOWK');
+
+        $sheet2->getStyle('A9')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 18,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+            ],
+        ]);
+
+        $sheet2->getRowDimension(9)->setRowHeight(20);
+
+        $sheet2->mergeCells('A10:B10');
+
+        $rulesText =
+            "(Seller should NOT edit these columns)";
+
+        $sheet2->setCellValue('A10', $rulesText);
+
+        $sheet2->getStyle('A10')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 11,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_TOP,
+                'wrapText'   => true,
+            ],
+            'fill' => [
+                'fillType'   => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'FFFFFF'],
+            ],
+        ]);
+
+        for ($r = 9; $r <= 10; $r++) {
+            $sheet2->getRowDimension($r)->setRowHeight(18);
+        }
+
+        //Row 4
+        $sheet2->mergeCells('A12:B12');
+        $sheet2->setCellValue('A12', 'Column A – InteriorChowk Product Code');
+
+        $sheet2->getStyle('A12')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 15,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+            ],
+        ]);
+
+        $sheet2->getRowDimension(12)->setRowHeight(18);
+
+        $sheet2->mergeCells('A13:B13');
+
+        $rulesText =
+            "- Auto-generated by InteriorChowk after upload.\n" .
+            "- Do not enter any value.\n";
+
+        $sheet2->setCellValue('A13', $rulesText);
+
+        $sheet2->getStyle('A13')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 11,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_TOP,
+                'wrapText'   => true,
+            ],
+            'fill' => [
+                'fillType'   => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'FFFFFF'],
+            ],
+        ]);
+
+        for ($r = 12; $r <= 14; $r++) {
+            $sheet2->getRowDimension($r)->setRowHeight(25);
+        }
+
+        //Row 5
+        $sheet2->mergeCells('A16:B16');
+        $sheet2->setCellValue('A16', 'Column B – Catalogue QC Status');
+
+        $sheet2->getStyle('A16')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 15,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+            ],
+        ]);
+
+        $sheet2->getRowDimension(16)->setRowHeight(18);
+
+        $sheet2->mergeCells('A17:B17');
+
+        $rulesText =
+            "- Shows product approval status after review.\n" .
+            "Pass = Product is live\n" .
+            "Fail = Product is inactive";
+
+        $sheet2->setCellValue('A17', $rulesText);
+
+        $sheet2->getStyle('A17')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 11,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_TOP,
+                'wrapText'   => true,
+            ],
+            'fill' => [
+                'fillType'   => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'FFFFFF'],
+            ],
+        ]);
+
+        for ($r = 16; $r <= 17; $r++) {
+            $sheet2->getRowDimension($r)->setRowHeight(45);
+        }
+
+        //Row 6
+        $sheet2->mergeCells('A19:B19');
+        $sheet2->setCellValue('A19', 'Column C – QC Failed Reason (If Any)');
+
+        $sheet2->getStyle('A19')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 15,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+            ],
+        ]);
+
+        $sheet2->getRowDimension(19)->setRowHeight(18);
+
+        $sheet2->mergeCells('A20:B20');
+
+        $rulesText =
+            "- Displays the reason for QC failure (e.g. wrong image, missing details).";
+
+        $sheet2->setCellValue('A20', $rulesText);
+
+        $sheet2->getStyle('A20')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 11,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_TOP,
+                'wrapText'   => true,
+            ],
+            'fill' => [
+                'fillType'   => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'FFFFFF'],
+            ],
+        ]);
+
+        for ($r = 19; $r <= 20; $r++) {
+            $sheet2->getRowDimension($r)->setRowHeight(20);
+        }
+
+        //Row 7
+        $sheet2->mergeCells('A22:B22');
+        $sheet2->setCellValue('A22', 'Column D – Product Category');
+
+        $sheet2->getStyle('A22')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 15,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+            ],
+        ]);
+
+        $sheet2->getRowDimension(22)->setRowHeight(18);
+
+        $sheet2->mergeCells('A23:B23');
+
+        $rulesText =
+            "- Prefilled while downloading the format.\n" .
+            "- Do not edit.\n" .
+            "- Only one category per bulk upload is allowed.";
+
+        $sheet2->setCellValue('A23', $rulesText);
+
+        $sheet2->getStyle('A23')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 11,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_TOP,
+                'wrapText'   => true,
+            ],
+            'fill' => [
+                'fillType'   => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'FFFFFF'],
+            ],
+        ]);
+
+        for ($r = 22; $r <= 23; $r++) {
+            $sheet2->getRowDimension($r)->setRowHeight(35);
+        }
+
+        //Row 8
+        $sheet2->mergeCells('A25:B25');
+        $sheet2->setCellValue('A25', 'Product Sub Category');
+
+        $sheet2->getStyle('A25')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 15,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+            ],
+        ]);
+
+        $sheet2->getRowDimension(25)->setRowHeight(18);
+
+        $sheet2->mergeCells('A26:B26');
+
+        $rulesText =
+            "- Prefilled automatically.\n" .
+            "- Do not change.";
+
+        $sheet2->setCellValue('A26', $rulesText);
+
+        $sheet2->getStyle('A26')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 11,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_TOP,
+                'wrapText'   => true,
+            ],
+            'fill' => [
+                'fillType'   => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'FFFFFF'],
+            ],
+        ]);
+
+        for ($r = 25; $r <= 26; $r++) {
+            $sheet2->getRowDimension($r)->setRowHeight(25);
+        }
+
+        //Row 9
+        $sheet2->mergeCells('A28:B28');
+        $sheet2->setCellValue('A28', 'Brand');
+
+        $sheet2->getStyle('A28')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 15,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+            ],
+        ]);
+
+        $sheet2->getRowDimension(28)->setRowHeight(18);
+
+        $sheet2->mergeCells('A29:B29');
+
+        $rulesText =
+            "- Prefilled while downloading the Excel file.\n" .
+            "- Do not edit.";
+
+        $sheet2->setCellValue('A29', $rulesText);
+
+        $sheet2->getStyle('A29')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 11,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_TOP,
+                'wrapText'   => true,
+            ],
+            'fill' => [
+                'fillType'   => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'FFFFFF'],
+            ],
+        ]);
+
+        for ($r = 28; $r <= 29; $r++) {
+            $sheet2->getRowDimension($r)->setRowHeight(25);
+        }
+
+        //Row 10
+        $sheet2->mergeCells('A31:B31');
+        $sheet2->setCellValue('A31', 'Excel Error Status');
+
+        $sheet2->getStyle('A31')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 15,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+            ],
+        ]);
+
+        $sheet2->getRowDimension(31)->setRowHeight(18);
+
+        $sheet2->mergeCells('A32:B32');
+
+        $rulesText =
+            "If any mandatory data is missing or incorrect, an error will be shown during upload.\n" .
+            "Fix the error or remove that product row before re-uploading.";
+
+        $sheet2->setCellValue('A32', $rulesText);
+
+        $sheet2->getStyle('A32')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 11,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_TOP,
+                'wrapText'   => true,
+            ],
+            'fill' => [
+                'fillType'   => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'FFFFFF'],
+            ],
+        ]);
+
+        for ($r = 30; $r <= 32; $r++) {
+            $sheet2->getRowDimension($r)->setRowHeight(25);
+        }
+
+        // Row 11 – Commission Type
+        $sheet2->mergeCells('A34:B34');
+        $sheet2->setCellValue('A34', 'Commission Type (Defines how commission is calculated)');
+
+        $sheet2->getStyle('A34')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 15,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+            ],
+        ]);
+
+        $sheet2->getRowDimension(34)->setRowHeight(18);
+
+        $sheet2->mergeCells('A35:B35');
+
+        $rulesText =
+            "- Category % (Default)\n" .
+            "- Transfer Price\n" .
+            "- Fixed Percentage (same % for all categories)";
+
+        $sheet2->setCellValue('A35', $rulesText);
+
+        $sheet2->getStyle('A35')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 11,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_TOP,
+                'wrapText'   => true,
+            ],
+            'fill' => [
+                'fillType'   => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'FFFFFF'],
+            ],
+        ]);
+
+        for ($r = 34; $r <= 35; $r++) {
+            $sheet2->getRowDimension($r)->setRowHeight(30);
+        }
+
+        //Row 12
+        $sheet2->mergeCells('A37:B37');
+        $sheet2->setCellValue('A37', 'Commission Fee');
+
+        $sheet2->getStyle('A37')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 15,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+            ],
+        ]);
+
+        $sheet2->getRowDimension(37)->setRowHeight(18);
+
+        $sheet2->mergeCells('A38:B38');
+
+        $rulesText =
+            "- Commission percentage charged by InteriorChowk on sale.";
+
+        $sheet2->setCellValue('A38', $rulesText);
+
+        $sheet2->getStyle('A38')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 11,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_TOP,
+                'wrapText'   => true,
+            ],
+            'fill' => [
+                'fillType'   => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'FFFFFF'],
+            ],
+        ]);
+
+        for ($r = 37; $r <= 38; $r++) {
+            $sheet2->getRowDimension($r)->setRowHeight(20);
+        }
+
+        //Row 13
+        $sheet2->mergeCells('A40:B40');
+        $sheet2->setCellValue('A40', 'Listing Status');
+
+        $sheet2->getStyle('A40')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 15,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+            ],
+        ]);
+
+        $sheet2->getRowDimension(40)->setRowHeight(18);
+
+        $sheet2->mergeCells('A41:B41');
+
+        $rulesText =
+            "- Shows whether product is Active or Inactive on the website.";
+
+        $sheet2->setCellValue('A41', $rulesText);
+
+        $sheet2->getStyle('A41')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 11,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_TOP,
+                'wrapText'   => true,
+            ],
+            'fill' => [
+                'fillType'   => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'FFFFFF'],
+            ],
+        ]);
+
+        for ($r = 40; $r <= 41; $r++) {
+            $sheet2->getRowDimension($r)->setRowHeight(20);
+        }
+
+        //Row 14
+        $sheet2->mergeCells('A43:B43');
+        $sheet2->setCellValue('A43', 'Warehouse');
+
+        $sheet2->getStyle('A43')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 15,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+            ],
+        ]);
+
+        $sheet2->getRowDimension(43)->setRowHeight(18);
+
+        $sheet2->mergeCells('A44:B44');
+
+        $rulesText =
+            "- Prefilled warehouse ID for product pickup.\n" .
+            "- Do not edit.";
+
+        $sheet2->setCellValue('A44', $rulesText);
+
+        $sheet2->getStyle('A44')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 11,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_TOP,
+                'wrapText'   => true,
+            ],
+            'fill' => [
+                'fillType'   => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'FFFFFF'],
+            ],
+        ]);
+
+        for ($r = 43; $r <= 44; $r++) {
+            $sheet2->getRowDimension($r)->setRowHeight(35);
+        }
+
+        //Row 15
+        $sheet2->mergeCells('A46:B46');
+        $sheet2->setCellValue('A46', 'Procurement SLA (Days)');
+
+        $sheet2->getStyle('A46')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 15,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+            ],
+        ]);
+
+        $sheet2->getRowDimension(46)->setRowHeight(18);
+
+        $sheet2->mergeCells('A47:B47');
+
+        $rulesText =
+            "- Number of days required for product pickup from warehouse.";
+
+        $sheet2->setCellValue('A47', $rulesText);
+
+        $sheet2->getStyle('A47')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 11,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_TOP,
+                'wrapText'   => true,
+            ],
+            'fill' => [
+                'fillType'   => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'FFFFFF'],
+            ],
+        ]);
+
+        for ($r = 46; $r <= 47; $r++) {
+            $sheet2->getRowDimension($r)->setRowHeight(20);
+        }
+
+        //Row 16
+        $sheet2->mergeCells('A49:B49');
+        $sheet2->setCellValue('A49', 'HSN Code');
+
+        $sheet2->getStyle('A49')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 15,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+            ],
+        ]);
+
+        $sheet2->getRowDimension(49)->setRowHeight(18);
+
+        $sheet2->mergeCells('A50:B50');
+
+        $rulesText =
+            "- Prefilled HSN code.\n" .
+            "- Do not edit.";
+
+        $sheet2->setCellValue('A50', $rulesText);
+
+        $sheet2->getStyle('A50')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 11,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_TOP,
+                'wrapText'   => true,
+            ],
+            'fill' => [
+                'fillType'   => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'FFFFFF'],
+            ],
+        ]);
+
+        for ($r = 49; $r <= 50; $r++) {
+            $sheet2->getRowDimension($r)->setRowHeight(25);
+        }
+
+        //Row 17
+        $sheet2->mergeCells('A52:B52');
+        $sheet2->setCellValue('A52', 'Tax (%)');
+
+        $sheet2->getStyle('A52')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 15,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+            ],
+        ]);
+
+        $sheet2->getRowDimension(52)->setRowHeight(18);
+
+        $sheet2->mergeCells('A53:B53');
+
+        $rulesText =
+            "- GST percentage based on HSN.\n" .
+            "- Do not edit.";
+
+        $sheet2->setCellValue('A53', $rulesText);
+
+        $sheet2->getStyle('A53')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 11,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_TOP,
+                'wrapText'   => true,
+            ],
+            'fill' => [
+                'fillType'   => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'FFFFFF'],
+            ],
+        ]);
+
+        for ($r = 52; $r <= 53; $r++) {
+            $sheet2->getRowDimension($r)->setRowHeight(25);
+        }
+
+        // Row 18
+        $sheet2->mergeCells('A55:B55');
+        $sheet2->setCellValue(
+            'A55',
+            'COLUMNS TO BE FILLED SELLER'
+        );
+
+        $sheet2->getStyle('A55')->applyFromArray([
+            'font' => [
+                'bold'  => true,
+                'size'  => 24,
+                'name'  => 'Calibri',
+                'color' => ['rgb' => '000000'],
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+                'wrapText'   => true,
+            ],
+            'fill' => [
+                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+            ],
+        ]);
+        $sheet2->getRowDimension(55)->setRowHeight(24);
+
+        //Row 19 – Seller SKU ID
+        $sheet2->mergeCells('A57:B57');
+        $sheet2->setCellValue('A57', 'Seller SKU ID');
+
+        $sheet2->getStyle('A57')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 15,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+            ],
+        ]);
+
+        $sheet2->getRowDimension(57)->setRowHeight(18);
+
+        $sheet2->mergeCells('A58:B58');
+
+        $rulesText =
+            "- Max 64 characters (including spaces).\n" .
+            "- Must be unique for every product and variation.\n" .
+            "- Example: IC-SOFA-GREEN-L";
+
+        $sheet2->setCellValue('A58', $rulesText);
+
+        $sheet2->getStyle('A58')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 11,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_TOP,
+                'wrapText'   => true,
+            ],
+            'fill' => [
+                'fillType'   => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'FFFFFF'],
+            ],
+        ]);
+
+        for ($r = 58; $r <= 58; $r++) {
+            $sheet2->getRowDimension($r)->setRowHeight(40);
+        }
+
+        // Row 21 – Colour Name
+        $sheet2->mergeCells('A61:B61');
+        $sheet2->setCellValue('A61', 'Colour Name');
+
+        $sheet2->getStyle('A61')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 15,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+            ],
+        ]);
+
+        $sheet2->getRowDimension(61)->setRowHeight(18);
+
+        $sheet2->mergeCells('A62:B62');
+
+        $rulesText =
+            "- Select only ONE color from the available list.\n" .
+            "- Remove all other colors from that cell.\n\n" .
+            "If a product has multiple colors:\n" .
+            "- Add the product in multiple rows\n" .
+            "- Change SKU, Color, Images for each row\n" .
+            "Example:\n" .
+            "Product A – Green (Row 1)\n" .
+            "Product A – Blue (Row 2)";
+
+        $sheet2->setCellValue('A62', $rulesText);
+
+        $sheet2->getStyle('A62')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 11,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_TOP,
+                'wrapText'   => true,
+            ],
+            'fill' => [
+                'fillType'   => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'FFFFFF'],
+            ],
+        ]);
+
+        $sheet2->getRowDimension(62)->setRowHeight(100);
+
+        // Row 22 – Rename Colour Name
+        $sheet2->mergeCells('A64:B64');
+        $sheet2->setCellValue('A64', 'Rename Colour Name');
+
+        $sheet2->getStyle('A64')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 15,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+            ],
+        ]);
+
+        $sheet2->getRowDimension(64)->setRowHeight(18);
+
+        $sheet2->mergeCells('A65:B65');
+
+        $rulesText =
+            "Use this if the shade is different.\n\n" .
+            "Example:\n" .
+            "Colour Name: Silver\n" .
+            "Rename Colour Name: Matt Silver";
+
+        $sheet2->setCellValue('A65', $rulesText);
+
+        $sheet2->getStyle('A65')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 11,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_TOP,
+                'wrapText'   => true,
+            ],
+            'fill' => [
+                'fillType'   => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'FFFFFF'],
+            ],
+        ]);
+
+        $sheet2->getRowDimension(65)->setRowHeight(80);
+
+        // Row 23 – SIZE
+        $sheet2->mergeCells('A67:B67');
+        $sheet2->setCellValue('A67', 'SIZE');
+
+        $sheet2->getStyle('A67')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 15,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+            ],
+        ]);
+
+        $sheet2->getRowDimension(67)->setRowHeight(18);
+
+        $sheet2->mergeCells('A68:B68');
+
+        $rulesText =
+            "Enter only ONE size per row.\n" .
+            "Examples: S, M, L, Small, Large, Custom\n\n" .
+            "For multiple sizes:\n" .
+            "- Duplicate the product row\n" .
+            "- Change SKU, Size, Images";
+
+        $sheet2->setCellValue('A68', $rulesText);
+
+        $sheet2->getStyle('A68')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 11,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_TOP,
+                'wrapText'   => true,
+            ],
+            'fill' => [
+                'fillType'   => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'FFFFFF'],
+            ],
+        ]);
+
+        $sheet2->getRowDimension(68)->setRowHeight(90);
+
+        // Row 24 – Return Days
+        $sheet2->mergeCells('A70:B70');
+        $sheet2->setCellValue('A70', 'Return Days');
+
+        $sheet2->getStyle('A70')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 15,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+            ],
+        ]);
+
+        $sheet2->getRowDimension(70)->setRowHeight(18);
+
+        $sheet2->mergeCells('A71:B71');
+
+        $rulesText =
+            "- Number of days seller accepts returns.\n" .
+            "- Minimum: 3 days";
+
+        $sheet2->setCellValue('A71', $rulesText);
+
+        $sheet2->getStyle('A71')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 11,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_TOP,
+                'wrapText'   => true,
+            ],
+            'fill' => [
+                'fillType'   => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'FFFFFF'],
+            ],
+        ]);
+
+        $sheet2->getRowDimension(71)->setRowHeight(45);
+
+        // Row 25 – Replacement Days
+        $sheet2->mergeCells('A73:B73');
+        $sheet2->setCellValue('A73', 'Replacement Days');
+
+        $sheet2->getStyle('A73')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 15,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+            ],
+        ]);
+
+        $sheet2->getRowDimension(73)->setRowHeight(18);
+
+        $sheet2->mergeCells('A74:B74');
+
+        $rulesText =
+            "- Number of days seller accepts replacements.";
+
+        $sheet2->setCellValue('A74', $rulesText);
+
+        $sheet2->getStyle('A74')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 11,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_TOP,
+                'wrapText'   => true,
+            ],
+            'fill' => [
+                'fillType'   => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'FFFFFF'],
+            ],
+        ]);
+
+        $sheet2->getRowDimension(74)->setRowHeight(35);
+
+        // Row 26 – UNIT
+        $sheet2->mergeCells('A76:B76');
+        $sheet2->setCellValue('A76', 'UNIT');
+
+        $sheet2->getStyle('A76')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 15,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+            ],
+        ]);
+
+        $sheet2->getRowDimension(76)->setRowHeight(18);
+
+        $sheet2->mergeCells('A77:B77');
+
+        $rulesText =
+            "Enter the selling unit.\n\n" .
+            "Examples:\n" .
+            "- Kg, Pc, Gms, Lts, Set, Pair, Sqft, Sq Mtr, Box";
+
+        $sheet2->setCellValue('A77', $rulesText);
+
+        $sheet2->getStyle('A77')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 11,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_TOP,
+                'wrapText'   => true,
+            ],
+            'fill' => [
+                'fillType'   => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'FFFFFF'],
+            ],
+        ]);
+
+        $sheet2->getRowDimension(77)->setRowHeight(60);
+
+        // Row 27 – IMAGE GUIDELINES
+        $sheet2->mergeCells('A79:B79');
+        $sheet2->setCellValue('A79', 'IMAGE GUIDELINES (VERY IMPORTANT)');
+
+        $sheet2->getStyle('A79')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 16,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+            ],
+        ]);
+
+        $sheet2->getRowDimension(79)->setRowHeight(22);
+
+        $sheet2->mergeCells('A80:B80');
+
+        $rulesText =
+            "- Before adding image names\n" .
+            "- Login to Seller Panel\n" .
+            "- Go to Products → Add Products → Bulk Images\n" .
+            "- Upload all product images\n" .
+            "- Copy the image path/name\n" .
+            "- Paste it into the Excel file";
+
+        $sheet2->setCellValue('A80', $rulesText);
+
+        $sheet2->getStyle('A80')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 11,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_TOP,
+                'wrapText'   => true,
+            ],
+            'fill' => [
+                'fillType'   => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'FFFFFF'],
+            ],
+        ]);
+
+        $sheet2->getRowDimension(80)->setRowHeight(110);
+
+        // Row 28 – Thumbnail Image Name
+        $sheet2->mergeCells('A82:B82');
+        $sheet2->setCellValue('A82', 'Thumbnail Image Name');
+
+        $sheet2->getStyle('A82')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 15,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+            ],
+        ]);
+
+        $sheet2->getRowDimension(82)->setRowHeight(18);
+
+        $sheet2->mergeCells('A83:B83');
+
+        $rulesText =
+            "- Main product image.\n" .
+            "- Enter only one image name.";
+
+        $sheet2->setCellValue('A83', $rulesText);
+
+        $sheet2->getStyle('A83')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 11,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_TOP,
+                'wrapText'   => true,
+            ],
+            'fill' => [
+                'fillType'   => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'FFFFFF'],
+            ],
+        ]);
+
+        $sheet2->getRowDimension(83)->setRowHeight(40);
+
+        // Row 29 – Other Image Name
+        $sheet2->mergeCells('A85:B85');
+        $sheet2->setCellValue('A85', 'Other Image Name');
+
+        $sheet2->getStyle('A85')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 15,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+            ],
+        ]);
+
+        $sheet2->getRowDimension(85)->setRowHeight(18);
+
+        $sheet2->mergeCells('A86:B86');
+
+        $rulesText =
+            "- First paste the thumbnail image name again\n" .
+            "- Then add other images separated by comma\n\n" .
+            "Example: image1.jpg,image2.jpg,image3.jpg";
+
+        $sheet2->setCellValue('A86', $rulesText);
+
+        $sheet2->getStyle('A86')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 11,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_TOP,
+                'wrapText'   => true,
+            ],
+            'fill' => [
+                'fillType'   => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'FFFFFF'],
+            ],
+        ]);
+
+        $sheet2->getRowDimension(86)->setRowHeight(70);
+
+        // Row 30 – VIDEO URL
+        $sheet2->mergeCells('A88:B88');
+        $sheet2->setCellValue('A88', 'VIDEO URL');
+
+        $sheet2->getStyle('A88')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 15,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+            ],
+        ]);
+
+        $sheet2->getRowDimension(88)->setRowHeight(18);
+
+        $sheet2->mergeCells('A89:B89');
+
+        $rulesText =
+            "- Paste YouTube embed link (if available).\n" .
+            "- Used for product demos, unboxing, or reviews.";
+
+        $sheet2->setCellValue('A89', $rulesText);
+
+        $sheet2->getStyle('A89')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 11,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_TOP,
+                'wrapText'   => true,
+            ],
+            'fill' => [
+                'fillType'   => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'FFFFFF'],
+            ],
+        ]);
+
+        $sheet2->getRowDimension(89)->setRowHeight(45);
+
+        // Row 31 – PDF URL
+        $sheet2->mergeCells('A91:B91');
+        $sheet2->setCellValue('A91', 'PDF URL');
+
+        $sheet2->getStyle('A91')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 15,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+            ],
+        ]);
+
+        $sheet2->getRowDimension(91)->setRowHeight(18);
+
+        $sheet2->mergeCells('A92:B92');
+
+        $rulesText =
+            "- Upload product information images or brochures (horizontal format preferred).\n" .
+            "- Paste the PDF link here.";
+
+        $sheet2->setCellValue('A92', $rulesText);
+
+        $sheet2->getStyle('A92')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 11,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_TOP,
+                'wrapText'   => true,
+            ],
+            'fill' => [
+                'fillType'   => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'FFFFFF'],
+            ],
+        ]);
+
+        $sheet2->getRowDimension(92)->setRowHeight(60);
+
+        // Row 32 – SEARCH TAGS
+        $sheet2->mergeCells('A94:B94');
+        $sheet2->setCellValue('A94', 'SEARCH TAGS');
+
+        $sheet2->getStyle('A94')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 15,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+            ],
+        ]);
+
+        $sheet2->getRowDimension(94)->setRowHeight(18);
+
+        $sheet2->mergeCells('A95:B95');
+
+        $rulesText =
+            "- Keywords to help customers find your product easily.\n" .
+            "- Use comma-separated words.\n\n" .
+            "Example: Modern sofa, living room sofa, wooden sofa";
+
+        $sheet2->setCellValue('A95', $rulesText);
+
+        $sheet2->getStyle('A95')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 11,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_TOP,
+                'wrapText'   => true,
+            ],
+            'fill' => [
+                'fillType'   => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'FFFFFF'],
+            ],
+        ]);
+
+        $sheet2->getRowDimension(95)->setRowHeight(70);
+
+        // Row 33 – OTHER DETAILS (VERY IMPORTANT)
+        $sheet2->mergeCells('A97:B97');
+        $sheet2->setCellValue('A97', 'OTHER DETAILS (VERY IMPORTANT)');
+
+        $sheet2->getStyle('A97')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 16,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+            ],
+        ]);
+
+        $sheet2->getRowDimension(97)->setRowHeight(22);
+
+        $sheet2->mergeCells('A98:B98');
+
+        $rulesText =
+            "Add:\n" .
+            "- Specifications\n" .
+            "- Key features\n" .
+            "- Technical details\n" .
+            "- Material, finish, usage, warranty, etc.\n\n" .
+            "These details:\n" .
+            "- Appear on product page\n" .
+            "- Help customers filter products easily\n\n" .
+            "Tip: Use short, clear keywords so customers can easily find your product through filters.";
+
+        $sheet2->setCellValue('A98', $rulesText);
+
+        $sheet2->getStyle('A98')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 11,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_TOP,
+                'wrapText'   => true,
+            ],
+            'fill' => [
+                'fillType'   => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'FFFFFF'],
+            ],
+        ]);
+
+        $sheet2->getRowDimension(98)->setRowHeight(140);
+
+        // Row 34 – FINAL CHECK BEFORE UPLOAD
+        $sheet2->mergeCells('A100:B100');
+        $sheet2->setCellValue('A100', 'FINAL CHECK BEFORE UPLOAD');
+
+        $sheet2->getStyle('A100')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 16,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
+            ],
+        ]);
+
+        $sheet2->getRowDimension(100)->setRowHeight(22);
+
+        $sheet2->mergeCells('A101:B101');
+
+        $rulesText =
+            "- All mandatory fields filled\n" .
+            "- Unique SKU for each variation\n" .
+            "- Correct images uploaded and mapped\n" .
+            "- One category only per Excel file";
+
+        $sheet2->setCellValue('A101', $rulesText);
+
+        $sheet2->getStyle('A101')->applyFromArray([
+            'font' => [
+                'bold' => true,
+                'size' => 11,
+                'name' => 'Calibri',
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_LEFT,
+                'vertical'   => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_TOP,
+                'wrapText'   => true,
+            ],
+            'fill' => [
+                'fillType'   => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'FFFFFF'],
+            ],
+        ]);
+
+        $sheet2->getRowDimension(101)->setRowHeight(70);
+
+        // ---------------- OUTPUT ----------------
+        $fileName = 'products_bulk.xlsx';
+
+        // Clean output buffer (optional but recommended before sending headers)
+        if (ob_get_length()) {
+            ob_end_clean();
+        }
+
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header("Content-Disposition: attachment; filename=\"{$fileName}\"");
+        header('Cache-Control: max-age=0');
+
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        $writer->save('php://output');
+        exit;
     }
-    $sheet1Rows[] = $row4;
-
-    /*
-     * -------- Sheet 2: Guideline (dummy data abhi ke liye) --------
-     */
-       /*
-     * -------- Sheet 2: Guideline (Amazon-type style) --------
-     */
-    $sheet2Rows = [
-        // Header row
-        ['Image Standards', 'Image Examples'],
-
-        // Intro block
-        [
-            'Every product on InteriorChowk needs one or more product images. Choose images that are clear, straightforward and easy to understand. They must accurately represent the product, be information-rich and attractively presented. Show only the product that is being offered for sale, with minimal or no propping. Text, logos and inset images are not allowed. Whenever possible, provide several images, with each one showing different angles and details of the product.',
-            '' // yahan pe tum baad me images add kar sakte ho
-        ],
-        [
-            'We reserve the right to reject images that do not meet our image standards.',
-            ''
-        ],
-        [
-            'It is your responsibility to ensure that you have all necessary rights to the images you submit.',
-            ''
-        ],
-
-        // Empty separator row
-        ['', ''],
-
-        // MAIN Images section
-        ['MAIN Images', ''],
-        [
-            '* The background for a MAIN image must be pure white (blends with site background).',
-            'Pure white background'
-        ],
-        [
-            '* A MAIN image must not be a graphic or illustration and must not contain accessories that are not being dispatched with the product, props that may confuse the customer, text that is not part of the product, or any logos, watermarks or inset images.',
-            'No graphics / illustrations'
-        ],
-        [
-            '* The product must fill 85% or more of the image area.',
-            'Product fills most of the frame'
-        ],
-
-        // Empty separator row
-        ['', ''],
-
-        // Additional Images section
-        ['Additional Images', ''],
-        [
-            '* MAIN images should be supplemented with additional images showing different sides of a product, the product in use, or details that are not visible in the MAIN image.',
-            'Different angles / lifestyle shots'
-        ],
-        [
-            '* Do not use blurry, pixelated or low-resolution images.',
-            'No blurry images'
-        ],
-        [
-            '* Avoid borders, collages, or multiple products in a single image unless clearly part of a set.',
-            'Single clear product'
-        ],
-
-        // Empty separator
-        ['', ''],
-
-        // Not allowed section
-        ['Not Allowed', ''],
-        [
-            '✘ Images with watermarks, logos or promotional text.',
-            'No watermark / logo'
-        ],
-        [
-            '✘ Images with inset boxes, icons or stickers (SALE, NEW, % OFF, etc.).',
-            'No inset images'
-        ],
-        [
-            '✘ Images that do not match the actual product colour, shape or design.',
-            'Product must match listing'
-        ],
-    ];
-}
-   
 
 
 
+
+
+
+
+
+
+
+
+    
 
 
     

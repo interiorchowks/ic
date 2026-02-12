@@ -82,9 +82,12 @@
                                                             <img src="{{ rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($firstImage, '/') }}"
                                                                 alt="{{ $product->name }}" class="product-image rounded-lg"
                                                                 style="width: 100%; height: 100%; object-fit: cover;">
+
                                                         </a>
 
                                                     </figure>
+
+
 
                                                     <div class="product-body"
                                                         style="flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between; padding-top: 10px;">

@@ -179,8 +179,8 @@
     @endforeach
                                                                                                                                                                                                                                                                                                                   ] -->
 
-    <main class="main">
-        <nav aria-label="breadcrumb" class="breadcrumb-nav border-0 mb-0">
+    <main class="main productRespoClass">
+        <nav aria-label="breadcrumb" class="breadcrumb-nav border-0 mb-0 d-none d-md-block">
             <div class="container d-flex align-items-center">
                 <ol class="breadcrumb" id="breadcrumb-list">
                     <li class="breadcrumb-item"><a href="{{ url('test_1') }}">Home</a></li>
@@ -215,15 +215,96 @@
             </div>
         </nav>
         <center>
-            <h1 class="product-title  titless">{{ $product->name }}</h1>
+            <h1 class="product-title titless d-none d-md-block">{{ $product->name }}</h1>
         </center>
         <div class="page-content">
-
+            <div class="container">
+                <div class="row">
+                    <div class="col-12 col-md-12">
+                        <div class="owl-carousel owl-simple carousel-equal-height trend-media d-md-none" id="single-product-carousel">
+                            <div class="product product-7">
+                                <figure class="product-media">
+                                    <a href="#">
+                                        <img src="https://images.unsplash.com/photo-1770462988018-7d1c4b198ead?q=80&w=435&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" class="product-image" alt="pro-img">
+                                    </a>
+                                    <a style="bottom:85%" href="javascript:void(0);"
+                                            class="btn-product-gallery share-button" onclick="toggleSharePopup(event)">
+                                            <i class="fa fa-share-alt" aria-hidden="true"></i>
+                                        </a>
+                                        <div id="sharePopup" class="share-popup">
+                                            <button onclick="copyLink()"><i class="fa-brands fa-copy"></i> Copy
+                                                Link</button>
+                                            <a href="mailto:?subject=Check this out&body=Check this product: {{ request()->fullUrl() }}"
+                                                target="_blank"><i class="fa-brands fa-envelope"></i> Email</a>
+                                            <a href="https://twitter.com/intent/tweet?url={{ urlencode(request()->fullUrl()) }}"
+                                                target="_blank"><i class="fa-brands fa-twitter"></i> Twitter</a>
+                                            <a href="https://pinterest.com/pin/create/button/?url={{ urlencode(request()->fullUrl()) }}&media={{ asset('path/to/product.jpg') }}"
+                                                target="_blank"><i class="fa-brands fa-pinterest"></i> Pinterest</a>
+                                            <a href="https://www.facebook.com/sharer/sharer.php?u={{ urlencode(request()->fullUrl()) }}"
+                                                target="_blank"><i class="fa-brands fa-facebook"></i> Facebook</a>
+                                        </div>
+                                        @php
+                                            $isWishlisted = DB::table('wishlists')
+                                                ->where('customer_id', auth()->id())
+                                                ->where('product_id', $product->id)
+                                                ->exists();
+                                        @endphp
+                                        @auth
+                                            <a style="bottom:72%;" href="javascript:void(0);" id="btn-add-to-wishlist"
+                                                class="btn-product-gallery btn-toggle-wishlist" data-id="{{ $product->id }}">
+                                                <i class="fa {{ $isWishlisted ? 'fa-heart text-danger' : 'fa-heart-o' }}"
+                                                    aria-hidden="true"></i>
+                                            </a>
+                                        @else
+                                            <a style="bottom:350px;" href="javascript:void(0);" id="btn-add-to-wishlist"
+                                                class="btn-product-gallery btn-toggle-wishlist" data-bs-toggle="modal"
+                                                data-bs-target="#loginModal">
+                                                <i class="fa {{ $isWishlisted ? 'fa-heart text-danger' : 'fa-heart-o' }}"
+                                                    aria-hidden="true"></i>
+                                            </a>
+                                        @endauth
+                                        <a href="#" id="zoomed-imagess" class="btn-product-gallery">
+                                            <i class="fa-solid fa-arrows-up-down-left-right"></i>
+                                        </a>
+                                        <div id="imgModal" class="img-modal">
+                                            <span class="img-modal-close">&times;</span>
+                                            <img class="img-modal-content" id="modalImg" style="width:60% !important;">
+                                        </div>
+                                </figure>
+                            </div>
+                            @foreach ( as )
+                                <div class="product product-7">
+                                    <figure class="product-media">
+                                        <a href="#">
+                                            <img src="https://images.unsplash.com/photo-1770349781649-b7722e0de3fc?q=80&w=688&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" class="product-image" alt="pro-img">
+                                        </a>
+                                    </figure>
+                                </div>
+                            @endforeach
+                            
+                            {{-- <div class="product product-7">
+                                <figure class="product-media">
+                                    <a href="#">
+                                        <img src="https://images.unsplash.com/photo-1590610123854-cff24ee40cf3?q=80&w=725&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" class="product-image" alt="pro-img">
+                                    </a>
+                                </figure>
+                            </div>
+                            <div class="product product-7">
+                                <figure class="product-media">
+                                    <a href="#">
+                                        <img src="https://plus.unsplash.com/premium_photo-1678304223767-b9aa73c1e147?q=80&w=387&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" class="product-image" alt="pro-img">
+                                    </a>
+                                </figure>
+                            </div> --}}
+                        </div>
+                    </div>
+                </div>
+            </div>
             <div class="container">
                 <div class="product-details-top">
                     <div class="row">
                         <div class="col-12 col-md-6">
-                            <div class="product-gallery product-gallery-vertical">
+                            <div class="product-gallery product-gallery-vertical d-none d-md-block">
                                 <div class="row">
                                     <figure class="product-main-image">
                                         <img id="product-zoom" src="{{ asset('/storage/images/default.jpg') }}"
@@ -398,7 +479,7 @@
                             </table>
                         </div>
                         <div class="col-md-6">
-                            <div class="product-details">
+                            <div class="product-details product-details-mobile">
                                 <h1 class="product-title  titles">{{ $product->name }}</h1>
                                 <input type="hidden" id="id_s" value="{{ $product->id }}">
                                 @if ($product->featured == 1)
@@ -413,53 +494,63 @@
                                     </a>
                                 </h5>
                             </div>
-                            <div class="row">
-                                <div class="col-3 col-md-6">
-                                    <div id="listed-price" class="product-price listed-price">
-                                        ₹ 0
+                            <div class="prodCostWrapper">
+                                <div class="row">
+                                    <div class="col-12 col-md-6 singlrProductDtl">
+                                        <div  class="d-flex align-items-center justify-content-start">
+                                            <div id="listed-price" class="product-price listed-price">
+                                                ₹ 0
+                                            </div>
+                                            <div id="mrp-discount" class="product-price mrp-discount mt-1 mb-1">
+                                            </div>
+                                            <div class="size mt-2 mb-2"></div>
+                                            @if ($product->featured == 1)
+                                                <h6 class="limited-offer-text">Limited time Offer!</h6>
+                                            @endif
+                                        </div>
+                                        <div class="ratingsWrapper">
+                                            <div class="ratingCnt">
+                                                <div class="ratingsVal">4.2<i class="fas fa-star ml-2"></i></div>
+                                            </div>
+                                            <span class="ratingsRev ml-3">90</span>
+                                        </div>
                                     </div>
-                                    <div id="mrp-discount" class="product-price mrp-discount mt-1 mb-1">
-                                    </div>
-                                    <div class="size mt-2 mb-2"></div>
-                                    @if ($product->featured == 1)
-                                        <h6 class="limited-offer-text">Limited time Offer!</h6>
-                                    @endif
-                                </div>
-                                @if ($product->quantity <= 0)
-                                    <div class="col-md-6 product-action-buttons">
-                                        <button
-                                            style="background: #f08e64; color:#ffffff; border-radius: 4px; height: 30px;border: 1px;padding-left:30px; padding-right:30px;}"
-                                            disabled>
-                                            Out of Stock
-                                        </button>
-                                    </div>
-                                @else
-                                    <div class="col-3 col-md-6 product-action-buttons">
-                                        @auth
-                                            @if ($alreadyAdded)
-                                                <button id="cart" class="view-cart cart">
-                                                    View Cart
+                                    @if ($product->quantity <= 0)
+                                        <div class="col-12 col-md-6 product-action-buttons">
+                                            <button
+                                                style="background: #f08e64; color:#ffffff; border-radius: 4px; height: 30px;border: 1px;padding-left:30px; padding-right:30px;}"
+                                                disabled>
+                                                Out of Stock
+                                            </button>
+                                        </div>
+                                    @else
+                                        <div class="col-12 col-md-6 product-action-buttons">
+                                            @auth
+                                                @if ($alreadyAdded)
+                                                    <button id="cart" class="view-cart cart">
+                                                        View Cart
+                                                    </button>
+                                                @else
+                                                    <button id="cart" class="btn-add-to-cart cart">
+                                                        Add to cart
+                                                    </button>
+                                                @endif
+                                                <button class="btn-buy-now buy_now">
+                                                    Buy now
                                                 </button>
                                             @else
-                                                <button id="cart" class="btn-add-to-cart cart">
+                                                <button class="btn-add-to-cart" data-bs-toggle="modal"
+                                                    data-bs-target="#loginModal">
                                                     Add to cart
                                                 </button>
-                                            @endif
-                                            <button class="btn-buy-now buy_now">
-                                                Buy now
-                                            </button>
-                                        @else
-                                            <button class="btn-add-to-cart" data-bs-toggle="modal"
-                                                data-bs-target="#loginModal">
-                                                Add to cart
-                                            </button>
-                                            <button class="btn-add-to-cart" data-bs-toggle="modal"
-                                                data-bs-target="#loginModal">
-                                                Buy now
-                                            </button>
-                                        @endauth
-                                    </div>
-                                @endif
+                                                <button class="btn-add-to-cart" data-bs-toggle="modal"
+                                                    data-bs-target="#loginModal">
+                                                    Buy now
+                                                </button>
+                                            @endauth
+                                        </div>
+                                    @endif
+                                </div>
                             </div>
                             {{-- <hr class="mt-0 mb-1" /> --}}
                             <div class="details-filter-row details-row-size mb-0">
@@ -1661,9 +1752,9 @@
                                         document.querySelector(
                                                 '.product-price.mt-1.mb-1')
                                             .innerHTML = `
-                                ${discountHTML}
-                                <span class="price-cut">₹ ${Number(variantMrp).toLocaleString()}</span>
-                            `;
+                                        <span class="price-cut">MRP ₹ ${Number(variantMrp).toLocaleString()}</span>
+                                        ${discountHTML}
+                                        `;
                                     }
 
                                     // Update selected size

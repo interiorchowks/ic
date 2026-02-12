@@ -163,7 +163,8 @@
                                     <a href="{{ url('category/' . $subcat->slug) }}"
                                         class="text-decoration-none text-dark">
                                         <div class="card border-0" style="align-items: center;padding:12px;">
-                                            <img src="{{ $url . $subcat->icon }}" alt="{{ $subcat->name }}"
+                                            <img src="{{ 'https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . $subcat->icon }}"
+                                                alt="{{ $subcat->name }}"
                                                 style="width: 100%; aspect-ratio: 1/1; object-fit: cover;"
                                                 class="card-img-top rounded-circle border">
                                             <div class="card-body text-center">
@@ -267,7 +268,7 @@
                                                                 ? $images[0]
                                                                 : $product->thumbnail_image;
                                                         @endphp
-                                                        <img src="{{ rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') .'/'. ltrim($firstImage, '/') }}"
+                                                        <img src="{{ 'https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($firstImage, '/') }}"
                                                             alt="{{ $product->name }}" class="product-image rounded-lg"
                                                             style="width: 100%; height: 100%; object-fit: cover;">
                                                     </a>
@@ -291,12 +292,15 @@
                                                     <div class="proListBotMinHeight">
                                                         <div class="d-flex">
                                                             <div class="product-price">
-                                                                ₹ {{ $product->listed_price }}
+                                                                ₹ {{ number_format($product->listed_price, 0) }}
+
                                                                 @if ($product->variant_mrp > $product->listed_price)
-                                                                    <span class="price-cut">₹
-                                                                        {{ $product->variant_mrp }}</span>
+                                                                    <span class="price-cut">
+                                                                        ₹ {{ number_format($product->variant_mrp, 0) }}
+                                                                    </span>
                                                                 @endif
                                                             </div>
+
                                                         </div>
                                                         @if ($product->quantity <= 0)
                                                             <span class="text-red-500"
@@ -306,6 +310,9 @@
                                                                 <span class="mb-0"
                                                                     style="color:#FF7373;font-size: small;font-weight: 600;">
                                                                     {{ $product->quantity }} Units Left</span>
+                                                            @else
+                                                                <span class="text-red-500"
+                                                                    style="font-size: small;font-weight: 600;"></apan>
                                                         @endif
                                                         <input type="hidden" name="variation" id="variation"
                                                             class="variation" value="{{ $product->variations }}">
