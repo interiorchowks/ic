@@ -336,9 +336,9 @@
                                                         </a>
                                                     </h3>
                                                     <div class="product-price" style="font-size: 2rem;">
-                                                        ₹ {{ $item->listed_price ?? '0.00' }}
+                                                        ₹ {{ number_format($item->listed_price) ?? '0.00' }}
                                                         @if (!empty($item->variant_mrp) && $item->variant_mrp > $item->listed_price)
-                                                            <span class="price-cut">₹ {{ $item->variant_mrp }}</span>
+                                                            <span class="price-cut">₹ {{ number_format($item->variant_mrp) }}</span>
                                                         @endif
                                                     </div>
 

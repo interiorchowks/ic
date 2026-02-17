@@ -59,6 +59,13 @@
 @section('content')
     <div class="content container-fluid">
         <div class="col-md-12">
+             <div class="d-flex justify-content-left">
+                <button type="button" class="btn btn--primary">
+                    <a style="color:#fff" href="{{ route('seller.product.bulk-images-url') }}">
+                        {{ \App\CPU\translate('Image Upload through URL') }}
+                    </a>
+                </button>
+            </div>
             <div class="d-flex justify-content-end">
                 <button type="button" class="btn btn--primary">
                     <a style="color:#fff" href="{{ route('seller.product.search_bulk-import') }}">

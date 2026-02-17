@@ -4596,4 +4596,6 @@
   'Cart Count' => 'Cart Count',
   'Wishlist Count' => 'Wishlist Count',
   'Views Count' => 'Views Count',
+  'Image Upload through URL' => 'Image Upload through URL',
+  'Export all images URL' => 'Export all images URL',
 );

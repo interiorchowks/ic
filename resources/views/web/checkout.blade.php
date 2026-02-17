@@ -1412,21 +1412,18 @@
 
                                 @if ($coupon_discount->count() > 1)
                                     <!-- Button trigger modal -->
-                                    <button type="button" class="btn viewOffBtn" data-toggle="modal"
-                                        data-target="#couponsModal">
+                                    <button type="button" class="btn viewOffBtn" data-toggle="modal" data-target="#couponsModal">
                                         View More Coupon codes<i class="fa fa-arrow-right" aria-hidden="true"></i>
                                     </button>
 
                                     <!-- Modal -->
-                                    <div class="modal couponsModal fade" id="couponsModal" tabindex="-1"
-                                        aria-labelledby="couponsModalLabel" aria-hidden="true">
+                                    <div class="modal couponsModal fade" id="couponsModal" tabindex="-1" aria-labelledby="couponsModalLabel" aria-hidden="true">
                                         <div class="modal-dialog">
                                             <div class="modal-content">
                                                 <div class="modal-header">
                                                     <h6 class="modal-title" id="couponsModalLabel">Coupons</h6>
-                                                    <button type="button" class="close" data-dismiss="modal"
-                                                        aria-label="Close">
-                                                        <span aria-hidden="true">&times;</span>
+                                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                    <span aria-hidden="true">&times;</span>
                                                     </button>
                                                 </div>
                                                 <div class="modal-body">
@@ -2403,15 +2400,14 @@
                                 <div class="custom_radio">
                                     @if (!empty($mobileAddresses) && count($mobileAddresses) > 0)
                                         @foreach ($mobileAddresses as $key => $addres)
-                                            {{-- @dd($addres); --}}
+                                        {{-- @dd($addres); --}}
                                             <div class="form-group position-relative">
                                                 <div class="form-check text-right">
                                                     <input type="radio" name="selectAddress"
                                                         id="selectAddress{{ $key + 1 }}" class="address"
                                                         value="{{ $addres->id ?? $key + 1 }}"
                                                         {{ $addres->is_selected == 1 ? 'checked' : '' }}>
-                                                    <label for="selectAddress{{ $key + 1 }}"
-                                                        {{ $addres->is_selected == 1 ? 'checked' : '' }}></label>
+                                                    <label for="selectAddress{{ $key + 1 }}" {{ $addres->is_selected == 1 ? 'checked' : '' }}></label>
                                                 </div>
 
                                                 <div class="d-flex align-items-center justify-content-between mb-1">
@@ -2501,8 +2497,8 @@
         }
 
         .chngeAddrFormWrapper.p-3 {
-            overflow: scroll;
-        }
+    overflow: scroll;
+}
     </style>
 
     <script>

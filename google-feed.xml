@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"
+  xmlns:g="http://base.google.com/ns/1.0">
+  <channel>
+    <title>InteriorChowk Product Feed</title>
+    <link>https://interiorchowk.com</link>
+    <description>Product feed for Google Merchant Center</description>
+
+    <item>
+      <g:id>698040c11378d</g:id>
+      <g:title>Decorative Soy Candle</g:title>
+      <g:description>Premium handmade candle</g:description>
+      <g:link>https://interiorchowk.com/product/slug</g:link>
+      <g:image_link>https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev/products/698040c11378d.webp</g:image_link>
+      <g:availability>in_stock</g:availability>
+      <g:price>499 INR</g:price>
+      <g:brand>Brand Name</g:brand>
+      <g:condition>new</g:condition>
+      <g:google_product_category>Home &amp; Garden &gt; Decor</g:google_product_category>
+    </item>
+
+
+  </channel>
+</rss>

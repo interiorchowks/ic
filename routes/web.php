@@ -21,6 +21,7 @@ use App\Http\Controllers\Web\CouponController;
 use App\Http\Controllers\RazorPayController;
 use App\Http\Controllers\Web\UserWalletController;
 use Illuminate\Support\Facades\Artisan;
+use App\Http\Controllers\GoogleFeedController;
 
 Route::get('shiprocket', function(){
     $service = new ShiprocketService;
@@ -465,7 +466,7 @@ Route::get('/mail-test', function () {
     Log::info('Mail test started');
     try {
         Mail::raw('Laravel SMTP test email', function ($message) {
-            $message->to('suramyainteriorchowk@gmail.com')
+            $message->to('guptaabhas7@gmail.com')
                     ->subject('Laravel SMTP Test');
         });
         Log::info('Mail sent successfully from Laravel');
@@ -492,3 +493,7 @@ Route::get('/clear-cache', function () {
 
     return "Sab cache clear ho gaya ✅";
 });
+
+Route::get('/google-feed.xml', [GoogleFeedController::class, 'index'])
+  ->name('google.feed')
+  ->middleware('throttle:60,1'); // optional

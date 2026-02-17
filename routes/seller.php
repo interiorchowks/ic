@@ -99,6 +99,15 @@ Route::group(['namespace' => 'Seller', 'prefix' => 'seller', 'as' => 'seller.'],
             Route::get('bulk-export', 'ProductController@bulk_export_data')->name('bulk-export');
             Route::get('bulk-export-data', 'ProductController@bulk_export_data_category_wise')->name('bulk-export-data');
             Route::post('record', 'ProductController@record_sub_category')->name('record');
+
+
+
+            Route::get('/bulk-images-url', 'ProductController@bulkimageurl')->name('bulk-images-url');
+            Route::post('/bulk-images-url-upload', 'ProductController@bulkimageurlupload')->name('bulk-images-url-upload');
+            Route::get('/bulk-images-url-export', 'ProductController@exportExcelUploadedImages')->name('bulk-images-url-export');
+            Route::post('/bulk-images-url-upload-ajax', 'ProductController@bulkimageurluploadAjax')->name('bulk-images-url-upload-ajax');
+            Route::get('/bulk-images-progress/{jobId}', 'ProductController@bulkImagesProgress')->name('bulk-images-progress');
+
         });
 
         Route::group(['prefix' => 'report', 'as' => 'report.'], function () {

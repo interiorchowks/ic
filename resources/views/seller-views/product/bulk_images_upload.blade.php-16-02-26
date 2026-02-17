@@ -1,0 +1,37 @@
+@extends('layouts.back-end.app-seller')
+
+@section('title', \App\CPU\translate('Product Bulk Import'))
+
+@push('css_or_js')
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    @section('content')
+        <div class="d-flex justify-content-end">
+                <button type="button" class="btn btn--primary">
+                    <a style="color:#fff" href="{{ route('seller.product.bulk-images-url-export') }}">
+                        {{ \App\CPU\translate('Export all images URL') }}
+                    </a>
+                </button>
+        </div>
+        <h2 style="padding:20px 50px;">Bulk Image Upload (Excel URLs → R2 → DB)</h2>
+
+
+        <form method="POST" action="{{ route('seller.product.bulk-images-url-upload') }}" style="padding:0px 50px;"
+            enctype="multipart/form-data">
+            @csrf
+
+            <div style="margin-bottom: 10px;">
+                {{-- <label><b>Seller ID</b></label><br> --}}
+                <input type="hidden" name="seller_id" value="{{ auth('seller')->id() }}" required />
+            </div>
+
+            <div style="margin-bottom: 10px;">
+                <label><b>Excel File (.xlsx)</b></label><br>
+                <input type="file" name="file" accept=".xlsx" required />
+            </div>
+
+            <button type="submit">Upload & Import</button>
+        </form>
+
+        <hr>
+    @endsection

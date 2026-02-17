@@ -334,10 +334,10 @@
                                                         </a>
                                                     </h3>
                                                     <div class="product-price" style="font-size: 2rem;">
-                                                        ₹ <?php echo e($item->listed_price ?? '0.00'); ?>
+                                                        ₹ <?php echo e(number_format($item->listed_price) ?? '0.00'); ?>
 
                                                         <?php if(!empty($item->variant_mrp) && $item->variant_mrp > $item->listed_price): ?>
-                                                            <span class="price-cut">₹ <?php echo e($item->variant_mrp); ?></span>
+                                                            <span class="price-cut">₹ <?php echo e(number_format($item->variant_mrp)); ?></span>
                                                         <?php endif; ?>
                                                     </div>
 

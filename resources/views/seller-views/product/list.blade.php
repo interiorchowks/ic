@@ -99,7 +99,7 @@
                             <!-- End  filter  -->
 
                             <div class="col-lg-6 mt-3 mt-lg-0 d-flex flex-wrap gap-3 justify-content-lg-end">
-                                <div style="display:none;">
+                                <div>
                                     <button type="button" class="btn btn-outline--primary" data-toggle="dropdown">
                                         <i class="tio-download-to"></i>
                                         {{ \App\CPU\translate('export') }}
