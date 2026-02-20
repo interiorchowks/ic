@@ -55,6 +55,13 @@
 
 @section('content')
     <div class="content container-fluid">
+        <form action="{{ route('seller.product.bulk_import-edit') }}" method="POST" enctype="multipart/form-data">
+  @csrf
+  <p>Edit Product Excel Upload</p>
+  <input type="file" name="file" accept=".xlsx,.xls" required class="form-control" style="display:inline;width:215px;">
+  <button type="submit" style="border-radius: 10px;padding: 8px;background: #00c9db;color: #fff;border-color: #fff;">Upload & Update</button>
+</form>
+
 
         <!-- Page Title -->
         <div class="mb-4">

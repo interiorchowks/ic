@@ -25,7 +25,7 @@
 
     <div style="margin-bottom: 10px;">
         <label><b>Excel File (.xlsx)</b></label><br>
-        <input type="file" name="file" accept=".xlsx" required />
+        <input type="file" name="file" accept=".xlsx" required class="form-control"/>
     </div>
 
     <button type="submit" class="btn btn--primary">Upload & Import</button>
@@ -41,9 +41,10 @@
 
 <hr>
 
+
+
 <script>
 (function () {
-
     const form = document.getElementById('bulkUploadForm');
     const progressBar = document.getElementById('progressBar');
     const progressText = document.getElementById('progressText');
@@ -51,6 +52,7 @@
 
     let uploadPct = 0;
     let processPct = 0;
+    let polling = false;
 
     function clamp(n){ return Math.max(0, Math.min(100, n)); }
 
@@ -70,41 +72,78 @@
         submitBtn.innerText = text;
     }
 
+    const sleep = (ms)=> new Promise(r=>setTimeout(r, ms));
+
     async function pollProgress(jobId) {
-        const url = progressUrl(jobId);
+        polling = true;
+        let delay = 1200;
+        let lastHeartbeat = null;
+        let staleCount = 0;
 
-        const timer = setInterval(async () => {
+        while (polling) {
             try {
-                const resp = await fetch(url);
-                const data = await resp.json();
+                const resp = await fetch(progressUrl(jobId), { cache: 'no-store' });
 
+                if (resp.status === 401) {
+                    polling = false;
+                    renderProgress('Session expired');
+                    setBusy(false, 'Upload & Import');
+                    alert('Session expired. Login again.');
+                    location.reload();
+                    return;
+                }
+
+                if (!resp.ok) {
+                    renderProgress('Reconnecting...');
+                    delay = Math.min(5000, Math.floor(delay * 1.5));
+                    await sleep(delay);
+                    continue;
+                }
+
+                const data = await resp.json();
                 processPct = data.percent ?? 0;
 
-                if (data.status === 'queued' || data.status === 'processing') {
-                    renderProgress('Processing...');
+                // ✅ heartbeat stale detect (if backend stuck)
+                if (data.updated_at) {
+                    if (lastHeartbeat === data.updated_at) staleCount++;
+                    else staleCount = 0;
+                    lastHeartbeat = data.updated_at;
+                }
+
+                if (staleCount >= 15) { // ~18-20 sec with 1200ms
+                    renderProgress('Still working... (slow)');
+                } else {
+                    renderProgress(data.message || (data.status === 'processing' ? 'Processing...' : ''));
                 }
 
                 if (data.status === 'done') {
-                    clearInterval(timer);
+                    polling = false;
+                    uploadPct = 100;
                     processPct = 100;
                     renderProgress('Completed');
-
                     setBusy(false, 'Upload & Import');
-
-                    // ✅ Auto reload after complete
-                    setTimeout(() => location.reload(), 1500);
+                    setTimeout(() => location.reload(), 1200);
+                    return;
                 }
 
+                // ✅ only REAL failed stops
                 if (data.status === 'failed') {
-                    clearInterval(timer);
+                    polling = false;
                     renderProgress('Failed');
                     setBusy(false, 'Upload & Import');
+                    alert(data.message || 'Job failed');
+                    return;
                 }
 
+                delay = 1200;
+                await sleep(delay);
+
             } catch (e) {
-                // silent
+                renderProgress('Reconnecting...');
+                delay = Math.min(5000, Math.floor(delay * 1.5));
+                await sleep(delay);
             }
-        }, 1200);
+        }
     }
 
     form.addEventListener('submit', function (e) {
@@ -112,7 +151,6 @@
 
         uploadPct = 0;
         processPct = 0;
-
         renderProgress('Uploading...');
         setBusy(true, 'Uploading...');
 
@@ -130,7 +168,7 @@
         };
 
         xhr.onload = function () {
-            if (xhr.status !== 200) {
+            if (xhr.status !== 200 && xhr.status !== 202) {
                 renderProgress('Upload Failed');
                 setBusy(false, 'Upload & Import');
                 alert('Upload failed');
@@ -138,7 +176,7 @@
             }
 
             uploadPct = 100;
-            renderProgress('Processing...');
+            renderProgress('Queued...');
             setBusy(true, 'Processing...');
 
             const res = JSON.parse(xhr.responseText);
@@ -152,8 +190,8 @@
 
         xhr.send(fd);
     });
-
 })();
 </script>
+
 
 @endsection

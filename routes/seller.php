@@ -103,6 +103,9 @@ Route::group(['namespace' => 'Seller', 'prefix' => 'seller', 'as' => 'seller.'],
 
 
             Route::get('/bulk-images-url', 'ProductController@bulkimageurl')->name('bulk-images-url');
+            // routes/web.php
+            Route::post('/bulk-import-edit', 'ProductController@bulk_import_data_edit')->name('bulk_import-edit');
+
             Route::post('/bulk-images-url-upload', 'ProductController@bulkimageurlupload')->name('bulk-images-url-upload');
             Route::get('/bulk-images-url-export', 'ProductController@exportExcelUploadedImages')->name('bulk-images-url-export');
             Route::post('/bulk-images-url-upload-ajax', 'ProductController@bulkimageurluploadAjax')->name('bulk-images-url-upload-ajax');

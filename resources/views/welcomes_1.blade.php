@@ -882,7 +882,7 @@
                                 @foreach ($top_brands as $tb)
                                     <div class="brand-card">
                                         <figure class="brand-logo-wrapper">
-                                            <a href="{{ url('brand/' . rawurlencode($tb->name)) }}">
+                                            <a href="{{ url('brand/' . \Illuminate\Support\Str::slug($tb->name)) }}">
                                                 <img src="{{ 'https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($tb->image, '/') }}"
                                                     alt="{{ $tb->name }}"
                                                     class="brand-logo-img">

@@ -19,7 +19,7 @@
                                     <img src="{{ env('CLOUDFLARE_R2_PUBLIC_URL'). $tb->image }}" class="product-image"
                                         alt="ProductImg">
                                 </a> --}}
-                                <a href="{{ url('products_2/' . rawurlencode($tb->name)) }}">
+                                <a href="{{ url('brand/' . \Illuminate\Support\Str::slug($tb->name)) }}">
                                     <img src="{{ rtrim(env('CLOUDFLARE_R2_PUBLIC_URL'), '/') . '/' . ltrim($tb->image, '/') }}"
                                         class="product-image" alt="ProductImg">
                                 </a>

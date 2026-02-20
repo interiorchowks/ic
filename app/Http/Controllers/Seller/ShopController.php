@@ -42,6 +42,70 @@ class ShopController extends Controller
         return view('seller-views.shop.edit', compact('shop','data'));
     }
 
+    // public function update(Request $request, $id)
+    // {
+    //     $shop = Shop::find($id);
+    //     $shop->comp_name = $request->comp_name;  
+        
+        
+    //     if(empty($shop->brand_name)){
+    //         $shop->brand_name = $request->comp_name;
+    //     }
+
+
+
+
+    //     $brandLogoPath = null;
+
+    //     if ($request->hasFile('brand_logo')) {
+
+    //         if (!empty($shop->brand_logo)) {
+    //             Storage::disk('r2')->delete(ltrim($shop->brand_logo, '/'));
+    //         }
+
+    //         $brandLogo = $request->file('brand_logo');
+
+    //         $webpBrandLogo = Image::make($brandLogo->getRealPath())->encode('webp', 90);
+
+    //         $brandLogoName = 'brands/logo_' . uniqid() . '.webp';
+
+    //         Storage::disk('r2')->put($brandLogoName, (string) $webpBrandLogo);
+
+    //         $brandLogoPath = '/' . $brandLogoName;
+    //         $shop->brand_logo = $brandLogoPath;
+    //     }
+    //     $trademarkPath = null;
+
+    //     if ($request->hasFile('trademark')) {
+
+    //         if (!empty($shop->trademark)) {
+    //             Storage::disk('r2')->delete(ltrim($shop->trademark, '/'));
+    //         }
+
+    //         $trademark = $request->file('trademark');
+
+    //         $webpTrademark = Image::make($trademark->getRealPath())->encode('webp', 90);
+
+    //         $trademarkName = 'brands/trademark_' . uniqid() . '.webp';
+
+    //         Storage::disk('r2')->put($trademarkName, (string) $webpTrademark);
+
+    //         $trademarkPath = '/' . $trademarkName;
+    //         $shop->trademark = $trademarkPath;
+    //     }
+
+
+
+
+        
+
+    //     $shop->save();
+    //     Seller::where('id',$id)->update(['profile_edit_status' => 0 ]);
+
+    //     Toastr::info('Shop updated successfully!');
+    //     return redirect()->route('seller.shop.view');
+    // }
+
     public function update(Request $request, $id)
     {
         $shop = Shop::findOrFail($id);

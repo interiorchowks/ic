@@ -36,49 +36,66 @@ class RegisterController extends Controller
 
     public function seller_registeration_store(Request $request)
     {
-        $rules = [
-            'f_name'   => 'required',
-            'email'    => 'required|email|unique:sellers,email',
-            'phone'    => 'required|digits:10|unique:sellers,phone',
-            'password' => 'required|min:8',
-        ];
+        if(!isset($request->seller_id))
+        {
+           $this->validate($request, [
+            'email'         => 'required|unique:sellers',
+            'f_name'        => 'required',
+            
+            'phone'        => 'required',
+            'password'      => 'required|min:8',
+        ]);
 
-        $messages = [
-            'email.unique' => 'This email is already registered',
-            'phone.unique' => 'This phone number is already registered',
-        ];
-
-        $validator = \Validator::make($request->all(), $rules, $messages);
-
-        if ($validator->fails()) {
-            if ($request->ajax()) {
-                return response()->json([
-                    'status' => 'error',
-                    'errors' => $validator->errors()
-                ], 422);
+        if($request->phone || $request->email){
+            if(Seller::where('phone',$request->phone)->where('email',$request->email)->first())
+            {
+                 Toastr::error('Phone and Email Already exist !');
+                 return back();
             }
-            return redirect()->back()->withErrors($validator)->withInput();
+            
+            elseif(Seller::where('phone',$request->phone)->first())
+            {
+                 Toastr::error('Phone Already exist !');
+                 return back();
+            }
+            
+             elseif(Seller::where('email',$request->email)->first())
+            {
+                 Toastr::error('Email Already exist !');
+                 return back();
+            }
         }
-
-        // Save seller
+      
         $seller = new Seller();
         $seller->f_name = $request->f_name;
         $seller->l_name = $request->l_name ?? NULL;
         $seller->phone = $request->phone;
         $seller->email = $request->email;
         $seller->password = bcrypt($request->password);
-        $seller->status = $request->status == 'approved' ? 'approved' : "pending";
-        $seller->profile_edit_status = 1;
+        $seller->status =  $request->status == 'approved'?'approved': "pending";
+        $seller->profile_edit_status =  1;
         $seller->save();
+        $Shop = new Shop();
+        $Shop->seller_id = $seller->id;
+        $Shop->save();
+        }else{
+            $seller = Seller::find($request->seller_id);
+            $seller->f_name = $request->f_name;
+            $seller->l_name = $request->l_name ?? NULL;
+            $seller->phone = $request->phone;
+            $seller->email = $request->email;
+            $seller->image = ImageManager::upload('seller/', 'png', $request->file('image'));
+            $seller->password = bcrypt($request->password);
+            $seller->status =  $request->status == 'approved'?'approved': "pending";
+            $seller->profile_edit_status =  1;
+            $seller->save();
+        }
+        $data['countries'] = DB::table('countries')->orderBy('name')->get();
+        $data['states'] = DB::table('states')->orderBy('name')->get();
+        $data['cities'] = DB::table('cities')->orderBy('name')->get();
+        $data['pincodes'] = DB::table('pincodes')->orderBy('code')->get();
 
-        $shop = new Shop();
-        $shop->seller_id = $seller->id;
-        $shop->save();
-
-        return response()->json([
-            'status' => 'success',
-            'redirect' => route('seller.auth.seller-registeration-2', ['id' => $seller->id])
-        ]);
+        return view('seller-views.auth-seller.seller-registeration-2',['id'=>$seller->id,'data'=>$data]);
     }
 
     public function seller_registeration_2(Request $request)
@@ -88,61 +105,63 @@ class RegisterController extends Controller
             $data['states'] = DB::table('states')->orderBy('name')->get();
             $data['cities'] = DB::table('cities')->orderBy('name')->get();
             $data['pincodes'] = DB::table('pincodes')->orderBy('code')->get();
+    
+            return view('seller-views.auth-seller.seller-registeration-2',['id'=>$request->id,'data'=>$data]);
 
-            return view('seller-views.auth-seller.seller-registeration-2', [
-                'id' => $request->id,
-                'data' => $data
-            ]);
-        }
-
-        // POST logic
-        $this->validate($request, [
-            'shop_name'     => 'required',
-            'shop_address'  => 'required',
+        } elseif ($request->isMethod('post')) {
+           
+            $this->validate($request, [
+            'shop_name'        => 'required',
+            'shop_address'        => 'required',
+            'state'        => 'required',
+            'city'        => 'required',
+            'pincode'        => 'required',
             'acc_no'        => 'required',
-            'bank_name'     => 'required',
-            'ifsc'          => 'required',
-            'gst'           => 'required',
-            // 'pan'           => 'required',
-        ]);
+            'bank_name'        => 'required',
+            'ifsc'        => 'required',
+           ]);
+            
+            $shop = Shop::where('seller_id',$request->seller_id)->first();
+            $shop->name = $request->shop_name;
+            $shop->billing_address = $request->shop_address;
+            $country =  DB::table('countries')->where('id',$request->country)->first();
+            // $shop->country = $country->name;
+            $shop->country = 'India';
+            $state =  DB::table('states')->where('id',$request->state)->first();
+            $shop->state = $state->name;
+            $city =  DB::table('cities')->where('id',$request->city)->first();
+            $shop->city = $city->name;
+            $pincode =  DB::table('pincodes')->where('id',$request->pincode)->first();
+            $shop->pincode = $pincode->code;
+            $shop->bank_branch = $request->bank_branch;
+            $shop->acc_no = $request->acc_no;
+            $shop->bank_name = $request->bank_name;
+            $shop->ifsc = $request->ifsc;
+            $seller = Seller::where('id',$request->seller_id)->first();
+            $shop->contact = $seller->phone;
+            $shop->save();
 
-        $shop = Shop::where('seller_id', $request->seller_id)->first();
-        if (!$shop) {
-            $shop = new Shop();
-            $shop->seller_id = $request->seller_id;
         }
-        if (strlen($request->gst) === 15) {
-            $pan = substr($request->gst, 2, 10);  // start from index 2, take 10 characters
-        } else {
-            $pan = null; // or handle error
-        }
-
-        $seller = Seller::find($request->seller_id);
-
-        $shop->name         = $request->shop_name;
-        $shop->address      = $request->shop_address;     // use `address` consistently
-        $shop->country      = 'India';
-        $shop->acc_no       = $request->acc_no;
-        $shop->bank_name    = $request->bank_name;
-        $shop->bank_holder_name = $request->name_at_bank;
-        $shop->ifsc         = $request->ifsc;
-        $shop->gst_no        = $request->gst;              // fixed field name
-        $shop->pan           = substr($request->gst, 2, 10);;
-        $shop->contact      = $seller->phone ?? null;
-        // dd($request->all());
-
-        $shop->save();
-
-        // Send onboarding mail
+        $seller = Seller::where('id',$request->seller_id)->first();
+        
         Mail::to($seller->email)->send(new \App\Mail\SellerOnboardingMail($seller)); 
 
-        Toastr::success('<strong>Congratulations!</strong> Shop registered successfully!');
-
-        return redirect()->route('seller.auth.seller-login');
+        
+        if($seller->status == 'approved'){
+            // Toastr::success('Shop apply successfully!');
+            Toastr::success('<strong>Congratulations!</strong> Your registration has been completed successfully. Now you can <strong>LOGIN</strong> and start your seller journey with us.');
+             return back();
+        }else{
+             //Toastr::success('Shop apply successfully!');
+             Toastr::success('<strong>Congratulations!</strong> Your registration has been completed successfully. Now you can <strong>LOGIN</strong> and start your seller journey with us.');
+ 
+             return redirect()->route('seller.auth.seller-login');
+        }
+        // return view('seller-views.auth-seller.seller-registeration-3',['id'=>$request->seller_id]);
     }
 
     public function seller_registeration_3(Request $request)
-    {
+    {  
        $this->validate($request, [
             'cheque' => 'required|mimes:jpg,jpeg,png,gif,pdf',
             'gst_cert_image' => 'required|mimes:jpg,jpeg,png,gif,pdf',
@@ -150,7 +169,7 @@ class RegisterController extends Controller
         ]);
 
         $shop = Shop::where('seller_id',$request->seller_id)->first();
-       // Upload GST Certificate
+        // Upload GST Certificate
         $gstCertFile = $request->file('gst_cert_image');
         $gstCertExtension = strtolower($gstCertFile->getClientOriginalExtension());
         $shop->gst_cert_image = ImageManager::upload('shop/', $gstCertExtension, $gstCertFile);
@@ -187,13 +206,12 @@ class RegisterController extends Controller
             // Toastr::success('Shop apply successfully!');
             Toastr::success('<strong>Congratulations!</strong> Your registration has been completed successfully. Now you can <strong>LOGIN</strong> and start your seller journey with us.');
              return back();
-         }else{
+        }else{
              //Toastr::success('Shop apply successfully!');
              Toastr::success('<strong>Congratulations!</strong> Your registration has been completed successfully. Now you can <strong>LOGIN</strong> and start your seller journey with us.');
  
              return redirect()->route('seller.auth.seller-login');
-         }
-
+        }
     }
     
     public function send_otp(Request $request)
@@ -232,7 +250,7 @@ class RegisterController extends Controller
                 echo 2;
             }
           
-           return ;
+        return ;
     }
     
     public function Verify_otp(Request $request)
@@ -266,31 +284,30 @@ class RegisterController extends Controller
     {
       
       if($request->phone || $request->email){
-         if(Seller::where('phone',$request->phone)->where('email',$request->email)->first())
-         {
-              Toastr::error('Phone and Email Already exist !');
-              return back();
-         }
-         
-         elseif(Seller::where('phone',$request->phone)->first())
-         {
-              Toastr::error('Phone Already exist !');
-              return back();
-         }
-         
-          elseif(Seller::where('email',$request->email)->first())
-         {
-              Toastr::error('Email Already exist !');
-              return back();
-         }
-      }
+            if(Seller::where('phone',$request->phone)->where('email',$request->email)->first())
+            {
+                Toastr::error('Phone and Email Already exist !');
+                return back();
+            }
+            
+            elseif(Seller::where('phone',$request->phone)->first())
+            {
+                Toastr::error('Phone Already exist !');
+                return back();
+            }
+            
+            elseif(Seller::where('email',$request->email)->first())
+            {
+                Toastr::error('Email Already exist !');
+                return back();
+            }
+        }
       
         $this->validate($request, [
            
             'logo'          => 'required|mimes: jpg,jpeg,png,gif',
             'banner'        => 'required|mimes: jpg,jpeg,png,gif',
             
-
             'reg_cert_image' => 'required|mimes: jpg,jpeg,png,gif',
             'gst_cert_image' => 'required|mimes: jpg,jpeg,png,gif',
             'pan_image'      => 'required|mimes: jpg,jpeg,png,gif',
@@ -342,19 +359,14 @@ class RegisterController extends Controller
             $seller->password = bcrypt($request->password);
             $seller->status =  $request->status == 'approved'?'approved': "pending";
             //$seller->status =  'approved';
-          
             $seller->save();
-
             $shop = new Shop();
             $shop->seller_id = $seller->id;
             $shop->name = $request->shop_name;
             $shop->address = $request->shop_address;
-
-           $country =  DB::table('countries')->where('id',$request->country)->first();
-           
+            $country =  DB::table('countries')->where('id',$request->country)->first();
             // $shop->country = $country->name;
             $shop->country = 'India';
-            
             $state =  DB::table('states')->where('id',$request->state)->first();
             $shop->state = $state->name;
             $city =  DB::table('cities')->where('id',$request->city)->first();
@@ -363,7 +375,6 @@ class RegisterController extends Controller
             $shop->pincode = $pincode->code;
             $shop->reg_cert = $request->reg_cert;
             $shop->company_type = $request->company_type;
-           
             $shop->cheque_image = ImageManager::upload('shop/', 'png', $request->file('cheque'));
             $shop->reg_cert_image = ImageManager::upload('shop/', 'png', $request->file('reg_cert_image'));
             $shop->gst_no = $request->gst_no;
@@ -374,16 +385,14 @@ class RegisterController extends Controller
             $shop->acc_no = $request->acc_no;
             $shop->bank_name = $request->bank_name;
             $shop->ifsc = $request->ifsc;
-
             $shop->contact = $request->phone;
             $shop->image = ImageManager::upload('shop/', 'png', $request->file('logo'));
             $shop->banner = ImageManager::upload('shop/banner/', 'png', $request->file('banner'));
             //$shop->bottom_banner = ImageManager::upload('shop/banner/', 'png', $request->file('bottom_banner'));
-            
             $shop->save();
             
             $full_name = $request->f_name.' '.$request->l_name;
-
+            
             DB::table('seller_wallets')->insert([
                 'seller_id' => $seller['id'],
                 'withdrawn' => 0,
@@ -397,10 +406,6 @@ class RegisterController extends Controller
             ]);
 
         });
-
-        $seller = Seller::where('id',$seller['id'])->first();
-        
-        Mail::to($seller->email)->send(new \App\Mail\SellerOnboardingMail($seller)); 
 
         if($request->status == 'approved'){
            // Toastr::success('Shop apply successfully!');
@@ -418,30 +423,29 @@ class RegisterController extends Controller
     {
         $country_id = $request->country_id;
         $found = DB::table('states')->where('country_id',$country_id)->first();
-       
         if($found){
-            $data = DB::table('states')->where('country_id',$country_id)->orderBy('name')->get();
-            $select['status1'] = '1';
-            $select['state'] = '<select class="form-control form-control-user" id="shop_state" name="state"  required><option> Select State </option>';
-            foreach ($data as $datas) {
-                $select['state'] .= '<option value="' . $datas->id . '">' . $datas->name . '</option>';
-            }
-            $select['state'] .= '</select>';
+             $data = DB::table('states')->where('country_id',$country_id)->orderBy('name')->get();
+             $select['status1'] = '1';
+          $select['state'] = '<select class="form-control form-control-user" id="shop_state" name="state"  required><option> Select State </option>';
+           foreach ($data as $datas) {
+        $select['state'] .= '<option value="' . $datas->id . '">' . $datas->name . '</option>';
+        }
+         $select['state'] .= '</select>';
+
         }else{
-            $select['status1'] = '0';
+             $select['status1'] = '0';
             $select['state'] ='<select class="form-control form-control-user" id="shop_state" name="state"  required><option value="0">No state found</option></select>';
-            $select['city'] ='<select class="form-control form-control-user" id="shop_city" name="city"  required><option value="0">No city found</option></select>';
-            $select['pincode'] ='<select class="form-control form-control-user" id="shop_pin" name="pincode"  required><option value="0">No pincode </option></select>';
+             $select['city'] ='<select class="form-control form-control-user" id="shop_city" name="city"  required><option value="0">No city found</option></select>';
+             $select['pincode'] ='<select class="form-control form-control-user" id="shop_pin" name="pincode"  required><option value="0">No pincode </option></select>';
         }
         
-        // echo $select;  
         echo json_encode($select);
     }
     
+    
     public function state(Request $request)
     {
-       $state_id = $request->state_id;
-        
+        $state_id = $request->state_id;
         $found = DB::table('cities')->where('state_id',$state_id)->first();
         if($found){
              $data = DB::table('cities')->where('state_id',$state_id)->orderBy('name')->get();
@@ -454,125 +458,98 @@ class RegisterController extends Controller
         }else{
             $select ='<select class="form-control form-control-user" id="shop_city" name="city"  required><option value="0">No city found</option></select>';
         }
-        
        echo $select;  
     }
     
     public function city(Request $request)
     {
-       $city_id = $request->city_id;
-        
+        $city_id = $request->city_id;
         $found = DB::table('pincodes')->where('city_id',$city_id)->first();
+       
         if($found){
-             $data = DB::table('pincodes')->where('city_id',$city_id)->orderBy('code')->get();
-          $select = '<select class="form-control form-control-user" id="shop_pin" name="pincode"  required><option> Select Pincode </option>';
+            $data = DB::table('pincodes')->where('city_id',$city_id)->orderBy('code')->get();
+            $select = '<select class="form-control form-control-user" id="shop_pin" name="pincode"  required><option> Select Pincode </option>';
            foreach ($data as $datas) {
-        $select .= '<option value="' . $datas->id . '">' . $datas->code . '</option>';
+            $select .= '<option value="' . $datas->id . '">' . $datas->code . '</option>';
         }
          $select .= '</select>';
 
         }else{
             $select ='<select class="form-control form-control-user" id="shop_pin" name="pincode"  required><option value="0">No pincode </option></select>';
         }
-        
        echo $select;  
     }
 
-    public function getToken()
-    {
-        $curl = curl_init();
-
-        curl_setopt_array($curl, [
-            CURLOPT_URL => 'https://production.deepvue.tech/v1/authorize',
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => '',
-            CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 10,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => 'POST',
-            CURLOPT_POSTFIELDS => http_build_query([
-                'client_id' => '9bb8fc8484',
-                'client_secret' => '98e61ce59f4944f3825fc01d16b74e59',
-                'grant_type' => 'client_credentials',
-            ]),
-            CURLOPT_HTTPHEADER => [
-                'Content-Type: application/x-www-form-urlencoded'
-            ],
-        ]);
-
-        $response = curl_exec($curl);
-        curl_close($curl);
-
-        $result = json_decode($response, true);
-
-        if (isset($result['access_token'])) {
-            return $result['access_token'];
-        }
-
-        throw new \Exception('Unable to get token from Deepvue API');
-    }
 
     public function verifyBank(Request $request)
     {
         $request->validate([
-            'acc_no' => 'required|string',
-            'ifsc' => 'required|string',
-            'bank_name' => 'nullable|string',
+            'bank_name' => 'required|string',
+            'acc_no'    => 'required|string',
+            'ifsc'      => 'required|string',
         ]);
 
-        $token = $this->getToken(); // must return valid token
+        $accountNumber = urlencode($request->acc_no);
+        $ifsc           = urlencode($request->ifsc);
+        $name           = urlencode($request->bank_name);
 
-        $params = [
-            'account_number' => $request->acc_no,
-            'ifsc' => $request->ifsc,
-        ];
-
-        if (!empty($request->bank_name)) {
-            $params['name'] = $request->bank_name;
-        }
-
-        $url = 'https://production.deepvue.tech/v1/verification/bankaccount?' . http_build_query($params);
+        $url = "https://production.deepvue.tech/v1/verification/bankaccount"
+            . "?account_number={$accountNumber}&ifsc={$ifsc}&name={$name}";
 
         $curl = curl_init();
-        curl_setopt_array($curl, [
-            CURLOPT_URL => $url,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 30,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => 'GET',
-            CURLOPT_HTTPHEADER => [
-                'x-api-key: 98e61ce59f4944f3825fc01d16b74e59',
-                'Authorization: Bearer ' . $token,
-                'Accept: application/json',
-            ],
-        ]);
 
-        $response = curl_exec($curl);
-        
-        if ($response === false) {
-            $error = curl_error($curl);
+        try {
+            curl_setopt_array($curl, [
+                CURLOPT_URL => $url,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_MAXREDIRS => 10,
+                CURLOPT_TIMEOUT => 30,
+                CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+                CURLOPT_CUSTOMREQUEST => 'GET',
+                CURLOPT_HTTPHEADER => [
+                    'x-api-key: af14bd743b194d6ca965a8b6df5ffee2',
+                    'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZDdjNTYzZWM1IiwiZXhwIjoxNzU4MDIwMjAzfQ.4H4C52Rx83eSMSko0dSMLPHaaC8xh2zsiuJbNB_bfyw',
+                    'Accept: application/json',
+                ],
+            ]);
+
+            $response = curl_exec($curl);
+
+            if ($response === false) {
+                throw new \Exception(curl_error($curl));
+            }
+
             curl_close($curl);
-            return response()->json(['status' => false, 'message' => $error], 500);
+
+            $result = json_decode($response, true);
+
+            // Debug if needed
+            // dd($result);
+
+            if (
+                isset($result['data']['message']) &&
+                $result['data']['message'] === 'Bank Account details verified successfully.'
+            ) {
+                return response()->json([
+                    'status' => true,
+                    'data'   => $result
+                ]);
+            }
+
+            return response()->json([
+                'status' => false,
+                'message' => 'Bank account could not be verified. Please check details.'
+            ]);
+
+        } catch (\Throwable $e) {
+            curl_close($curl);
+
+            return response()->json([
+                'status' => false,
+                'message' => $e->getMessage()
+            ], 500);
         }
-
-        curl_close($curl);
-
-        $result = json_decode($response, true);
-
-        if (
-            isset($result['data']['message']) &&
-            stripos($result['data']['message'], 'Bank Account details verified successfully.') !== false
-        ) {
-            return response()->json(['status' => true, 'data' => $result]);
-        }
-
-        return response()->json([
-            'status' => false,
-            'message' => $result['message'] ?? 'Bank account could not be verified.'
-        ]);
     }
 
     public function verifyGst(Request $request)
@@ -583,15 +560,15 @@ class RegisterController extends Controller
 
         $gst = trim($request->input('gst'));
 
-        $apiKey = '98e61ce59f4944f3825fc01d16b74e59';
+        // Prepare headers from .env
+        $apiKey = 'af14bd743b194d6ca965a8b6df5ffee2';
+        $bearer = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZDdjNTYzZWM1IiwiZXhwIjoxNzU4MDIwMjAzfQ.4H4C52Rx83eSMSko0dSMLPHaaC8xh2zsiuJbNB_bfyw';
         $endpoint = 'https://production.deepvue.tech/v1/verification/gstinlite';
 
         try {
-            $token = $this->getToken(); // <-- Get fresh token here
-
             $response = Http::withHeaders([
                 'x-api-key' => $apiKey,
-                'Authorization' => 'Bearer ' . $token,
+                'Authorization' => 'Bearer ' . $bearer,
                 'Accept' => 'application/json',
             ])->timeout(10)->get($endpoint, [
                 'gstin_number' => $gst
@@ -614,9 +591,12 @@ class RegisterController extends Controller
             }
 
             $d = $body['data'];
+
+            // Extract useful fields with safe null checks
             $tradeName = $d['tradeNam'] ?? $d['lgnm'] ?? null;
             $addr = $d['pradr']['addr'] ?? [];
 
+            // Build a readable address
             $addrParts = [];
             foreach (['bno','flno','st','loc','dst','pncd','landMark'] as $k) {
                 if (!empty($addr[$k])) $addrParts[] = $addr[$k];
@@ -632,7 +612,7 @@ class RegisterController extends Controller
                 'city' => $addr['loc'] ?? $addr['dst'] ?? null,
                 'pincode' => $addr['pncd'] ?? null,
                 'status' => $d['sts'] ?? null,
-                'other' => $d,
+                'other' => $d, // raw for debugging if needed
             ];
 
             return response()->json([
@@ -646,45 +626,6 @@ class RegisterController extends Controller
                 'message' => 'Exception: ' . $e->getMessage()
             ], 500);
         }
-    }
-
-    public function verifyPan(Request $request)
-    {
-        $request->validate([
-            'pan' => 'required|string',
-        ]);
-
-        $pan = strtoupper(trim($request->pan));
-        $apiKey = '98e61ce59f4944f3825fc01d16b74e59';
-        $token = $this->getToken();
-        $endpoint = 'https://production.deepvue.tech/v1/verification/panbasic';
-
-        $response = Http::withHeaders([
-            'x-api-key' => $apiKey,
-            'Authorization' => 'Bearer ' . $token,
-            'Accept' => 'application/json',
-        ])->get($endpoint, [
-            'pan_number' => $pan
-        ]);
-
-        if ($response->successful()) {
-            $data = $response->json('data');
-
-            return response()->json([
-                'success' => true,
-                'data' => [
-                    'full_name' => $data['full_name'] ?? null,
-                    'category'  => $data['category'] ?? null,
-                    'status'    => $data['status'] ?? null,
-                    'other'     => $data,
-                ]
-            ]);
-        }
-
-        return response()->json([
-            'success' => false,
-            'message' => $response->body(),
-        ], $response->status());
     }
 
 }

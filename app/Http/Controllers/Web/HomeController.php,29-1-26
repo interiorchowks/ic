@@ -494,15 +494,11 @@ class HomeController extends Controller
         $top_categories = Category::where('status', '1')->get();
         $top_brands = Brand::where('status', '1')->get();
         $top_products = DB::table('sku_product_new')
-            // ->join('home_products', function ($join) {
-            //     $join->on('sku_product_new.product_id', '=', 'home_products.product_id')
-            //         ->where('home_products.section_type', 'top_products');
-            // })
+            ->join('home_products', function ($join) {
+                $join->on('sku_product_new.product_id', '=', 'home_products.product_id')
+                    ->where('home_products.section_type', 'top_products');
+            })
             ->leftJoin('products', 'sku_product_new.product_id', '=', 'products.id')
-            ->leftjoin('sellers','sku_product_new.seller_id','=','sellers.id')
-            ->where('sellers.status','approved')
-            ->where('products.featured',1)
-            ->where('products.status',1)
             ->select(
                 'sku_product_new.product_id',
                 'sku_product_new.image',
@@ -513,13 +509,9 @@ class HomeController extends Controller
                 'products.name',
                 'products.slug',
                 'products.category_ids',
-                'products.free_delivery',
-                'sellers.status',
-                'products.featured',
-                'products.status'
+                'products.free_delivery'
             )
             ->get();
-        // dd($top_products);
 
         $luxe_products = DB::table('sku_product_new')
             ->join('home_products', function ($join) {
@@ -722,15 +714,13 @@ class HomeController extends Controller
 
     public function brands()
     {
-        $top_brands = Brand::select('id', 'name', 'image')
-            ->where('status', 1)
+
+        $top_brands = Brand::where('status', '1')
             ->orderByRaw("(name = 'Other')")
             ->get();
 
         return view('web.brand', compact('top_brands'));
     }
-
-
 
     public function architects()
     {
@@ -2043,11 +2033,5 @@ class HomeController extends Controller
             \Log::error('Deepvue eKYC error: '.$e->getMessage());
         }
         return view('web.serviceregister',compact('captcha','session_id'));
-    }
-
-    public function reviewrating(Request $request, $id)
-    {
-        $id = $request->id;
-        return view('web.return-and-review',compact('id'));
     }
 }

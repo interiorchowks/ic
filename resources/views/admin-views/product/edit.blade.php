@@ -23,7 +23,7 @@
             </h2>
         </div>
         <!-- End Page Title -->
-        @php
+        {{-- @php
             $specifications = DB::table('categories')->where('id', $product->sub_sub_category_id)->first();
             $specificationArray =
                 $specifications && $specifications->specification ? explode(',', $specifications->specification) : [];
@@ -48,7 +48,25 @@
             $a = json_decode($x->technical_specification, true);
             $bx = json_decode($x->other_details, true);
 
+        @endphp --}}
+
+        @php
+            $category = DB::table('categories')->where('id', $product->sub_sub_category_id)->first();
+
+            $specificationArray = $category && $category->specification ? explode(',', $category->specification) : [];
+            $key_featureArray = $category && $category->key_features ? explode(',', $category->key_features) : [];
+            $technical_specificationArray =
+                $category && $category->technical_specification ? explode(',', $category->technical_specification) : [];
+            $other_detailsArray = $category && $category->other_details ? explode(',', $category->other_details) : [];
+
+            $x = DB::table('key_specification_values')->where('product_id', $product->id)->first();
+
+            $y = $x && $x->specification ? json_decode($x->specification, true) : [];
+            $z = $x && $x->key_features ? json_decode($x->key_features, true) : [];
+            $a = $x && $x->technical_specification ? json_decode($x->technical_specification, true) : [];
+            $bx = $x && $x->other_details ? json_decode($x->other_details, true) : [];
         @endphp
+
 
         <div class="row">
             <div class="col-md-12">
@@ -664,16 +682,16 @@
             let n = name.split(' ').join('');
             $('#customer_choice_options').append(
                 '<div class="row">' +
-                    '<div class="col-md-3">' +
-                        '<input type="hidden" name="choice_no[]" value="' + i + '">' +
-                        '<input type="text" class="form-control" name="choice[]" value="' + n +
-                        '" placeholder="{{ trans('Choice Title') }}" readonly>' +
-                    '</div>' +
-                    '<div class="col-lg-9">' +
-                        '<input type="text" class="form-control" name="choice_options_' + i +
-                        '[]" placeholder="{{ trans('Enter choice values') }}" data-role="tagsinput" value="' +
-                        (existingValue || '') + '">' +
-                    '</div>' +
+                '<div class="col-md-3">' +
+                '<input type="hidden" name="choice_no[]" value="' + i + '">' +
+                '<input type="text" class="form-control" name="choice[]" value="' + n +
+                '" placeholder="{{ trans('Choice Title') }}" readonly>' +
+                '</div>' +
+                '<div class="col-lg-9">' +
+                '<input type="text" class="form-control" name="choice_options_' + i +
+                '[]" placeholder="{{ trans('Enter choice values') }}" data-role="tagsinput" value="' +
+                (existingValue || '') + '">' +
+                '</div>' +
                 '</div>'
             );
 
@@ -819,7 +837,8 @@
             function colorCodeSelect(state) {
                 var colorCode = $(state.element).val();
                 if (!colorCode) return state.text;
-                return "<span class='color-preview' style='background-color:" + colorCode + ";'></span>" + state.text;
+                return "<span class='color-preview' style='background-color:" + colorCode + ";'></span>" + state
+                    .text;
             }
 
             // page load hote hi ek baar SKU table generate

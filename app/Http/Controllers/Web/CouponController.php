@@ -264,6 +264,7 @@ class CouponController extends Controller
             }
         }
 
+        // Apply discount if purchase requirement met
         if ($total >= $coupon_f->min_purchase) {
             if ($coupon_f->coupon_type == 'discount_on_purchase' || $coupon_f->coupon_type == 'first_order') {
                 if ($coupon_f->discount_type === 'percentage') {

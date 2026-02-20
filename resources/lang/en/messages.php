@@ -4598,4 +4598,8 @@
   'Views Count' => 'Views Count',
   'Image Upload through URL' => 'Image Upload through URL',
   'Export all images URL' => 'Export all images URL',
+  'This name will be appear in website' => 'This name will be appear in website',
+  'Brand Name' => 'Brand Name',
+  'Brand Logo' => 'Brand Logo',
+  'Trademark' => 'Trademark',
 );

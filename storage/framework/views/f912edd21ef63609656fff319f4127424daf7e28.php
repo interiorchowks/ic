@@ -866,7 +866,7 @@
                                 <?php $__currentLoopData = $top_brands; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $tb): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                                     <div class="brand-card">
                                         <figure class="brand-logo-wrapper">
-                                            <a href="<?php echo e(url('brand/' . rawurlencode($tb->name))); ?>">
+                                            <a href="<?php echo e(url('brand/' . \Illuminate\Support\Str::slug($tb->name))); ?>">
                                                 <img src="<?php echo e('https://pub-3593718b2c3a49558e703e35d10e7897.r2.dev' . '/' . ltrim($tb->image, '/')); ?>"
                                                     alt="<?php echo e($tb->name); ?>"
                                                     class="brand-logo-img">

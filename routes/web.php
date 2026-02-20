@@ -78,6 +78,7 @@ Route::group(['namespace' => 'Web','middleware'=>['maintenance_mode']], function
     Route::post('/callback-mail','HomeController@request_for_callBack_mail')->name('callback-mail');
     Route::post('/addressupdate', 'CartController@update_address')->name('addressupdate');
     Route::get('/category/{slug}/products', 'HomeController@ajaxCategoryProducts');
+    Route::get('/rating-&-reviews/{id}','HomeController@reviewrating');
 
     Route::post('/provider/review/store', 'HomeController@ratingstore')->name('provider.review.store');
      

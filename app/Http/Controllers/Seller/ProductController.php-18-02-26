@@ -2068,7 +2068,32 @@ class ProductController extends Controller
 
         Toastr::success($countRow . ' Products Imported Successfully!');
         return back();
-    }    
+    }
+
+
+
+
+
+    
+
+
+
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
+    
 
     public function bulk_image()
     {
@@ -4101,6 +4126,7 @@ class ProductController extends Controller
         exit;
     }
 
+
     public function bulk_export_data()
     {
         $sellerId = auth('seller')->id();
@@ -4405,6 +4431,7 @@ class ProductController extends Controller
                 3 => 'Transfer Price',
             ];
 
+            // NOTE: your code uses commission_fee as type; keeping same logic
             $commissionType = $commissionTypeMap[(int)($seller->commission_fee ?? 1)] ?? 'Default';
 
             $CatelogueQCStatus = [
@@ -4426,6 +4453,7 @@ class ProductController extends Controller
                     }
                 };
 
+                // ---- Parse description + bullets from HTML/details ----
                 $parsed = $this->parseDescriptionBullets($p->details ?? '');
 
                 // Basic fields
@@ -4530,1218 +4558,6 @@ class ProductController extends Controller
         ]);
     }
 
-    public function barcode(Request $request, $id)
-    {
-        if ($request->limit > 270) {
-            Toastr::warning(translate('You can not generate more than 270 barcode'));
-            return back();
-        }
-        $product = Product::findOrFail($id);
-        $range_data = range(1, $request->limit ?? 4);
-        $array_chunk = array_chunk($range_data, 24);
-
-        return view('seller-views.product.barcode', compact('product', 'array_chunk'));
-    }
-
-    public function save_product(Request $request)
-    {
-        DB::table('category_request')->insert([
-        'seller_id'=>auth('seller')->id(),
-        'name'=>$request->name,
-        'hsn_code'=>$request->hsn_code,
-        'created_at'=>now(),
-        'updated_at'=>now()
-        ]);
-
-        return response()->json([
-        'message' => 'Product added successfully!',
-        ]);
-    }
-
-    public function bulkimageurl()
-    {
-        return view('seller-views.product.bulk_images_upload');
-    }
-
-    public function bulkimageurluploadAjax(Request $request)
-    {
-        $request->validate([
-            'seller_id' => 'required|integer',
-            'file'      => 'required|file|mimes:xlsx',
-        ]);
-
-        $sellerId   = (int) $request->seller_id;
-        $storedPath = $request->file('file')->store("bulk_import/{$sellerId}", 'local');
-
-        $jobId = (string) Str::uuid();
-
-        Cache::put("bulkimg:{$jobId}", [
-            'status'    => 'queued',
-            'percent'   => 0,
-            'total'     => 0,
-            'processed' => 0,
-            'inserted'  => 0,
-            'failed'    => 0,
-            'message'   => null,
-        ], now()->addHours(6));
-
-        dispatch(function () use ($jobId, $sellerId, $storedPath) {
-
-            set_time_limit(0);
-            ini_set('memory_limit', '1024M');
-
-            $normalizeUrl = function (string $url): string {
-                $url = trim($url);
-
-                // ✅ Google Drive: /file/d/{id}/view -> direct download
-                if (preg_match('~drive\.google\.com/file/d/([^/]+)~', $url, $m)) {
-                    return "https://drive.google.com/uc?export=download&id=" . $m[1];
-                }
-                // ✅ Google Drive: open?id={id} -> direct download
-                if (preg_match('~drive\.google\.com/open\?id=([^&]+)~', $url, $m)) {
-                    return "https://drive.google.com/uc?export=download&id=" . $m[1];
-                }
-
-                // Make URL path safer (spaces/+ etc)
-                $parts = parse_url($url);
-                if (!$parts || empty($parts['scheme']) || empty($parts['host'])) return $url;
-
-                $path = $parts['path'] ?? '';
-                $segments = explode('/', $path);
-                $segments = array_map(function ($seg) {
-                    $seg = str_replace('%2B', '+', $seg);
-                    return rawurlencode(rawurldecode($seg));
-                }, $segments);
-
-                $safeUrl = $parts['scheme'] . '://' . $parts['host'] . implode('/', $segments);
-                if (!empty($parts['query'])) $safeUrl .= '?' . $parts['query'];
-
-                return $safeUrl;
-            };
-
-            try {
-                self::bulkImgProgressPatch($jobId, ['status' => 'processing', 'message' => null]);
-
-                Log::info("BulkImage: START", [
-                    'job_id'      => $jobId,
-                    'seller_id'   => $sellerId,
-                    'stored_path' => $storedPath,
-                ]);
-
-                // ✅ Intervention driver
-                if (extension_loaded('imagick')) {
-                    Image::configure(['driver' => 'imagick']);
-                } else {
-                    Image::configure(['driver' => 'gd']);
-                }
-
-                // ✅ WebP support check for GD
-                if (!extension_loaded('imagick') && function_exists('gd_info')) {
-                    $gd = gd_info();
-                    if (isset($gd['WebP Support']) && !$gd['WebP Support']) {
-                        self::bulkImgProgressPatch($jobId, [
-                            'status'  => 'failed',
-                            'message' => 'Server GD WebP support off. Enable WebP or install Imagick.',
-                        ]);
-                        return;
-                    }
-                }
-
-                $tmpDir = storage_path('app/tmp');
-                if (!is_dir($tmpDir)) @mkdir($tmpDir, 0775, true);
-
-                $filePath    = storage_path('app/' . $storedPath);
-                $spreadsheet = IOFactory::load($filePath);
-                $sheet       = $spreadsheet->getActiveSheet();
-
-                $idCol  = 1; // A: image_id/group id
-                $urlCol = 2; // B: urls (comma separated)
-
-                $highestRow = (int) $sheet->getHighestRow();
-                $totalRows  = max(0, $highestRow - 1);
-
-                $inserted  = 0;
-                $failed    = 0;
-                $processed = 0;
-
-                for ($row = 2; $row <= $highestRow; $row++) {
-                    $processed++;
-
-                    $idCell = trim((string) $sheet->getCellByColumnAndRow($idCol, $row)->getValue());
-                    $cell   = trim((string) $sheet->getCellByColumnAndRow($urlCol, $row)->getValue());
-
-                    if ($cell === '') {
-                        self::bulkImgTick($jobId, $processed, $totalRows, $inserted, $failed);
-                        continue;
-                    }
-
-                    if ($idCell === '' || !is_numeric($idCell)) {
-                        $failed++;
-                        self::bulkImgTick($jobId, $processed, $totalRows, $inserted, $failed);
-                        continue;
-                    }
-
-                    $imageGroupId = (int) $idCell;
-                    $urls = array_filter(array_map('trim', explode(',', $cell)));
-
-                    foreach ($urls as $url) {
-                        if ($url === '') continue;
-
-                        if (!filter_var($url, FILTER_VALIDATE_URL)) {
-                            $failed++;
-                            continue;
-                        }
-
-                        $safeUrl = $normalizeUrl($url);
-
-                        $tmpIn  = $tmpDir . "/bulk_in_{$sellerId}_{$row}_" . Str::random(8);
-                        $tmpOut = $tmpDir . "/bulk_out_{$sellerId}_{$row}_" . Str::random(8) . ".webp";
-
-                        try {
-                            $resp = Http::withOptions([
-                                    'sink'            => $tmpIn,
-                                    'allow_redirects' => true,
-                                ])
-                                ->retry(3, 800)
-                                ->timeout(120)
-                                ->withHeaders([
-                                    'User-Agent' => 'Mozilla/5.0',
-                                    'Accept'     => 'image/*,*/*;q=0.8',
-                                    'Referer'    => 'https://www.amazon.in/',
-                                ])
-                                ->get($safeUrl);
-
-                            if (!$resp->successful() || !file_exists($tmpIn) || filesize($tmpIn) <= 0) {
-                                $failed++;
-                                @unlink($tmpIn);
-                                continue;
-                            }
-
-                            // ✅ Ensure it's an actual image (avoid HTML pages)
-                            $fi   = finfo_open(FILEINFO_MIME_TYPE);
-                            $mime = $fi ? finfo_file($fi, $tmpIn) : null;
-                            if ($fi) finfo_close($fi);
-
-                            if (!$mime || !str_starts_with($mime, 'image/')) {
-                                $failed++;
-                                Log::warning("BulkImage: Not an image (blocked/HTML)", [
-                                    'job_id' => $jobId,
-                                    'row'    => $row,
-                                    'url'    => $safeUrl,
-                                    'mime'   => $mime,
-                                ]);
-                                @unlink($tmpIn);
-                                continue;
-                            }
-
-                            // ✅ Resize + transparent canvas 1000x1000
-                            $img = Image::make($tmpIn)->orientate();
-                            $img->resize(1000, 1000, function ($c) {
-                                $c->aspectRatio();
-                                $c->upsize();
-                            });
-
-                            $canvas = Image::canvas(1000, 1000, [0, 0, 0, 0]);
-                            $canvas->insert($img, 'center');
-
-                            $canvas->encode('webp', 85)->save($tmpOut);
-
-                            if (!file_exists($tmpOut) || filesize($tmpOut) <= 0) {
-                                $failed++;
-                                @unlink($tmpIn);
-                                @unlink($tmpOut);
-                                continue;
-                            }
-
-                            // ✅ Build filename
-                            $base = basename(parse_url($url, PHP_URL_PATH) ?? 'image');
-                            $base = preg_replace('/[^a-zA-Z0-9\-_\.]/', '_', $base);
-                            $base = Str::limit($base, 60, '');
-                            $base = preg_replace('/\.(jpg|jpeg|png|webp)$/i', '', $base);
-
-                            $r2Path = "products/lists/{$sellerId}_{$base}_" . Str::random(6) . ".webp";
-
-                            // ✅ Upload to Cloudflare R2 disk
-                            $stream = fopen($tmpOut, 'r');
-                            if (!$stream) {
-                                $failed++;
-                                @unlink($tmpIn);
-                                @unlink($tmpOut);
-                                continue;
-                            }
-                            rewind($stream);
-
-                            Storage::disk('r2')->put($r2Path, $stream, [
-                                'visibility'  => 'public',
-                                'ContentType' => 'image/webp',
-                            ]);
-
-                            if (is_resource($stream)) fclose($stream);
-
-                            // ✅ DB insert
-                            DB::table('bulk_image')->insert([
-                                'seller_id'     => $sellerId,
-                                'image_path'    => $r2Path,
-                                'is_from_excel' => 1,
-                                'image_id'      => $imageGroupId,
-                                'created_at'    => now(),
-                                'updated_at'    => now(),
-                            ]);
-
-                            $inserted++;
-
-                            @unlink($tmpIn);
-                            @unlink($tmpOut);
-
-                        } catch (\Throwable $e) {
-                            $failed++;
-                            Log::error("BulkImage: inner exception", [
-                                'job_id'  => $jobId,
-                                'row'     => $row,
-                                'url'     => $safeUrl,
-                                'message' => $e->getMessage(),
-                            ]);
-                            @unlink($tmpIn);
-                            @unlink($tmpOut);
-                            continue;
-                        }
-                    }
-
-                    self::bulkImgTick($jobId, $processed, $totalRows, $inserted, $failed);
-                }
-
-                self::bulkImgProgressPatch($jobId, [
-                    'status'    => 'done',
-                    'percent'   => 100,
-                    'total'     => $totalRows,
-                    'processed' => $processed,
-                    'inserted'  => $inserted,
-                    'failed'    => $failed,
-                    'message'   => 'Completed',
-                ]);
-
-            } catch (\Throwable $e) {
-                self::bulkImgProgressPatch($jobId, [
-                    'status'  => 'failed',
-                    'message' => $e->getMessage(),
-                ]);
-                throw $e;
-            }
-
-        })->onQueue('default');
-
-        return response()->json(['ok' => true, 'job_id' => $jobId], 202);
-    }
-
-    public function bulkImagesProgress($jobId)
-    {
-        $data = Cache::get("bulkimg:{$jobId}");
-        if (!$data) {
-            return response()->json(['status' => 'not_found', 'percent' => 0], 404);
-        }
-        return response()->json($data);
-    }
-
-    private static function bulkImgTick(string $jobId, int $processed, int $total, int $inserted, int $failed): void
-    {
-        $percent = $total > 0 ? (int) floor(($processed / $total) * 100) : 100;
-
-        self::bulkImgProgressPatch($jobId, [
-            'status'    => 'processing',
-            'percent'   => $percent,
-            'total'     => $total,
-            'processed' => $processed,
-            'inserted'  => $inserted,
-            'failed'    => $failed,
-            'message'   => null,
-        ]);
-    }
-
-    private static function bulkImgProgressPatch(string $jobId, array $patch): void
-    {
-        $key = "bulkimg:{$jobId}";
-        $old = Cache::get($key, []);
-
-        $new = array_merge([
-            'status'    => 'queued',
-            'percent'   => 0,
-            'total'     => 0,
-            'processed' => 0,
-            'inserted'  => 0,
-            'failed'    => 0,
-            'message'   => null,
-        ], $old, $patch);
-
-        Cache::put($key, $new, now()->addHours(6));
-    }
-
-    public function exportExcelUploadedImages(Request $request)
-    {
-        $sellerId = auth('seller')->id();
-
-        if (!$sellerId) {
-        return response()->json(['message' => 'Unauthorized'], 401);
-        }
-
-        $q = DB::table('bulk_image')
-        ->select(
-        'image_id',
-        'seller_id',
-        DB::raw("GROUP_CONCAT(TRIM(LEADING '/' FROM image_path) ORDER BY id SEPARATOR
-        '||') as images"),
-        DB::raw("MIN(created_at) as created_at")
-        )
-        ->where('is_from_excel', 1)
-        ->where('seller_id', $sellerId) // ✅ force only auth seller
-        ->orderBy('image_id', 'asc')
-        ->groupBy('image_id', 'seller_id');
-
-        $rows = $q->get();
-
-        $maxImages = 0;
-        $parsed = [];
-        foreach ($rows as $row) {
-        $imgs = array_values(array_filter(explode('||', (string) $row->images)));
-        $maxImages = max($maxImages, count($imgs));
-        $parsed[] = [$row, $imgs];
-        }
-
-        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
-        $sheet = $spreadsheet->getActiveSheet();
-        $sheet->setTitle('bulk_images');
-
-        $sheet->setCellValue('A1', 'image_id');
-        $sheet->setCellValue('B1', 'seller_id');
-
-        $startColIndex = 3; // C
-        for ($i = 1; $i <= $maxImages; $i++) 
-        {
-            $col=\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($startColIndex + $i - 1); $sheet->
-            setCellValue($col . '1', "image_{$i}");
-        }
-
-        $createdAtCol =
-        \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($startColIndex
-        + $maxImages);
-        $sheet->setCellValue($createdAtCol . '1', 'created_at');
-
-        $r = 2;
-        foreach ($parsed as [$row, $imgs]) {
-        $sheet->setCellValue("A{$r}", (int) $row->image_id);
-        $sheet->setCellValue("B{$r}", (int) $row->seller_id);
-
-        for ($i = 0; $i < $maxImages; $i++) 
-        {
-            $col=\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($startColIndex + $i); $sheet->
-            setCellValue($col . $r, $imgs[$i] ?? '');
-        }
-
-        $sheet->setCellValue($createdAtCol . $r, (string) $row->created_at);
-        $r++;
-        }
-
-        // Autosize
-        $lastCol =
-        \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($startColIndex
-        + $maxImages);
-        foreach (range('A', $lastCol) as $col) {
-        $sheet->getColumnDimension($col)->setAutoSize(true);
-        }
-
-        $fileName = "bulk_images_excel_seller_{$sellerId}.xlsx";
-
-        return response()->streamDownload(function () use ($spreadsheet) {
-        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
-        $writer->save('php://output');
-        }, $fileName, [
-        'Content-Type' =>
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        ]);
-    }
-
-
-
-
-
-    
-
-    // public function bulk_import_data_edit(Request $request)
-    // {
-    //     $request->validate([
-    //         'file' => 'required|file|mimes:xlsx,xls|max:20480',
-    //     ]);
-
-    //     $sellerId = auth('seller')->id();
-
-    //     $spreadsheet = IOFactory::load($request->file('file')->getRealPath());
-    //     $sheet = $spreadsheet->getSheetByName('Product_Bulk') ?? $spreadsheet->getActiveSheet();
-
-    //     $headerRow = 1;   // main header (merged)
-    //     $instRow1  = 2;   // sub headers for grouped sections
-    //     $dataStart = 4;   // data starts
-
-    //     $highestRow = $sheet->getHighestDataRow();
-    //     $highestCol = $sheet->getHighestDataColumn();
-    //     $highestColIndex = Coordinate::columnIndexFromString($highestCol);
-
-    //     // Map main headers (row 1) to column index (handles merged headers)
-    //     $headerToCol = [];
-    //     $lastHeader = '';
-    //     for ($c = 1; $c <= $highestColIndex; $c++) {
-    //         $h = trim((string)$sheet->getCellByColumnAndRow($c, $headerRow)->getValue());
-    //         if ($h !== '') $lastHeader = $h;
-    //         if ($lastHeader !== '' && !isset($headerToCol[$lastHeader])) {
-    //             $headerToCol[$lastHeader] = $c;
-    //         }
-    //     }
-
-    //     // Map sub headers (row 2) to column index
-    //     $dimToCol = [];
-    //     for ($c = 1; $c <= $highestColIndex; $c++) {
-    //         $h = trim((string)$sheet->getCellByColumnAndRow($c, $instRow1)->getValue());
-    //         if ($h !== '' && !isset($dimToCol[$h])) {
-    //             $dimToCol[$h] = $c;
-    //         }
-    //     }
-
-    //     $skuCols = $this->getTableColumns('sku_product_new');
-    //     $skuHasUpdatedAt = in_array('updated_at', $skuCols, true);
-    //     $skuHasCreatedAt = in_array('created_at', $skuCols, true);
-
-    //     $errors = [];
-    //     $updatedProducts = 0;
-    //     $updatedVariants = 0;
-
-    //     DB::beginTransaction();
-    //     try {
-    //         for ($r = $dataStart; $r <= $highestRow; $r++) {
-
-    //             $productId    = (int)$this->cellByHeader($sheet, $headerToCol, 'InteriorChowk Product Code', $r);
-    //             $subcat    = $this->cellByHeader($sheet, $headerToCol, 'Product Sub Category', $r);
-    //             $variantRowId = (int)$this->cellByHeader($sheet, $headerToCol, 'Variant Row ID', $r); // optional
-    //             $sellerSku    = trim((string)$this->cellByHeader($sheet, $headerToCol, 'Seller SKU ID', $r));
-    //             $titleProbe   = trim((string)$this->cellByHeader($sheet, $headerToCol, 'Product Title', $r));
-
-    //             $comm = DB::table('categories')->where('name',$subcat)->first();
-    //             // dd($comm);
-    //             // skip empty lines
-    //             if ($productId <= 0 && $titleProbe === '') {
-    //                 continue;
-    //             }
-
-    //             if ($productId <= 0) {
-    //                 $errors[] = "Row {$r}: InteriorChowk Product Code missing/invalid.";
-    //                 continue;
-    //             }
-
-    //             $product = Product::where('id', $productId)
-    //                 ->where('added_by', 'seller')
-    //                 ->where('user_id', $sellerId)
-    //                 ->first();
-
-    //             if (!$product) {
-    //                 $errors[] = "Row {$r}: Product {$productId} not found or not owned by seller.";
-    //                 continue;
-    //             }
-
-    //             $title = trim((string)$this->cellByHeader($sheet, $headerToCol, 'Product Title', $r));
-    //             if ($title !== '') $product->name = $title;
-
-    //             $returnDays = $this->cellByHeader($sheet, $headerToCol, 'Return Days', $r);
-    //             if ($this->hasVal($returnDays)) $product->Return_days = (int)$returnDays;
-
-    //             $replacementDays = $this->cellByHeader($sheet, $headerToCol, 'Replacement Days', $r);
-    //             if ($this->hasVal($replacementDays)) $product->replacement_days = (int)$replacementDays;
-
-    //             $unit = trim((string)$this->cellByHeader($sheet, $headerToCol, 'Unit', $r));
-    //             if ($unit !== '') $product->unit = $unit;
-
-    //             $moq = $this->cellByHeader($sheet, $headerToCol, 'MOQ', $r);
-    //             if ($this->hasVal($moq)) $product->min_qty = (int)$moq;
-
-    //             $warehouse = $this->cellByHeader($sheet, $headerToCol, 'Warehouse', $r);
-    //             if ($this->hasVal($warehouse)) $product->add_warehouse = (string)$warehouse;
-
-    //             $hsn = $this->cellByHeader($sheet, $headerToCol, 'HSN', $r);
-    //             if ($this->hasVal($hsn)) $product->HSN_code = (string)$hsn;
-
-    //             $freeDelivery = trim((string)$this->cellByHeader($sheet, $headerToCol, 'Free Delivery', $r));
-    //             if ($freeDelivery !== '') {
-    //                 $product->free_shipping = (strtolower($freeDelivery) === 'yes') ? 1 : 0;
-    //             }
-
-    //             $videoUrl = $this->cellByHeader($sheet, $headerToCol, 'Video URL', $r);
-    //             if ($this->hasVal($videoUrl)) $product->video_url = (string)$videoUrl;
-
-    //             // product thumbnail/images (optional)
-    //             $prodThumb = trim((string)$this->cellByHeader($sheet, $headerToCol, 'Thumbnail Image name', $r));
-    //             if ($prodThumb !== '') $product->thumbnail = $prodThumb;
-
-    //             $otherImgs = trim((string)$this->cellByHeader($sheet, $headerToCol, 'Other Image name', $r));
-    //             if ($otherImgs !== '') {
-    //                 $imgs = array_values(array_filter(array_map('trim', explode(',', $otherImgs))));
-    //                 if (count($imgs)) $product->images = json_encode($imgs);
-    //             }
-
-    //             $desc = trim((string)$this->cellByDim($sheet, $dimToCol, 'Description', $r));
-    //             $bullets = [];
-    //             for ($i = 1; $i <= 5; $i++) {
-    //                 $b = trim((string)$this->cellByDim($sheet, $dimToCol, "Bullet Point {$i}", $r));
-    //                 if ($b !== '') $bullets[] = $b;
-    //             }
-    //             if ($desc !== '' || count($bullets)) {
-    //                 $product->details = $this->buildDetailsHtml($desc, $bullets);
-    //             }
-
-    //             $product->save();
-    //             $updatedProducts++;
-
-    //             // ---------------- VARIANT / SKU UPDATE ----------------
-    //             // REQUIRE SKU for variant update
-    //             if ($sellerSku === '') {
-    //                 $errors[] = "Row {$r}: Seller SKU ID missing. Variant update skipped.";
-    //                 continue;
-    //             }
-
-    //             $variantMrp = $this->toNumber($this->cellByHeader($sheet, $headerToCol, 'MRP (INR)', $r));
-    //             $listedMrpRaw = $this->cellCalculated($sheet, $headerToCol, 'Your selling price (INR)', $r);
-    //             $listedMrp    = $this->toNumber($listedMrpRaw);   // convert to number safely
-
-    //             $tax        = $this->toNumber($this->cellByHeader($sheet, $headerToCol, 'Tax', $r)); // assume GST%
-
-    //             $discountTypeRaw = trim((string)$this->cellByHeader($sheet, $headerToCol, 'Discount Type', $r));
-    //             $discountType    = $this->normalizeDiscountType($discountTypeRaw); // 'flat' or 'percent'
-    //             $discount        = $this->toNumber($this->cellByHeader($sheet, $headerToCol, 'Discount', $r));
-    //             $qty             = (int)($this->cellByHeader($sheet, $headerToCol, 'Stock', $r) ?? 0);
-
-    //             // IMPORTANT: image fields are STRINGS
-    //             $thumbnailImage = trim((string)$this->cellByHeader($sheet, $headerToCol, 'Thumbnail Image name', $r));
-    //             $otherImagesCsv = trim((string)$this->cellByHeader($sheet, $headerToCol, 'Other Image name', $r));
-
-    //             // Optional variation (only if header exists in your sheet)
-    //             $variation = trim((string)$this->cellByHeader($sheet, $headerToCol, 'Variation', $r));
-
-    //             $colorName = trim((string)$this->cellByDim($sheet, $dimToCol, 'Colour Name', $r));
-    //             // dd($colorName);
-    //             if ($colorName === '') $colorNames = trim((string)$this->cellByDim($sheet, $dimToCol, 'Rename Colour Name', $r));
-
-    //             $size = trim((string)$this->cellByDim($sheet, $dimToCol, 'Add size', $r));
-    //             if ($size === '') $size = trim((string)$this->cellByHeader($sheet, $headerToCol, 'Size', $r));
-
-    //             $len = $this->toNumber($this->cellByDim($sheet, $dimToCol, 'Length (CM)', $r));
-    //             $brd = $this->toNumber($this->cellByDim($sheet, $dimToCol, 'Breadth (CM)', $r));
-    //             $ht  = $this->toNumber($this->cellByDim($sheet, $dimToCol, 'Height (CM)', $r));
-    //             $wt  = $this->toNumber($this->cellByDim($sheet, $dimToCol, 'Weight (KG)', $r));
-
-    //             // Build images JSON safely from CSV
-    //             $imagesArr = [];
-    //             if ($otherImagesCsv !== '') {
-    //                 $imagesArr = array_values(array_filter(array_map('trim', explode(',', $otherImagesCsv))));
-    //             }
-    //             $imagesJson = count($imagesArr) ? json_encode($imagesArr) : null;
-
-    //             // discount percent calc
-    //             $discountPercent = null;
-    //             if ($variantMrp !== null && $variantMrp > 0 && $discount !== null) {
-    //                 if ($discountType === 'percent') {
-    //                     $discountPercent = $discount;
-    //                 } else { // flat
-    //                     $discountPercent = ($discount * 100) / $variantMrp;
-    //                 }
-    //                 $discountPercent = round($discountPercent, 2);
-    //             }
-
-    //             $payload = [
-    //                 'variant_mrp'        => $variantMrp,
-    //                 'variation'          => $colorName.'-'.$size,
-    //                 'listed_price'       => $listedMrp,
-    //                 'tax'                => $tax,
-    //                 'commission_fee'     => $comm->commission,
-    //                 'gst_percent'        => $tax,
-    //                 'listed_gst_percent' => $tax,
-    //                 'discount_type'      => $discountType,
-    //                 'discount'           => $discount,
-    //                 'discount_percent'   => $discountPercent,
-    //                 'listed_percent'     => $discountPercent,
-    //                 'quantity'           => $qty,
-    //                 'color_name'         => $colorNames !== '' ? $colorNames : null,
-    //                 'sizes'              => $size !== '' ? $size : null,
-    //                 'length'             => $len,
-    //                 'breadth'            => $brd,
-    //                 'height'             => $ht,
-    //                 'weight'             => $wt,
-    //             ];
-
-    //             if ($variation !== '') {
-    //                 $payload['variation'] = $variation;
-    //             }
-
-    //             // only update image fields if excel has value (no wipe)
-    //             if ($thumbnailImage !== '') {
-    //                 $payload['thumbnail_image'] = $thumbnailImage;
-    //             }
-    //             if (!is_null($imagesJson)) {
-    //                 $payload['image'] = $imagesJson;
-    //             }
-
-    //             if ($skuHasUpdatedAt) $payload['updated_at'] = now();
-
-    //             // ---- DUPLICATE SKU SAFETY ----
-    //             $dupes = DB::table('sku_product_new')
-    //                 ->where('seller_id', $sellerId)
-    //                 ->where('product_id', $productId)
-    //                 ->where('sku', $sellerSku)
-    //                 ->count();
-
-    //             if ($dupes > 1) {
-    //                 $errors[] = "Row {$r}: Duplicate SKU '{$sellerSku}' found ({$dupes}). Variant update skipped.";
-    //                 continue;
-    //             }
-
-    //             $existing = DB::table('sku_product_new')
-    //                 ->where('seller_id', $sellerId)
-    //                 ->where('product_id', $productId)
-    //                 ->where('sku', $sellerSku)
-    //                 ->first();
-
-    //             if ($existing) {
-    //                 DB::table('sku_product_new')->where('id', $existing->id)->update($payload);
-    //                 $updatedVariants++;
-    //             } else {
-    //                 if ($variantRowId > 0) {
-    //                     $affected = DB::table('sku_product_new')
-    //                         ->where('id', $variantRowId)
-    //                         ->where('seller_id', $sellerId)
-    //                         ->where('product_id', $productId)
-    //                         ->update($payload);
-
-    //                     if ($affected) {
-    //                         $updatedVariants++;
-    //                     } else {
-    //                         $insert = array_merge($payload, [
-    //                             'seller_id'  => $sellerId,
-    //                             'product_id' => $productId,
-    //                             'sku'        => $sellerSku,
-    //                         ]);
-    //                         if ($skuHasCreatedAt) $insert['created_at'] = now();
-    //                         if ($skuHasUpdatedAt) $insert['updated_at'] = now();
-    //                         DB::table('sku_product_new')->insert($insert);
-    //                         $updatedVariants++;
-    //                     }
-    //                 } else {
-    //                     $insert = array_merge($payload, [
-    //                         'seller_id'  => $sellerId,
-    //                         'product_id' => $productId,
-    //                         'sku'        => $sellerSku,
-    //                     ]);
-    //                     if ($skuHasCreatedAt) $insert['created_at'] = now();
-    //                     if ($skuHasUpdatedAt) $insert['updated_at'] = now();
-    //                     DB::table('sku_product_new')->insert($insert);
-    //                     $updatedVariants++;
-    //                 }
-    //             }
-
-    //             // Tags
-    //             $tagsCsv = trim((string)$this->cellByHeader($sheet, $headerToCol, 'Search Tags', $r));
-    //             if ($tagsCsv !== '') $this->syncTags($productId, $tagsCsv);
-    //         }
-
-    //         DB::commit();
-
-    //         return redirect('/seller/product/list')
-    //             ->with('success', "Bulk update completed. Products Updated: {$updatedProducts}, Variants Updated: {$updatedVariants}")
-    //             ->with('errors_list', $errors);
-
-    //     } catch (\Throwable $e) {
-    //         DB::rollBack();
-
-    //         return redirect('/seller/product/list')
-    //             ->with('error', 'Import failed: ' . $e->getMessage())
-    //             ->with('errors_list', $errors);
-    //     }
-    // }
-
-
-    public function bulk_import_data_edit(Request $request)
-{
-    $request->validate([
-        'file' => 'required|file|mimes:xlsx,xls|max:20480',
-    ]);
-
-    $sellerId = auth('seller')->id();
-
-    $spreadsheet = IOFactory::load($request->file('file')->getRealPath());
-    $sheet = $spreadsheet->getSheetByName('Product_Bulk') ?? $spreadsheet->getActiveSheet();
-
-    $headerRow = 1;   // main header (merged)
-    $dataStart = 4;   // data starts (keep 4 as you had)
-    $instRow1  = 2;   // we will auto-detect 2/3 below
-
-    $highestRow = $sheet->getHighestDataRow();
-    $highestCol = $sheet->getHighestDataColumn();
-    $highestColIndex = Coordinate::columnIndexFromString($highestCol);
-
-    // -----------------------------
-    // Helpers (local, safe)
-    // -----------------------------
-    $norm = function ($v) {
-        $v = (string)$v;
-        $v = preg_replace('/\s+/', ' ', $v); // collapse spaces/newlines/tabs
-        return trim($v);
-    };
-
-    // -----------------------------
-    // Map main headers (row 1) to column index (handles merged headers)
-    // -----------------------------
-    $headerToCol = [];
-    $lastHeader = '';
-    for ($c = 1; $c <= $highestColIndex; $c++) {
-        $h = $norm($sheet->getCellByColumnAndRow($c, $headerRow)->getValue());
-        if ($h !== '') $lastHeader = $h;
-        if ($lastHeader !== '' && !isset($headerToCol[$lastHeader])) {
-            $headerToCol[$lastHeader] = $c;
-        }
-    }
-
-    // -----------------------------
-    // Auto-detect sub header row (2 or 3) and map sub headers
-    // (Fix for Description/Bullet Points not saving)
-    // -----------------------------
-    $dimToCol = [];
-    foreach ([2, 3] as $tryRow) {
-        $tmp = [];
-        for ($c = 1; $c <= $highestColIndex; $c++) {
-            $h = $norm($sheet->getCellByColumnAndRow($c, $tryRow)->getValue());
-            if ($h !== '' && !isset($tmp[$h])) {
-                $tmp[$h] = $c;
-            }
-        }
-        // If we detect these keys, this is the right subheader row
-        if (isset($tmp['Description']) || isset($tmp['Bullet Point 1']) || isset($tmp['Bullet Point 2'])) {
-            $dimToCol = $tmp;
-            $instRow1 = $tryRow;
-            break;
-        }
-    }
-
-    // If still empty, fallback to row 2 mapping anyway
-    if (!$dimToCol) {
-        for ($c = 1; $c <= $highestColIndex; $c++) {
-            $h = $norm($sheet->getCellByColumnAndRow($c, 2)->getValue());
-            if ($h !== '' && !isset($dimToCol[$h])) $dimToCol[$h] = $c;
-        }
-    }
-
-    $skuCols = $this->getTableColumns('sku_product_new');
-    $skuHasUpdatedAt = in_array('updated_at', $skuCols, true);
-    $skuHasCreatedAt = in_array('created_at', $skuCols, true);
-
-    $errors = [];
-    $updatedProducts = 0;
-    $updatedVariants = 0;
-
-    DB::beginTransaction();
-    try {
-        for ($r = $dataStart; $r <= $highestRow; $r++) {
-
-            $productId    = (int)$this->cellByHeader($sheet, $headerToCol, 'InteriorChowk Product Code', $r);
-            $subcat       = $this->cellByHeader($sheet, $headerToCol, 'Product Sub Category', $r);
-            $variantRowId = (int)$this->cellByHeader($sheet, $headerToCol, 'Variant Row ID', $r); // optional
-            $sellerSku    = trim((string)$this->cellByHeader($sheet, $headerToCol, 'Seller SKU ID', $r));
-            $titleProbe   = trim((string)$this->cellByHeader($sheet, $headerToCol, 'Product Title', $r));
-
-            // skip empty lines
-            if ($productId <= 0 && $titleProbe === '') {
-                continue;
-            }
-
-            if ($productId <= 0) {
-                $errors[] = "Row {$r}: InteriorChowk Product Code missing/invalid.";
-                continue;
-            }
-
-            $product = Product::where('id', $productId)
-                ->where('added_by', 'seller')
-                ->where('user_id', $sellerId)
-                ->first();
-
-            if (!$product) {
-                $errors[] = "Row {$r}: Product {$productId} not found or not owned by seller.";
-                continue;
-            }
-
-            // Commission/category lookup (protect if subcat blank / not found)
-            $comm = null;
-            if ($subcat !== null && $subcat !== '') {
-                $comm = DB::table('categories')->where('name', $subcat)->first();
-            }
-
-            $title = trim((string)$this->cellByHeader($sheet, $headerToCol, 'Product Title', $r));
-            if ($title !== '') $product->name = $title;
-
-            $returnDays = $this->cellByHeader($sheet, $headerToCol, 'Return Days', $r);
-            if ($this->hasVal($returnDays)) $product->Return_days = (int)$returnDays;
-
-            $replacementDays = $this->cellByHeader($sheet, $headerToCol, 'Replacement Days', $r);
-            if ($this->hasVal($replacementDays)) $product->replacement_days = (int)$replacementDays;
-
-            $unit = trim((string)$this->cellByHeader($sheet, $headerToCol, 'Unit', $r));
-            if ($unit !== '') $product->unit = $unit;
-
-            $moq = $this->cellByHeader($sheet, $headerToCol, 'MOQ', $r);
-            if ($this->hasVal($moq)) $product->min_qty = (int)$moq;
-
-            $warehouse = $this->cellByHeader($sheet, $headerToCol, 'Warehouse', $r);
-            if ($this->hasVal($warehouse)) $product->add_warehouse = (string)$warehouse;
-
-            $hsn = $this->cellByHeader($sheet, $headerToCol, 'HSN', $r);
-            if ($this->hasVal($hsn)) $product->HSN_code = (string)$hsn;
-
-            $freeDelivery = trim((string)$this->cellByHeader($sheet, $headerToCol, 'Free Delivery', $r));
-            if ($freeDelivery !== '') {
-                $product->free_shipping = (strtolower($freeDelivery) === 'yes') ? 1 : 0;
-            }
-
-            $videoUrl = $this->cellByHeader($sheet, $headerToCol, 'Video URL', $r);
-            if ($this->hasVal($videoUrl)) $product->video_url = (string)$videoUrl;
-
-            // product thumbnail/images (optional)
-            $prodThumb = trim((string)$this->cellByHeader($sheet, $headerToCol, 'Thumbnail Image name', $r));
-            if ($prodThumb !== '') $product->thumbnail = $prodThumb;
-
-            $otherImgs = trim((string)$this->cellByHeader($sheet, $headerToCol, 'Other Image name', $r));
-            if ($otherImgs !== '') {
-                $imgs = array_values(array_filter(array_map('trim', explode(',', $otherImgs))));
-                if (count($imgs)) $product->images = json_encode($imgs);
-            }
-
-            // ---------------- FIX: Description & Bullet Points ----------------
-            // Use calculated values + auto-detected subheader row mapping
-            $desc = '';
-            $bullets = [];
-
-            // if your cellByDim uses getValue internally, we still normalize + allow formulas by using cellCalculated fallback
-            $descRaw = $this->cellByDim($sheet, $dimToCol, 'Description', $r);
-            if (!$this->hasVal($descRaw)) {
-                // fallback: in case your helper returns null but column exists
-                if (isset($dimToCol['Description'])) {
-                    $descRaw = $sheet->getCellByColumnAndRow($dimToCol['Description'], $r)->getCalculatedValue();
-                }
-            }
-            $desc = trim((string)$descRaw);
-
-            for ($i = 1; $i <= 5; $i++) {
-                $key = "Bullet Point {$i}";
-                $bRaw = $this->cellByDim($sheet, $dimToCol, $key, $r);
-                if (!$this->hasVal($bRaw)) {
-                    if (isset($dimToCol[$key])) {
-                        $bRaw = $sheet->getCellByColumnAndRow($dimToCol[$key], $r)->getCalculatedValue();
-                    }
-                }
-                $b = trim((string)$bRaw);
-                if ($b !== '') $bullets[] = $b;
-            }
-
-            if ($desc !== '' || count($bullets)) {
-                $product->details = $this->buildDetailsHtml($desc, $bullets);
-            }
-            // -----------------------------------------------------------------
-
-            $product->save();
-            $updatedProducts++;
-
-            // ---------------- VARIANT / SKU UPDATE ----------------
-            // REQUIRE SKU for variant update
-            if ($sellerSku === '') {
-                $errors[] = "Row {$r}: Seller SKU ID missing. Variant update skipped.";
-                continue;
-            }
-
-            $variantMrp = $this->toNumber($this->cellByHeader($sheet, $headerToCol, 'MRP (INR)', $r));
-            $listedMrpRaw = $this->cellCalculated($sheet, $headerToCol, 'Your selling price (INR)', $r);
-            $listedMrp    = $this->toNumber($listedMrpRaw);
-
-            $tax = $this->toNumber($this->cellByHeader($sheet, $headerToCol, 'Tax', $r)); // GST%
-
-            $discountTypeRaw = trim((string)$this->cellByHeader($sheet, $headerToCol, 'Discount Type', $r));
-            $discountType    = $this->normalizeDiscountType($discountTypeRaw); // 'flat' or 'percent'
-            $discount        = $this->toNumber($this->cellByHeader($sheet, $headerToCol, 'Discount', $r));
-            $qty             = (int)($this->cellByHeader($sheet, $headerToCol, 'Stock', $r) ?? 0);
-
-            // IMPORTANT: image fields are STRINGS
-            $thumbnailImage = trim((string)$this->cellByHeader($sheet, $headerToCol, 'Thumbnail Image name', $r));
-            $otherImagesCsv = trim((string)$this->cellByHeader($sheet, $headerToCol, 'Other Image name', $r));
-
-            // Optional variation (only if header exists in your sheet)
-            $variation = trim((string)$this->cellByHeader($sheet, $headerToCol, 'Variation', $r));
-
-            // FIX: colorNames variable safety
-            $colorNames = '';
-
-            $colorName = trim((string)$this->cellByDim($sheet, $dimToCol, 'Colour Name', $r));
-            if ($colorName === '') {
-                $colorNames = trim((string)$this->cellByDim($sheet, $dimToCol, 'Rename Colour Name', $r));
-            }
-
-            $size = trim((string)$this->cellByDim($sheet, $dimToCol, 'Add size', $r));
-            if ($size === '') $size = trim((string)$this->cellByHeader($sheet, $headerToCol, 'Size', $r));
-
-            $len = $this->toNumber($this->cellByDim($sheet, $dimToCol, 'Length (CM)', $r));
-            $brd = $this->toNumber($this->cellByDim($sheet, $dimToCol, 'Breadth (CM)', $r));
-            $ht  = $this->toNumber($this->cellByDim($sheet, $dimToCol, 'Height (CM)', $r));
-            $wt  = $this->toNumber($this->cellByDim($sheet, $dimToCol, 'Weight (KG)', $r));
-
-            // Build images JSON safely from CSV
-            $imagesArr = [];
-            if ($otherImagesCsv !== '') {
-                $imagesArr = array_values(array_filter(array_map('trim', explode(',', $otherImagesCsv))));
-            }
-            $imagesJson = count($imagesArr) ? json_encode($imagesArr) : null;
-
-            // discount percent calc
-            $discountPercent = null;
-            if ($variantMrp !== null && $variantMrp > 0 && $discount !== null) {
-                if ($discountType === 'percent') {
-                    $discountPercent = $discount;
-                } else { // flat
-                    $discountPercent = ($discount * 100) / $variantMrp;
-                }
-                $discountPercent = round($discountPercent, 2);
-            }
-
-            $payload = [
-                'variant_mrp'        => $variantMrp,
-                'variation'          => $colorName . '-' . $size,
-                'listed_price'       => $listedMrp,
-                'tax'                => $tax,
-                'commission_fee'     => $comm ? $comm->commission : 0,
-                'gst_percent'        => $tax,
-                'listed_gst_percent' => $tax,
-                'discount_type'      => $discountType,
-                'discount'           => $discount,
-                'discount_percent'   => $discountPercent,
-                'listed_percent'     => $discountPercent,
-                'quantity'           => $qty,
-                'color_name'         => ($colorNames !== '') ? $colorNames : null,
-                'sizes'              => ($size !== '') ? $size : null,
-                'length'             => $len,
-                'breadth'            => $brd,
-                'height'             => $ht,
-                'weight'             => $wt,
-            ];
-
-            if ($variation !== '') {
-                $payload['variation'] = $variation;
-            }
-
-            // only update image fields if excel has value (no wipe)
-            if ($thumbnailImage !== '') {
-                $payload['thumbnail_image'] = $thumbnailImage;
-            }
-            if (!is_null($imagesJson)) {
-                $payload['image'] = $imagesJson;
-            }
-
-            if ($skuHasUpdatedAt) $payload['updated_at'] = now();
-
-            // ---- DUPLICATE SKU SAFETY ----
-            $dupes = DB::table('sku_product_new')
-                ->where('seller_id', $sellerId)
-                ->where('product_id', $productId)
-                ->where('sku', $sellerSku)
-                ->count();
-
-            if ($dupes > 1) {
-                $errors[] = "Row {$r}: Duplicate SKU '{$sellerSku}' found ({$dupes}). Variant update skipped.";
-                continue;
-            }
-
-            $existing = DB::table('sku_product_new')
-                ->where('seller_id', $sellerId)
-                ->where('product_id', $productId)
-                ->where('sku', $sellerSku)
-                ->first();
-
-            if ($existing) {
-                DB::table('sku_product_new')->where('id', $existing->id)->update($payload);
-                $updatedVariants++;
-            } else {
-                if ($variantRowId > 0) {
-                    $affected = DB::table('sku_product_new')
-                        ->where('id', $variantRowId)
-                        ->where('seller_id', $sellerId)
-                        ->where('product_id', $productId)
-                        ->update($payload);
-
-                    if ($affected) {
-                        $updatedVariants++;
-                    } else {
-                        $insert = array_merge($payload, [
-                            'seller_id'  => $sellerId,
-                            'product_id' => $productId,
-                            'sku'        => $sellerSku,
-                        ]);
-                        if ($skuHasCreatedAt) $insert['created_at'] = now();
-                        if ($skuHasUpdatedAt) $insert['updated_at'] = now();
-                        DB::table('sku_product_new')->insert($insert);
-                        $updatedVariants++;
-                    }
-                } else {
-                    $insert = array_merge($payload, [
-                        'seller_id'  => $sellerId,
-                        'product_id' => $productId,
-                        'sku'        => $sellerSku,
-                    ]);
-                    if ($skuHasCreatedAt) $insert['created_at'] = now();
-                    if ($skuHasUpdatedAt) $insert['updated_at'] = now();
-                    DB::table('sku_product_new')->insert($insert);
-                    $updatedVariants++;
-                }
-            }
-
-            // Tags
-            $tagsCsv = trim((string)$this->cellByHeader($sheet, $headerToCol, 'Search Tags', $r));
-            if ($tagsCsv !== '') $this->syncTags($productId, $tagsCsv);
-        }
-
-        DB::commit();
-
-        return redirect('/seller/product/list')
-            ->with('success', "Bulk update completed. Products Updated: {$updatedProducts}, Variants Updated: {$updatedVariants}")
-            ->with('errors_list', $errors);
-
-    } catch (\Throwable $e) {
-        DB::rollBack();
-
-        return redirect('/seller/product/list')
-            ->with('error', 'Import failed: ' . $e->getMessage())
-            ->with('errors_list', $errors);
-    }
-}
-
-
-
-
-    private function cellCalculated($sheet, array $headerToCol, string $header, int $row)
-    {
-        if (!isset($headerToCol[$header])) return null;
-
-        $col = $headerToCol[$header];
-        $cell = $sheet->getCellByColumnAndRow($col, $row);
-
-        try {
-            $val = $cell->getCalculatedValue();
-        } catch (\Throwable $e) {
-            // fallback
-            $val = $cell->getValue();
-        }
-
-        if ($val instanceof \PhpOffice\PhpSpreadsheet\RichText\RichText) {
-            $val = $val->getPlainText();
-        }
-
-        return $val;
-    }
-
-    private function normalizeDiscountType(string $t): string
-    {
-        $t = strtolower(trim($t));
-        if ($t === 'flat' || $t === 'amount' || $t === 'price' || $t === 'rs') return 'flat';
-        if ($t === 'percent' || $t === '%' || $t === 'percentage') return 'percent';
-        return $t ?: 'flat';
-    }
-
-    private function cellByHeader($sheet, array $headerToCol, string $header, int $row)
-    {
-        if (!isset($headerToCol[$header])) return null;
-        $col = $headerToCol[$header];
-        return $sheet->getCellByColumnAndRow($col, $row)->getValue();
-    }
-
-    private function cellByDim($sheet, array $dimToCol, string $dimHeader, int $row)
-    {
-        if (!isset($dimToCol[$dimHeader])) return null;
-        $col = $dimToCol[$dimHeader];
-        return $sheet->getCellByColumnAndRow($col, $row)->getValue();
-    }
-
-    private function hasVal($v): bool
-    {
-        return $v !== null && trim((string)$v) !== '';
-    }
-
-    private function buildDetailsHtml(string $description, array $bullets): string
-    {
-        $description = trim($description);
-        $html = '';
-        if ($description !== '') $html .= '<p>' . e($description) . '</p>';
-        if (!empty($bullets)) {
-            $html .= '<ul>';
-            foreach ($bullets as $b) $html .= '<li>' . e($b) . '</li>';
-            $html .= '</ul>';
-        }
-        return $html;
-    }
-
-    private function toNumber($v)
-    {
-        if ($v === null) return null;
-        if (is_numeric($v)) return $v + 0;
-
-        $s = trim((string)$v);
-        if ($s === '') return null;
-        $s = str_replace([',', '₹'], '', $s);
-
-        return is_numeric($s) ? ($s + 0) : null;
-    }
-
-    private function syncTags(int $productId, string $csv)
-    {
-        $tags = array_values(array_filter(array_map('trim', explode(',', $csv))));
-        $tags = array_unique($tags);
-
-        DB::table('product_tag')->where('product_id', $productId)->delete();
-
-        foreach ($tags as $t) {
-            if ($t === '') continue;
-
-            $tagRow = DB::table('tags')->where('tag', $t)->first();
-            $tagId = $tagRow ? $tagRow->id : DB::table('tags')->insertGetId(['tag' => $t]);
-
-            DB::table('product_tag')->insert([
-                'product_id' => $productId,
-                'tag_id' => $tagId,
-            ]);
-        }
-    }
-
-    private function getTableColumns(string $table): array
-    {
-        try {
-            $db = DB::getDatabaseName();
-            return DB::table('information_schema.columns')
-                ->where('table_schema', $db)
-                ->where('table_name', $table)
-                ->pluck('column_name')
-                ->toArray();
-        } catch (\Throwable $e) {
-            return [];
-        }
-    }
-
-
-
-
-
-
-
-
-
-
-
-
-                
-
 
     private function parseDescriptionBullets($html): array
     {
@@ -5799,4 +4615,1263 @@ return [
 }
 
 
+
+
+
+
+
+public function barcode(Request $request, $id)
+{
+if ($request->limit > 270) {
+Toastr::warning(translate('You can not generate more than 270 barcode'));
+return back();
 }
+$product = Product::findOrFail($id);
+$range_data = range(1, $request->limit ?? 4);
+$array_chunk = array_chunk($range_data, 24);
+
+return view('seller-views.product.barcode', compact('product', 'array_chunk'));
+}
+
+public function save_product(Request $request)
+{
+DB::table('category_request')->insert([
+'seller_id'=>auth('seller')->id(),
+'name'=>$request->name,
+'hsn_code'=>$request->hsn_code,
+'created_at'=>now(),
+'updated_at'=>now()
+]);
+
+return response()->json([
+'message' => 'Product added successfully!',
+]);
+
+}
+
+
+
+public function bulkimageurl()
+{
+return view('seller-views.product.bulk_images_upload');
+}
+
+
+// public function bulkimageurlupload(Request $request)
+// {
+// $request->validate([
+// 'seller_id' => 'required|integer',
+// 'file' => 'required|file|mimes:xlsx',
+// ]);
+
+// $sellerId = (int) $request->seller_id;
+
+// set_time_limit(0);
+// ini_set('memory_limit', '1024M');
+
+// \Log::info("BulkImage: START", [
+// 'seller_id' => $sellerId,
+// 'file_name' => $request->file('file')->getClientOriginalName(),
+// ]);
+
+// try {
+// $filePath = $request->file('file')->getRealPath();
+// $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($filePath);
+// $sheet = $spreadsheet->getActiveSheet();
+
+// // Excel mapping
+// $idCol = 1; // A = image_id
+// $urlCol = 2; // B = urls
+
+// // ✅ safest
+// $highestRow = (int) $sheet->getHighestRow();
+
+// $inserted = 0;
+// $failed = 0;
+
+// for ($row = 1; $row <= $highestRow; $row++) { $idCell=$sheet->getCellByColumnAndRow($idCol, $row)->getValue();
+    // $idCell = is_object($idCell) ? (string) $idCell : (string) $idCell;
+    // $idCell = trim($idCell);
+
+    // $cell = $sheet->getCellByColumnAndRow($urlCol, $row)->getValue();
+    // $cell = is_object($cell) ? (string) $cell : (string) $cell;
+    // $cell = trim($cell);
+
+    // if ($cell === '') continue;
+
+    // if ($idCell === '' || !is_numeric($idCell)) {
+    // $failed++;
+    // \Log::warning("BulkImage: Missing/invalid image_id", [
+    // 'row' => $row,
+    // 'image_id' => $idCell,
+    // 'seller_id' => $sellerId
+    // ]);
+    // continue;
+    // }
+    // $imageGroupId = (int) $idCell;
+
+    // $urls = array_filter(array_map('trim', explode(',', $cell)));
+
+    // foreach ($urls as $url) {
+    // if ($url === '') continue;
+
+    // if (!filter_var($url, FILTER_VALIDATE_URL)) {
+    // $failed++;
+    // \Log::warning("BulkImage: Invalid URL", [
+    // 'row' => $row, 'url' => $url, 'seller_id' => $sellerId, 'image_id' => $imageGroupId
+    // ]);
+    // continue;
+    // }
+
+    // $parts = parse_url($url);
+    // if (!$parts || empty($parts['scheme']) || empty($parts['host'])) {
+    // $failed++;
+    // \Log::warning("BulkImage: parse_url failed", [
+    // 'row' => $row, 'url' => $url, 'seller_id' => $sellerId, 'image_id' => $imageGroupId
+    // ]);
+    // continue;
+    // }
+
+    // $path = $parts['path'] ?? '';
+    // $path = implode('/', array_map('rawurlencode', explode('/', $path)));
+    // $safeUrl = $parts['scheme'] . '://' . $parts['host'] . $path;
+    // if (!empty($parts['query'])) $safeUrl .= '?' . $parts['query'];
+
+    // try {
+    // $resp = \Illuminate\Support\Facades\Http::withHeaders([
+    // 'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+    // 'Accept' => 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8',
+    // 'Referer' => 'https://www.amazon.in/',
+    // ])->timeout(45)->get($safeUrl);
+
+    // if (!$resp->successful()) {
+    // $failed++;
+    // \Log::warning("BulkImage: HTTP failed", [
+    // 'row' => $row,
+    // 'url' => $url,
+    // 'safe_url' => $safeUrl,
+    // 'status' => $resp->status(),
+    // 'seller_id' => $sellerId,
+    // 'image_id' => $imageGroupId
+    // ]);
+    // continue;
+    // }
+
+    // $contentType = (string) $resp->header('Content-Type', '');
+    // $body = $resp->body();
+
+    // if (empty($body)) {
+    // $failed++;
+    // \Log::warning("BulkImage: Empty body", [
+    // 'row' => $row, 'url' => $url, 'seller_id' => $sellerId, 'image_id' => $imageGroupId
+    // ]);
+    // continue;
+    // }
+
+    // $ext = 'jpg';
+    // if (str_contains($contentType, 'png')) $ext = 'png';
+    // if (str_contains($contentType, 'webp')) $ext = 'webp';
+    // if (str_contains($contentType, 'jpeg')) $ext = 'jpg';
+
+    // $base = basename(parse_url($url, PHP_URL_PATH) ?? 'image');
+    // $base = preg_replace('/[^a-zA-Z0-9\-_\.]/', '_', $base);
+    // $base = \Illuminate\Support\Str::limit($base, 60, '');
+    // $base = preg_replace('/\.(jpg|jpeg|png|webp)$/i', '', $base);
+    // $rand = \Illuminate\Support\Str::random(6);
+
+    // $r2Path = "products/{$sellerId}_{$base}_{$rand}.{$ext}";
+
+    // $ok = \Illuminate\Support\Facades\Storage::disk('r2')->put($r2Path, $body);
+
+    // if (!$ok) {
+    // $failed++;
+    // \Log::error("BulkImage: R2 put returned false", [
+    // 'row' => $row, 'url' => $url, 'r2_path' => $r2Path,
+    // 'seller_id' => $sellerId, 'image_id' => $imageGroupId
+    // ]);
+    // continue;
+    // }
+
+    // \Illuminate\Support\Facades\DB::table('bulk_image')->insert([
+    // 'seller_id' => $sellerId,
+    // 'image_path' => $r2Path,
+    // 'is_from_excel' => 1,
+    // 'image_id' => $imageGroupId, // ✅ excel column A value
+    // 'created_at' => now(),
+    // 'updated_at' => now(),
+    // ]);
+
+    // $inserted++;
+
+    // } catch (\Throwable $e) {
+    // $failed++;
+    // \Log::error("BulkImage: Exception inner", [
+    // 'row' => $row,
+    // 'url' => $url,
+    // 'seller_id' => $sellerId,
+    // 'image_id' => $imageGroupId,
+    // 'message' => $e->getMessage(),
+    // ]);
+    // continue;
+    // }
+    // }
+    // }
+
+    // \Log::info("BulkImage: DONE", ['seller_id' => $sellerId, 'inserted' => $inserted, 'failed' => $failed]);
+
+    // return back()->with('success', "Done! Inserted: {$inserted}, Failed: {$failed}. Logs:
+    // storage/logs/laravel.log");
+
+    // } catch (\Throwable $e) {
+    // \Log::error("BulkImage: Import failed outer", ['seller_id' => $sellerId, 'message' => $e->getMessage()]);
+    // return back()->with('error', 'Import failed: ' . $e->getMessage());
+    // }
+    // }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    // public function bulkimageurlupload(Request $request)
+    // {
+
+    // $request->validate([
+    // 'seller_id' => 'required|integer',
+    // 'file' => 'required|file|mimes:xlsx',
+    // ]);
+
+    // $sellerId = (int) $request->seller_id;
+
+    // set_time_limit(0);
+    // ini_set('memory_limit', '1024M');
+
+    // Log::info("BulkImage: START", [
+    // 'seller_id' => $sellerId,
+    // 'file_name' => $request->file('file')->getClientOriginalName(),
+    // ]);
+
+    // // ✅ DO NOT force imagick if not installed
+    // if (extension_loaded('imagick')) {
+    // Image::configure(['driver' => 'imagick']);
+    // Log::info("BulkImage: Using driver imagick");
+    // } else {
+    // Image::configure(['driver' => 'gd']);
+    // Log::warning("BulkImage: Imagick not installed, using GD");
+    // }
+
+    // // ✅ If GD doesn't support webp, stop early (else encode('webp') will fail)
+    // if (!extension_loaded('imagick') && function_exists('gd_info')) {
+    // $gd = gd_info();
+    // if (isset($gd['WebP Support']) && !$gd['WebP Support']) {
+    // Log::error("BulkImage: GD WebP Support is OFF. Enable GD webp or install Imagick.");
+    // return back()->with('error', 'Server GD WebP support off. Enable WebP or install Imagick.');
+    // }
+    // }
+
+    // try {
+    // $tmpDir = storage_path('app/tmp');
+    // if (!is_dir($tmpDir)) {
+    // @mkdir($tmpDir, 0775, true);
+    // }
+
+    // $filePath = $request->file('file')->getRealPath();
+    // $spreadsheet = IOFactory::load($filePath);
+    // $sheet = $spreadsheet->getActiveSheet();
+
+    // // Excel mapping: A=image_id, B=urls (comma separated)
+    // $idCol = 1;
+    // $urlCol = 2;
+
+    // $highestRow = (int) $sheet->getHighestRow();
+
+    // $inserted = 0;
+    // $failed = 0;
+
+    // // ✅ assume row 1 = header
+    // for ($row = 2; $row <= $highestRow; $row++) { $idCell=trim((string) $sheet->getCellByColumnAndRow($idCol,
+        // $row)->getValue());
+        // $cell = trim((string) $sheet->getCellByColumnAndRow($urlCol, $row)->getValue());
+
+        // if ($cell === '') continue;
+
+        // if ($idCell === '' || !is_numeric($idCell)) {
+        // $failed++;
+        // Log::warning("BulkImage: Missing/invalid image_id", [
+        // 'row' => $row,
+        // 'image_id' => $idCell,
+        // 'seller_id' => $sellerId
+        // ]);
+        // continue;
+        // }
+
+        // $imageGroupId = (int) $idCell;
+        // $urls = array_filter(array_map('trim', explode(',', $cell)));
+
+        // foreach ($urls as $url) {
+        // if ($url === '') continue;
+
+        // if (!filter_var($url, FILTER_VALIDATE_URL)) {
+        // $failed++;
+        // Log::warning("BulkImage: Invalid URL", [
+        // 'row' => $row,
+        // 'url' => $url,
+        // 'seller_id' => $sellerId,
+        // 'image_id' => $imageGroupId
+        // ]);
+        // continue;
+        // }
+
+        // // ✅ Build safe URL but KEEP '+' in path (Amazon images sometimes have '+')
+        // $parts = parse_url($url);
+        // if (!$parts || empty($parts['scheme']) || empty($parts['host'])) {
+        // $failed++;
+        // Log::warning("BulkImage: parse_url failed", [
+        // 'row' => $row,
+        // 'url' => $url,
+        // 'seller_id' => $sellerId,
+        // 'image_id' => $imageGroupId
+        // ]);
+        // continue;
+        // }
+
+        // $path = $parts['path'] ?? '';
+        // $pathSegments = explode('/', $path);
+        // $pathSegments = array_map(function ($seg) {
+        // // rawurlencode turns + into %2B, revert it back
+        // return str_replace('%2B', '+', rawurlencode($seg));
+        // }, $pathSegments);
+        // $safePath = implode('/', $pathSegments);
+
+        // $safeUrl = $parts['scheme'] . '://' . $parts['host'] . $safePath;
+        // if (!empty($parts['query'])) $safeUrl .= '?' . $parts['query'];
+
+        // $tmpIn = $tmpDir . "/bulk_in_{$sellerId}_{$row}_" . Str::random(8);
+        // $tmpOut = $tmpDir . "/bulk_out_{$sellerId}_{$row}_" . Str::random(8) . ".webp";
+
+        // try {
+        // // ✅ Download to file (no big RAM usage)
+        // $resp = Http::withHeaders([
+        // 'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+        // 'Accept' => 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8',
+        // 'Referer' => 'https://www.amazon.in/',
+        // ])
+        // ->retry(3, 800)
+        // ->timeout(120)
+        // ->withOptions(['sink' => $tmpIn])
+        // ->get($safeUrl);
+
+        // if (!$resp->successful()) {
+        // $failed++;
+        // Log::warning("BulkImage: HTTP failed", [
+        // 'row' => $row,
+        // 'url' => $url,
+        // 'safe_url' => $safeUrl,
+        // 'status' => $resp->status(),
+        // 'seller_id' => $sellerId,
+        // 'image_id' => $imageGroupId
+        // ]);
+        // @unlink($tmpIn);
+        // continue;
+        // }
+
+        // if (!file_exists($tmpIn) || filesize($tmpIn) <= 0) { $failed++; Log::warning("BulkImage: Empty downloaded
+            //file", [ 'row'=> $row,
+            // 'url' => $url,
+            // 'seller_id' => $sellerId,
+            // 'image_id' => $imageGroupId
+            // ]);
+            // @unlink($tmpIn);
+            // continue;
+            // }
+
+            // // ✅ Convert: 1000x1000 (aspect ratio OFF), transparent background, webp
+            // $img = Image::make($tmpIn)->resize(1000, 1000);
+
+            // $canvas = Image::canvas(1000, 1000, [0, 0, 0, 0]);
+            // $canvas->insert($img, 'center');
+
+            // $webpBinary = (string) $canvas->encode('webp', 85);
+
+            // file_put_contents($tmpOut, $webpBinary);
+
+            // if (!file_exists($tmpOut) || filesize($tmpOut) <= 0) { $failed++; Log::error("BulkImage: tmpOut not // //
+                // created/empty", [ 'row'=> $row,
+                // 'tmpOut' => $tmpOut,
+                // 'seller_id' => $sellerId,
+                // 'image_id' => $imageGroupId
+                // ]);
+                // @unlink($tmpIn);
+                // @unlink($tmpOut);
+                // continue;
+                // }
+
+                // // ✅ R2 path
+                // $base = basename(parse_url($url, PHP_URL_PATH) ?? 'image');
+                // $base = preg_replace('/[^a-zA-Z0-9\-_\.]/', '_', $base);
+                // $base = Str::limit($base, 60, '');
+                // $base = preg_replace('/\.(jpg|jpeg|png|webp)$/i', '', $base);
+                // $rand = Str::random(6);
+
+                // $r2Path = "products/{$sellerId}_{$base}_{$rand}.webp";
+
+                // // ✅ Upload via stream (reliable)
+                // $stream = fopen($tmpOut, 'r');
+                // Storage::disk('r2')->writeStream($r2Path, $stream, [
+                // 'visibility' => 'public', // optional
+                // 'mimetype' => 'image/webp',
+                // ]);
+                // if (is_resource($stream)) fclose($stream);
+
+                // DB::table('bulk_image')->insert([
+                // 'seller_id' => $sellerId,
+                // 'image_path' => $r2Path,
+                // 'is_from_excel' => 1,
+                // 'image_id' => $imageGroupId,
+                // 'created_at' => now(),
+                // 'updated_at' => now(),
+                // ]);
+
+                // $inserted++;
+
+                // @unlink($tmpIn);
+                // @unlink($tmpOut);
+
+                // } catch (\Throwable $e) {
+                // $failed++;
+                // Log::error("BulkImage: Exception inner", [
+                // 'row' => $row,
+                // 'url' => $url,
+                // 'safe_url' => $safeUrl ?? null,
+                // 'seller_id' => $sellerId,
+                // 'image_id' => $imageGroupId,
+                // 'message' => $e->getMessage(),
+                // ]);
+                // @unlink($tmpIn);
+                // @unlink($tmpOut);
+                // continue;
+                // }
+                // }
+                // }
+
+                // Log::info("BulkImage: DONE", [
+                // 'seller_id' => $sellerId,
+                // 'inserted' => $inserted,
+                // 'failed' => $failed
+                // ]);
+
+                // return back()->with('success', "Done! Inserted: {$inserted}, Failed: {$failed}. Logs:
+                // storage/logs/laravel.log");
+
+                // } catch (\Throwable $e) {
+                // Log::error("BulkImage: Import failed outer", [
+                // 'seller_id' => $sellerId,
+                // 'message' => $e->getMessage()
+                // ]);
+                // return back()->with('error', 'Import failed: ' . $e->getMessage());
+                // }
+                // }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                // public function bulkimageurluploadAjax(Request $request)
+                // {
+                // $request->validate([
+                // 'seller_id' => 'required|integer',
+                // 'file' => 'required|file|mimes:xlsx',
+                // ]);
+
+                // $sellerId = (int) $request->seller_id;
+
+                // // Store excel so queue can access it
+                // $storedPath = $request->file('file')->store("bulk_import/{$sellerId}", 'local');
+
+                // $jobId = (string) Str::uuid();
+
+                // Cache::put("bulkimg:{$jobId}", [
+                // 'status' => 'queued',
+                // 'percent' => 0,
+                // 'total' => 0,
+                // 'processed' => 0,
+                // 'inserted' => 0,
+                // 'failed' => 0,
+                // 'message' => null,
+                // ], now()->addHours(6));
+
+                // // ✅ Run async in queue (controller-only, no separate Job class)
+                // dispatch(function () use ($jobId, $sellerId, $storedPath) {
+
+                // set_time_limit(0);
+                // ini_set('memory_limit', '1024M');
+
+                // try {
+                // $this->bulkImgProgressPatch($jobId, [
+                // 'status' => 'processing',
+                // 'message' => null,
+                // ]);
+
+                // Log::info("BulkImage: START", [
+                // 'job_id' => $jobId,
+                // 'seller_id' => $sellerId,
+                // 'stored_path' => $storedPath,
+                // ]);
+
+                // // ✅ DO NOT force imagick if not installed
+                // if (extension_loaded('imagick')) {
+                // Image::configure(['driver' => 'imagick']);
+                // Log::info("BulkImage: Using driver imagick", ['job_id' => $jobId]);
+                // } else {
+                // Image::configure(['driver' => 'gd']);
+                // Log::warning("BulkImage: Imagick not installed, using GD", ['job_id' => $jobId]);
+                // }
+
+                // // ✅ If GD doesn't support webp, stop early
+                // if (!extension_loaded('imagick') && function_exists('gd_info')) {
+                // $gd = gd_info();
+                // if (isset($gd['WebP Support']) && !$gd['WebP Support']) {
+                // Log::error("BulkImage: GD WebP Support is OFF.", ['job_id' => $jobId]);
+                // $this->bulkImgProgressPatch($jobId, [
+                // 'status' => 'failed',
+                // 'message' => 'Server GD WebP support off. Enable WebP or install Imagick.',
+                // ]);
+                // return;
+                // }
+                // }
+
+                // $tmpDir = storage_path('app/tmp');
+                // if (!is_dir($tmpDir)) {
+                // @mkdir($tmpDir, 0775, true);
+                // }
+
+                // $filePath = storage_path('app/' . $storedPath);
+                // $spreadsheet = IOFactory::load($filePath);
+                // $sheet = $spreadsheet->getActiveSheet();
+
+                // // Excel mapping: A=image_id, B=urls (comma separated)
+                // $idCol = 1;
+                // $urlCol = 2;
+
+                // $highestRow = (int) $sheet->getHighestRow();
+                // $totalRows = max(0, $highestRow - 1); // header excluded
+
+                // $inserted = 0;
+                // $failed = 0;
+                // $processed = 0;
+
+                // // ✅ row 1 = header
+                // for ($row = 2; $row <= $highestRow; $row++) { $processed++; $idCell=trim((string) $sheet->
+                    // getCellByColumnAndRow($idCol, $row)->getValue());
+                    // $cell = trim((string) $sheet->getCellByColumnAndRow($urlCol, $row)->getValue());
+
+                    // if ($cell === '') {
+                    // $this->bulkImgTick($jobId, $processed, $totalRows, $inserted, $failed);
+                    // continue;
+                    // }
+
+                    // if ($idCell === '' || !is_numeric($idCell)) {
+                    // $failed++;
+                    // Log::warning("BulkImage: Missing/invalid image_id", [
+                    // 'job_id' => $jobId,
+                    // 'row' => $row,
+                    // 'image_id' => $idCell,
+                    // 'seller_id' => $sellerId
+                    // ]);
+                    // $this->bulkImgTick($jobId, $processed, $totalRows, $inserted, $failed);
+                    // continue;
+                    // }
+
+                    // $imageGroupId = (int) $idCell;
+                    // $urls = array_filter(array_map('trim', explode(',', $cell)));
+
+                    // foreach ($urls as $url) {
+                    // if ($url === '') continue;
+
+                    // if (!filter_var($url, FILTER_VALIDATE_URL)) {
+                    // $failed++;
+                    // Log::warning("BulkImage: Invalid URL", [
+                    // 'job_id' => $jobId,
+                    // 'row' => $row,
+                    // 'url' => $url,
+                    // 'seller_id' => $sellerId,
+                    // 'image_id' => $imageGroupId
+                    // ]);
+                    // continue;
+                    // }
+
+                    // // ✅ Build safe URL but KEEP '+'
+                    // $parts = parse_url($url);
+                    // if (!$parts || empty($parts['scheme']) || empty($parts['host'])) {
+                    // $failed++;
+                    // Log::warning("BulkImage: parse_url failed", [
+                    // 'job_id' => $jobId,
+                    // 'row' => $row,
+                    // 'url' => $url,
+                    // 'seller_id' => $sellerId,
+                    // 'image_id' => $imageGroupId
+                    // ]);
+                    // continue;
+                    // }
+
+                    // $path = $parts['path'] ?? '';
+                    // $pathSegments = explode('/', $path);
+                    // $pathSegments = array_map(function ($seg) {
+                    // return str_replace('%2B', '+', rawurlencode($seg));
+                    // }, $pathSegments);
+                    // $safePath = implode('/', $pathSegments);
+
+                    // $safeUrl = $parts['scheme'] . '://' . $parts['host'] . $safePath;
+                    // if (!empty($parts['query'])) $safeUrl .= '?' . $parts['query'];
+
+                    // $tmpIn = $tmpDir . "/bulk_in_{$sellerId}_{$row}_" . Str::random(8);
+                    // $tmpOut = $tmpDir . "/bulk_out_{$sellerId}_{$row}_" . Str::random(8) . ".webp";
+
+                    // try {
+                    // $resp = Http::withHeaders([
+                    // 'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+                    // 'Accept' => 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8',
+                    // 'Referer' => 'https://www.amazon.in/',
+                    // ])
+                    // ->retry(3, 800)
+                    // ->timeout(120)
+                    // ->withOptions(['sink' => $tmpIn])
+                    // ->get($safeUrl);
+
+                    // if (!$resp->successful()) {
+                    // $failed++;
+                    // Log::warning("BulkImage: HTTP failed", [
+                    // 'job_id' => $jobId,
+                    // 'row' => $row,
+                    // 'url' => $url,
+                    // 'safe_url' => $safeUrl,
+                    // 'status' => $resp->status(),
+                    // 'seller_id' => $sellerId,
+                    // 'image_id' => $imageGroupId
+                    // ]);
+                    // @unlink($tmpIn);
+                    // continue;
+                    // }
+
+                    // if (!file_exists($tmpIn) || filesize($tmpIn) <= 0) { $failed++; Log::warning("BulkImage: Empty //
+                        //downloaded file", [ 'job_id'=> $jobId,
+                        // 'row' => $row,
+                        // 'url' => $url,
+                        // 'seller_id' => $sellerId,
+                        // 'image_id' => $imageGroupId
+                        // ]);
+                        // @unlink($tmpIn);
+                        // continue;
+                        // }
+
+                        // // ✅ Convert to webp
+                        // $img = Image::make($tmpIn)->resize(1000, 1000);
+
+                        // $canvas = Image::canvas(1000, 1000, [0, 0, 0, 0]);
+                        // $canvas->insert($img, 'center');
+
+                        // $webpBinary = (string) $canvas->encode('webp', 85);
+                        // file_put_contents($tmpOut, $webpBinary);
+
+                        // if (!file_exists($tmpOut) || filesize($tmpOut) <= 0) { $failed++; Log::error("BulkImage:
+                            //tmpOut // empty", [ 'job_id'=> $jobId,
+                            // 'row' => $row,
+                            // 'tmpOut' => $tmpOut,
+                            // 'seller_id' => $sellerId,
+                            // 'image_id' => $imageGroupId
+                            // ]);
+                            // @unlink($tmpIn);
+                            // @unlink($tmpOut);
+                            // continue;
+                            // }
+
+                            // // ✅ R2 path
+                            // $base = basename(parse_url($url, PHP_URL_PATH) ?? 'image');
+                            // $base = preg_replace('/[^a-zA-Z0-9\-_\.]/', '_', $base);
+                            // $base = Str::limit($base, 60, '');
+                            // $base = preg_replace('/\.(jpg|jpeg|png|webp)$/i', '', $base);
+                            // $rand = Str::random(6);
+
+                            // $r2Path = "products/{$sellerId}_{$base}_{$rand}.webp";
+
+                            // // ✅ Upload via stream
+                            // $stream = fopen($tmpOut, 'r');
+                            // Storage::disk('r2')->writeStream($r2Path, $stream, [
+                            // 'visibility' => 'public',
+                            // 'mimetype' => 'image/webp',
+                            // ]);
+                            // if (is_resource($stream)) fclose($stream);
+
+                            // DB::table('bulk_image')->insert([
+                            // 'seller_id' => $sellerId,
+                            // 'image_path' => $r2Path,
+                            // 'is_from_excel' => 1,
+                            // 'image_id' => $imageGroupId,
+                            // 'created_at' => now(),
+                            // 'updated_at' => now(),
+                            // ]);
+
+                            // $inserted++;
+
+                            // @unlink($tmpIn);
+                            // @unlink($tmpOut);
+
+                            // } catch (\Throwable $e) {
+                            // $failed++;
+                            // Log::error("BulkImage: Exception inner", [
+                            // 'job_id' => $jobId,
+                            // 'row' => $row,
+                            // 'url' => $url,
+                            // 'safe_url' => $safeUrl ?? null,
+                            // 'seller_id' => $sellerId,
+                            // 'image_id' => $imageGroupId,
+                            // 'message' => $e->getMessage(),
+                            // ]);
+                            // @unlink($tmpIn);
+                            // @unlink($tmpOut);
+                            // continue;
+                            // }
+                            // }
+
+                            // $this->bulkImgTick($jobId, $processed, $totalRows, $inserted, $failed);
+                            // }
+
+                            // $this->bulkImgProgressPatch($jobId, [
+                            // 'status' => 'done',
+                            // 'percent' => 100,
+                            // 'total' => $totalRows,
+                            // 'processed' => $processed,
+                            // 'inserted' => $inserted,
+                            // 'failed' => $failed,
+                            // 'message' => 'Completed',
+                            // ]);
+
+                            // Log::info("BulkImage: DONE", [
+                            // 'job_id' => $jobId,
+                            // 'seller_id' => $sellerId,
+                            // 'inserted' => $inserted,
+                            // 'failed' => $failed
+                            // ]);
+
+                            // } catch (\Throwable $e) {
+                            // Log::error("BulkImage: Import failed outer", [
+                            // 'job_id' => $jobId,
+                            // 'seller_id' => $sellerId,
+                            // 'message' => $e->getMessage()
+                            // ]);
+
+                            // $this->bulkImgProgressPatch($jobId, [
+                            // 'status' => 'failed',
+                            // 'message' => $e->getMessage(),
+                            // ]);
+
+                            // throw $e;
+                            // }
+
+                            // })->onQueue('default');
+
+                            // return response()->json([
+                            // 'ok' => true,
+                            // 'job_id' => $jobId,
+                            // ]);
+                            // }
+
+                            // public function bulkImagesProgress($jobId)
+                            // {
+                            // $data = Cache::get("bulkimg:{$jobId}");
+                            // if (!$data) {
+                            // return response()->json(['status' => 'not_found', 'percent' => 0], 404);
+                            // }
+                            // return response()->json($data);
+                            // }
+
+                            // /** =================== HELPERS =================== */
+
+                            // private function bulkImgTick(string $jobId, int $processed, int $total, int $inserted,
+                            //int
+                            // $failed): void
+                            // {
+                            // $percent = $total > 0 ? (int) floor(($processed / $total) * 100) : 100;
+
+                            // $this->bulkImgProgressPatch($jobId, [
+                            // 'status' => 'processing',
+                            // 'percent' => $percent,
+                            // 'total' => $total,
+                            // 'processed' => $processed,
+                            // 'inserted' => $inserted,
+                            // 'failed' => $failed,
+                            // 'message' => null,
+                            // ]);
+                            // }
+
+                            // private function bulkImgProgressPatch(string $jobId, array $patch): void
+                            // {
+                            // $key = "bulkimg:{$jobId}";
+                            // $old = Cache::get($key, []);
+
+                            // $new = array_merge([
+                            // 'status' => 'queued',
+                            // 'percent' => 0,
+                            // 'total' => 0,
+                            // 'processed' => 0,
+                            // 'inserted' => 0,
+                            // 'failed' => 0,
+                            // 'message' => null,
+                            // ], $old, $patch);
+
+                            // Cache::put($key, $new, now()->addHours(6));
+                            // }
+
+
+
+
+
+
+
+                            public function bulkimageurluploadAjax(Request $request)
+                            {
+                            $request->validate([
+                            'seller_id' => 'required|integer',
+                            'file' => 'required|file|mimes:xlsx',
+                            ]);
+
+                            $sellerId = (int) $request->seller_id;
+
+                            // store excel so queue can access later
+                            $storedPath = $request->file('file')->store("bulk_import/{$sellerId}", 'local');
+
+                            $jobId = (string) Str::uuid();
+
+                            Cache::put("bulkimg:{$jobId}", [
+                            'status' => 'queued',
+                            'percent' => 0,
+                            'total' => 0,
+                            'processed' => 0,
+                            'inserted' => 0,
+                            'failed' => 0,
+                            'message' => null,
+                            ], now()->addHours(6));
+
+                            // IMPORTANT: don't use $this inside closure, use static helpers
+                            dispatch(function () use ($jobId, $sellerId, $storedPath) {
+
+                            set_time_limit(0);
+                            ini_set('memory_limit', '1024M');
+
+                            try {
+                            self::bulkImgProgressPatch($jobId, ['status' => 'processing', 'message' => null]);
+
+                            Log::info("BulkImage: START", [
+                            'job_id' => $jobId,
+                            'seller_id' => $sellerId,
+                            'stored_path' => $storedPath,
+                            ]);
+
+                            // Image driver
+                            if (extension_loaded('imagick')) {
+                            Image::configure(['driver' => 'imagick']);
+                            } else {
+                            Image::configure(['driver' => 'gd']);
+                            }
+
+                            // GD WebP support check
+                            if (!extension_loaded('imagick') && function_exists('gd_info')) {
+                            $gd = gd_info();
+                            if (isset($gd['WebP Support']) && !$gd['WebP Support']) {
+                            self::bulkImgProgressPatch($jobId, [
+                            'status' => 'failed',
+                            'message' => 'Server GD WebP support off. Enable WebP or install Imagick.',
+                            ]);
+                            return;
+                            }
+                            }
+
+                            $tmpDir = storage_path('app/tmp');
+                            if (!is_dir($tmpDir)) @mkdir($tmpDir, 0775, true);
+
+                            $filePath = storage_path('app/' . $storedPath);
+                            $spreadsheet = IOFactory::load($filePath);
+                            $sheet = $spreadsheet->getActiveSheet();
+
+                            $idCol = 1; // A
+                            $urlCol = 2; // B
+
+                            $highestRow = (int) $sheet->getHighestRow();
+                            $totalRows = max(0, $highestRow - 1);
+
+                            $inserted = 0;
+                            $failed = 0;
+                            $processed = 0;
+
+                            for ($row = 2; $row <= $highestRow; $row++) { $processed++; $idCell=trim((string) $sheet->
+                                getCellByColumnAndRow($idCol, $row)->getValue());
+                                $cell = trim((string) $sheet->getCellByColumnAndRow($urlCol, $row)->getValue());
+
+                                if ($cell === '') {
+                                self::bulkImgTick($jobId, $processed, $totalRows, $inserted, $failed);
+                                continue;
+                                }
+
+                                if ($idCell === '' || !is_numeric($idCell)) {
+                                $failed++;
+                                self::bulkImgTick($jobId, $processed, $totalRows, $inserted, $failed);
+                                continue;
+                                }
+
+                                $imageGroupId = (int) $idCell;
+                                $urls = array_filter(array_map('trim', explode(',', $cell)));
+
+                                foreach ($urls as $url) {
+                                if ($url === '') continue;
+
+                                if (!filter_var($url, FILTER_VALIDATE_URL)) {
+                                $failed++;
+                                continue;
+                                }
+
+                                $parts = parse_url($url);
+                                if (!$parts || empty($parts['scheme']) || empty($parts['host'])) {
+                                $failed++;
+                                continue;
+                                }
+
+                                // safe url (amazon paths etc)
+                                $path = $parts['path'] ?? '';
+                                $pathSegments = explode('/', $path);
+                                $pathSegments = array_map(function ($seg) {
+                                return str_replace('%2B', '+', rawurlencode($seg));
+                                }, $pathSegments);
+                                $safePath = implode('/', $pathSegments);
+
+                                $safeUrl = $parts['scheme'] . '://' . $parts['host'] . $safePath;
+                                if (!empty($parts['query'])) $safeUrl .= '?' . $parts['query'];
+
+                                $tmpIn = $tmpDir . "/bulk_in_{$sellerId}_{$row}_" . Str::random(8);
+                                $tmpOut = $tmpDir . "/bulk_out_{$sellerId}_{$row}_" . Str::random(8) . ".webp";
+
+                                try {
+                                $resp = Http::withHeaders([
+                                'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+                                'Accept' => 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8',
+                                'Referer' => 'https://www.amazon.in/',
+                                ])
+                                ->retry(3, 800)
+                                ->timeout(120)
+                                ->withOptions(['sink' => $tmpIn])
+                                ->get($safeUrl);
+
+                                if (!$resp->successful() || !file_exists($tmpIn) || filesize($tmpIn) <= 0) { $failed++;
+                                    @unlink($tmpIn); continue; } // resize with padding 1000x1000
+                                    $img=Image::make($tmpIn)->resize(1000, 1000, function ($c) {
+                                    $c->aspectRatio();
+                                    $c->upsize();
+                                    });
+
+                                    $canvas = Image::canvas(1000, 1000, [0, 0, 0, 0]);
+                                    $canvas->insert($img, 'center');
+
+                                    file_put_contents($tmpOut, (string) $canvas->encode('webp', 85));
+
+                                    if (!file_exists($tmpOut) || filesize($tmpOut) <= 0) { $failed++; @unlink($tmpIn);
+                                        @unlink($tmpOut); continue; } $base=basename(parse_url($url, PHP_URL_PATH)
+                                        ?? 'image' ); $base=preg_replace('/[^a-zA-Z0-9\-_\.]/', '_' , $base);
+                                        $base=Str::limit($base, 60, '' );
+                                        $base=preg_replace('/\.(jpg|jpeg|png|webp)$/i', '' , $base);
+                                        $rand=Str::random(6); $r2Path="products/lists/{$sellerId}_{$base}_{$rand}.webp"
+                                        ; $stream=fopen($tmpOut, 'r' ); Storage::disk('r2')->writeStream($r2Path,
+                                        $stream,
+                                        [
+                                        'visibility' => 'public',
+                                        'mimetype' => 'image/webp',
+                                        ]);
+                                        if (is_resource($stream)) fclose($stream);
+
+                                        DB::table('bulk_image')->insert([
+                                        'seller_id' => $sellerId,
+                                        'image_path' => $r2Path,
+                                        'is_from_excel' => 1,
+                                        'image_id' => $imageGroupId,
+                                        'created_at' => now(),
+                                        'updated_at' => now(),
+                                        ]);
+
+                                        $inserted++;
+
+                                        @unlink($tmpIn);
+                                        @unlink($tmpOut);
+
+                                        } catch (\Throwable $e) {
+                                        $failed++;
+                                        Log::error("BulkImage: inner exception", [
+                                        'job_id' => $jobId,
+                                        'row' => $row,
+                                        'url' => $url,
+                                        'message' => $e->getMessage(),
+                                        ]);
+                                        @unlink($tmpIn);
+                                        @unlink($tmpOut);
+                                        continue;
+                                        }
+                                        }
+
+                                        self::bulkImgTick($jobId, $processed, $totalRows, $inserted, $failed);
+                                        }
+
+                                        self::bulkImgProgressPatch($jobId, [
+                                        'status' => 'done',
+                                        'percent' => 100,
+                                        'total' => $totalRows,
+                                        'processed' => $processed,
+                                        'inserted' => $inserted,
+                                        'failed' => $failed,
+                                        'message' => 'Completed',
+                                        ]);
+
+                                        } catch (\Throwable $e) {
+                                        self::bulkImgProgressPatch($jobId, [
+                                        'status' => 'failed',
+                                        'message' => $e->getMessage(),
+                                        ]);
+                                        throw $e;
+                                        }
+
+                                        })->onQueue('default');
+
+                                        // Return fast to avoid gateway timeout
+                                        return response()->json(['ok' => true, 'job_id' => $jobId], 202);
+                                        }
+
+
+                                        public function bulkImagesProgress($jobId)
+                                        {
+                                        $data = Cache::get("bulkimg:{$jobId}");
+                                        if (!$data) return response()->json(['status' => 'not_found', 'percent' => 0],
+                                        404);
+                                        return response()->json($data);
+                                        }
+
+
+                                        private static function bulkImgTick(string $jobId, int $processed, int $total,
+                                        int $inserted, int $failed): void
+                                        {
+                                        $percent = $total > 0 ? (int) floor(($processed / $total) * 100) : 100;
+
+                                        self::bulkImgProgressPatch($jobId, [
+                                        'status' => 'processing',
+                                        'percent' => $percent,
+                                        'total' => $total,
+                                        'processed' => $processed,
+                                        'inserted' => $inserted,
+                                        'failed' => $failed,
+                                        'message' => null,
+                                        ]);
+                                        }
+
+                                        private static function bulkImgProgressPatch(string $jobId, array $patch): void
+                                        {
+                                        $key = "bulkimg:{$jobId}";
+                                        $old = Cache::get($key, []);
+
+                                        $new = array_merge([
+                                        'status' => 'queued',
+                                        'percent' => 0,
+                                        'total' => 0,
+                                        'processed' => 0,
+                                        'inserted' => 0,
+                                        'failed' => 0,
+                                        'message' => null,
+                                        ], $old, $patch);
+
+                                        Cache::put($key, $new, now()->addHours(6));
+                                        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                        // public function exportExcelUploadedImages(Request $request)
+                                        // {
+                                        // // seller_id optional
+                                        // $request->validate([
+                                        // 'seller_id' => 'nullable|integer',
+                                        // ]);
+
+                                        // $sellerId = $request->filled('seller_id') ? (int) $request->seller_id : null;
+
+                                        // // Get rows
+                                        // $q = DB::table('bulk_image')
+                                        // ->select('image_id', 'seller_id', 'image_path', 'created_at')
+                                        // ->where('is_from_excel', 1)
+                                        // ->orderBy('id', 'asc');
+
+                                        // if ($sellerId) {
+                                        // $q->where('seller_id', $sellerId);
+                                        // }
+
+                                        // $rows = $q->get();
+
+                                        // // Create excel
+                                        // $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+                                        // $sheet = $spreadsheet->getActiveSheet();
+                                        // $sheet->setTitle('bulk_images');
+
+                                        // // Header
+                                        // $sheet->setCellValue('A1', 'image_id');
+                                        // $sheet->setCellValue('B1', 'seller_id');
+                                        // $sheet->setCellValue('C1', 'image_path');
+                                        // $sheet->setCellValue('D1', 'created_at');
+
+                                        // $r = 2;
+                                        // foreach ($rows as $row) {
+                                        // $path = ltrim((string) $row->image_path, '/');
+
+                                        // $sheet->setCellValue("A{$r}", (int) $row->image_id);
+                                        // $sheet->setCellValue("B{$r}", (int) $row->seller_id);
+                                        // $sheet->setCellValue("C{$r}", $path);
+                                        // $sheet->setCellValue("D{$r}", (string) $row->created_at);
+
+                                        // $r++;
+                                        // }
+
+                                        // foreach (range('A', 'D') as $col) {
+                                        // $sheet->getColumnDimension($col)->setAutoSize(true);
+                                        // }
+
+                                        // $fileName = $sellerId
+                                        // ? "bulk_images_excel_seller_{$sellerId}.xlsx"
+                                        // : "bulk_images_excel_all.xlsx";
+
+                                        // return response()->streamDownload(function () use ($spreadsheet) {
+                                        // $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+                                        // $writer->save('php://output');
+                                        // }, $fileName, [
+                                        // 'Content-Type' =>
+                                        // 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                                        // ]);
+                                        // }
+
+
+
+                                        public function exportExcelUploadedImages(Request $request)
+                                        {
+                                        // ✅ Get authenticated seller id
+                                        // Change guard/model as per your project (seller guard / user->seller_id etc.)
+                                        $sellerId = auth('seller')->id();
+                                        // OR: $sellerId = auth()->user()->seller_id;
+
+                                        if (!$sellerId) {
+                                        return response()->json(['message' => 'Unauthorized'], 401);
+                                        }
+
+                                        $q = DB::table('bulk_image')
+                                        ->select(
+                                        'image_id',
+                                        'seller_id',
+                                        DB::raw("GROUP_CONCAT(TRIM(LEADING '/' FROM image_path) ORDER BY id SEPARATOR
+                                        '||') as images"),
+                                        DB::raw("MIN(created_at) as created_at")
+                                        )
+                                        ->where('is_from_excel', 1)
+                                        ->where('seller_id', $sellerId) // ✅ force only auth seller
+                                        ->orderBy('image_id', 'asc')
+                                        ->groupBy('image_id', 'seller_id');
+
+                                        $rows = $q->get();
+
+                                        // Find max images count to create headers
+                                        $maxImages = 0;
+                                        $parsed = [];
+                                        foreach ($rows as $row) {
+                                        $imgs = array_values(array_filter(explode('||', (string) $row->images)));
+                                        $maxImages = max($maxImages, count($imgs));
+                                        $parsed[] = [$row, $imgs];
+                                        }
+
+                                        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+                                        $sheet = $spreadsheet->getActiveSheet();
+                                        $sheet->setTitle('bulk_images');
+
+                                        // Base headers
+                                        $sheet->setCellValue('A1', 'image_id');
+                                        $sheet->setCellValue('B1', 'seller_id');
+
+                                        // Dynamic image headers
+                                        $startColIndex = 3; // C
+                                        for ($i = 1; $i <= $maxImages; $i++) {
+                                            $col=\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($startColIndex
+                                            + $i - 1); $sheet->setCellValue($col . '1', "image_{$i}");
+                                            }
+
+                                            // created_at last column
+                                            $createdAtCol =
+                                            \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($startColIndex
+                                            + $maxImages);
+                                            $sheet->setCellValue($createdAtCol . '1', 'created_at');
+
+                                            $r = 2;
+                                            foreach ($parsed as [$row, $imgs]) {
+                                            $sheet->setCellValue("A{$r}", (int) $row->image_id);
+                                            $sheet->setCellValue("B{$r}", (int) $row->seller_id);
+
+                                            for ($i = 0; $i < $maxImages; $i++) {
+                                                $col=\PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($startColIndex
+                                                + $i); $sheet->setCellValue($col . $r, $imgs[$i] ?? '');
+                                                }
+
+                                                $sheet->setCellValue($createdAtCol . $r, (string) $row->created_at);
+                                                $r++;
+                                                }
+
+                                                // Autosize
+                                                $lastCol =
+                                                \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($startColIndex
+                                                + $maxImages);
+                                                foreach (range('A', $lastCol) as $col) {
+                                                $sheet->getColumnDimension($col)->setAutoSize(true);
+                                                }
+
+                                                $fileName = "bulk_images_excel_seller_{$sellerId}.xlsx";
+
+                                                return response()->streamDownload(function () use ($spreadsheet) {
+                                                $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+                                                $writer->save('php://output');
+                                                }, $fileName, [
+                                                'Content-Type' =>
+                                                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                                                ]);
+                                                }
+
+
+
+
+
+
+                                                }

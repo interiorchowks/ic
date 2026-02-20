@@ -902,6 +902,450 @@ class ProductController extends BaseController
         ]);
     }
 
+    // public function sku_combination(Request $request)
+    // {
+    //     $options = [];
+    //     if ($request->has('colors_active') && $request->has('colors') && count($request->colors) > 0) {
+    //         $colors_active = 1;
+    //         array_push($options, $request->colors);
+    //     } else {
+    //         $colors_active = 0;
+    //     }
+
+    //     $unit_price = $request->unit_price;
+    //     $product_name = $request->name[array_search('en', $request->lang)];
+
+    //     if ($request->has('choice_no')) {
+    //         foreach ($request->choice_no as $key => $no) {
+    //             $name = 'choice_options_' . $no;
+    //             $my_str = implode('', $request[$name]);
+    //             array_push($options, explode(',', $my_str));
+    //         }
+    //     }
+
+    //     $combinations = Helpers::combinations($options);
+    //     return response()->json([
+    //         'view' => view('admin-views.product.partials._sku_combinations', compact('combinations', 'unit_price', 'colors_active', 'product_name'))->render(),
+    //     ]);
+    // }
+
+    // public function get_variations(Request $request)
+    // {
+    //     $product = Product::find($request['id']);
+    //     return response()->json([
+    //         'view' => view('admin-views.product.partials._update_stock', compact('product'))->render()
+    //     ]);
+    // }
+
+
+    // public function edit($id)
+    // {
+    //     $product = Product::withoutGlobalScopes()->with('translations')->find($id);
+    //     $product_category = json_decode($product->category_ids);
+    //     $product->colors = json_decode($product->colors);
+    //     $categories = Category::where(['parent_id' => 0])->orderBy('name')->get();
+    //     $br = Brand::orderBY('name', 'ASC')->get();
+    //     $brand_setting = BusinessSetting::where('type', 'product_brand')->first()->value;
+    //     $digital_product_setting = BusinessSetting::where('type', 'digital_product')->first()->value;
+    //     $warehouse = DB::table('warehouse')->get();
+       
+    //     try {
+    //         return view('admin-views.product.edit', compact('categories', 'br','warehouse', 'product', 'product_category', 'brand_setting', 'digital_product_setting'));
+    //     } catch (\Exception $e) {
+    //         dd($e->getMessage());
+    //     }
+    // }
+
+    // public function update(Request $request, $id)
+    // {
+    //     // dd($request);
+    //     $product = Product::find($id);
+
+    //     $brand_setting = BusinessSetting::where('type', 'product_brand')->first()->value;
+    //     if ($brand_setting && empty($request->brand_id)) {
+    //         $validator->after(function ($validator) {
+    //             $validator->errors()->add(
+    //                 'brand_id', 'Brand is required!'
+    //             );
+    //         });
+    //     }
+       
+    //     if ($request['discount_type'] == 'percent') {
+    //         $dis = ($request['unit_price'] / 100) * $request['discount'];
+    //     } else {
+    //         $dis = $request['discount'];
+    //     }
+        
+    //     $product->name = $request->name[array_search('en', $request->lang)];
+    //     $product->slug = Str::slug($request->name[array_search('en', $request->lang)], '-') . '-' . Str::random(6);
+    //     $category = [];
+    //     if ($request->category_id != null) {
+    //         array_push($category, [
+    //             'id' => $request->category_id,
+    //             'position' => 1,
+    //         ]);
+    //     }
+    //     if ($request->sub_category_id != null) {
+    //         array_push($category, [
+    //             'id' => $request->sub_category_id,
+    //             'position' => 2,
+    //         ]);
+    //     }
+    //     if ($request->sub_sub_category_id != null) {
+    //         array_push($category, [
+    //             'id' => $request->sub_sub_category_id,
+    //             'position' => 3,
+    //         ]);
+    //     }
+
+    //     $product->HSN_code = $request->HSN_code;
+    //     $product->Return_days     = $request->Return_days;
+    //     $product->Replacement_days = $request->Replacement_days;
+    //     $product->product_type          = $request->product_type;
+    //     $product->category_ids          = json_encode($category);
+    //     $product->category_id          = $request->category_id;
+    //     $product->sub_category_id      = $request->sub_category_id;
+    //     $product->sub_sub_category_id  = $request->sub_sub_category_id;
+    //     $product->brand_id              = isset($request->brand_id) ? $request->brand_id : null;
+    //     $product->unit = $request->unit;
+       
+    //     $product->digital_product_type  = $request->product_type == 'digital' ? $request->digital_product_type : null;
+    //     $product->details               = $request->description[array_search('en', $request->lang)];
+    //     $product->free_delivery      = $request->free_delivery=='on'?1:0;
+
+    //     $product->add_warehouse = $request->warehouse;
+    //     $request->product_type = "physical";
+    //     $request->product_type == 'digital';
+
+    //     if ($request->has('colors_active') && $request->has('colors') && count($request->colors) > 0) {
+    //         $product->colors = $request->product_type == 'physical' ? json_encode($request->colors) : json_encode([]);
+    //     } else {
+    //         $colors = [];
+    //         $product->colors = $request->product_type == 'physical' ? json_encode($colors) : json_encode([]);
+    //     }
+    //     $choice_options = [];
+    //     if ($request->has('choice')) {
+    //         foreach ($request->choice_no as $key => $no) {
+    //             $str = 'choice_options_' . $no;
+    //             $item['name'] = 'choice_' . $no;
+    //             $item['title'] = $request->choice[$key];
+    //             $item['options'] = array_map('trim', explode(',', implode('|', $request[$str])));
+    //            // $item['options'] = explode(',', implode('|', $request[$str]));
+    //             array_push($choice_options, $item);
+    //         }
+    //     }
+      
+    //     $product->choice_options = $request->product_type == 'physical' ? json_encode($choice_options) : json_encode([]);
+    //     $variations = [];
+    //     //combinations start
+    //     $options = [];
+    //     if ($request->has('colors_active') && $request->has('colors') && count($request->colors) > 0) {
+    //         $colors_active = 1;
+    //         array_push($options, $request->colors);
+    //     }
+    //     if ($request->has('choice_no')) {
+    //         foreach ($request->choice_no as $key => $no) {
+    //             $name = 'choice_options_' . $no;
+    //             $my_str = implode('|', $request[$name]);
+    //             array_push($options, explode(',', $my_str));
+    //         }
+    //     }
+    //     //Generates the combinations of customer choice options
+    //     $combinations = Helpers::combinations($options);
+       
+    //     $variations = [];
+    //     $stock_count = 0;
+    //     if (count($combinations[0]) > 0) {
+    //         foreach ($combinations as $key => $combination) {
+    //             $str = '';
+    //             foreach ($combination as $k => $item) {
+    //                 if ($k > 0) {
+    //                     $str .= '-' . str_replace(' ', '', $item);
+    //                 } else {
+    //                     if ($request->has('colors_active') && $request->has('colors') && count($request->colors) > 0) {
+    //                         $color_name = Color::where('code', $item)->first()->name;
+    //                         $str .= $color_name;
+    //                     } else {
+    //                         $str .= str_replace(' ', '', $item);
+    //                     }
+    //                 }
+    //             }
+              
+    //             $item = [];
+    //             $item['type'] = $str;
+    //             $item['price'] = Convert::usd(abs($request['price_' . str_replace('.', '_', $str)]));
+    //             $item['sku'] = $request['sku_' . str_replace('.', '_', $str)];
+    //             $item['qty'] = abs($request['qty_' . str_replace('.', '_', $str)]);
+    //             array_push($variations, $item);
+    //             $stock_count += $item['qty'];
+    //         }
+    //     } else {
+    //         $stock_count = (integer)$request['current_stock'];
+    //     }
+      
+    //     //combinations end
+    //     $product->variation         = $request->product_type == 'physical' ? json_encode($variations) : json_encode([]);
+    //     $product->unit_price        = Convert::usd($request->unit_price);
+    //     $product->purchase_price    = Convert::usd($request->purchase_price ?? 0);
+    //     //$product->tax               = $request->tax;
+    //     $product->tax_model         = $request->tax_model ?? 'include';
+    //     $product->code              = $request->code;
+    //     $product->minimum_order_qty = $request->minimum_order_qty;
+    //     // $product->tax_type          = $request->tax_type;
+    //     $product->discount          = $request->discount_type == 'flat' ? Convert::usd($request->discount) : $request->discount;
+    //     $product->attributes        = $request->product_type == 'physical' ? json_encode($request->choice_attributes) : json_encode([]);
+    //     $product->discount_type     = $request->discount_type;
+    //     $product->current_stock     = $request->product_type == 'physical' ? abs($stock_count) : 0;
+    //     $product->shipping_cost     = $request->product_type == 'physical' ? (Helpers::get_business_settings('product_wise_shipping_cost_approval')==1?$product->shipping_cost:Convert::usd($request->shipping_cost)) : 0;
+    //     $product->multiply_qty      = ($request->product_type == 'physical') ? ($request->multiplyQTY=='on'?1:0) : 0;
+    //     $product->request_status = Helpers::get_business_settings('new_product_approval')==1?0:1;
+    //     $product->status         = 0;
+      
+    //     if(Helpers::get_business_settings('product_wise_shipping_cost_approval')==1 && $product->shipping_cost != Convert::usd($request->shipping_cost))
+    //     {
+    //         $product->temp_shipping_cost = Convert::usd($request->shipping_cost);
+    //         $product->is_shipping_cost_updated = 0;
+    //     }
+
+    //     $product->video_provider = 'youtube';
+    //     $product->video_url = $request->video_link;
+    //     if ($product->request_status == 2) {
+    //         $product->request_status = 0;
+    //     }
+
+    //     if ($request->ajax()) {
+    //         return response()->json([], 200);
+    //     } else {
+          
+    //         $product->save();
+    //     if($request->sizes){
+    //         foreach ($request->sizes as $index => $skus) {
+    //             $imageNames = [];
+
+    //             // Get thumbnail input name
+    //             $thumbnailImage = $request->input('thumbnail_image_' . $index);
+
+    //             // Get image order from hidden input
+    //             $imageOrder = json_decode($request->input('image_order_' . $index, '[]'), true);
+
+    //             // Store new images in the correct order
+    //             // if ($request->hasFile('image_' . $index)) {
+    //             //     $files = $request->file('image_' . $index);
+    //             //     $fileMap = [];
+
+    //             //     foreach ($files as $file) {
+    //             //         $fileMap[$file->getClientOriginalName()] = $file;
+    //             //     }
+
+    //             //     // Sort and store according to client-side order
+    //             //     foreach ($imageOrder as $originalName) {
+    //             //         if (isset($fileMap[$originalName]) && $fileMap[$originalName]->isValid()) {
+    //             //             $path = $fileMap[$originalName]->store('images', 'public');
+    //             //             $imageName = basename($path);
+    //             //             $imageNames[] = $imageName;
+
+    //             //             // Set thumbnail if this is the selected one
+    //             //             if ($thumbnailImage == $originalName) {
+    //             //                 $thumbnailImage = $imageName;
+    //             //             }
+    //             //         }
+    //             //     }
+    //             // }
+
+    //             // // Get old images
+    //             // $oldImages = $request->input('old_image_' . $index, []);
+    //             // $finalImages = array_merge($oldImages, $imageNames);
+    //             // $imageJson = !empty($finalImages) ? json_encode($finalImages) : null;
+
+    //                 //     if ($request->hasFile('image_' . $index)) {
+    //                 //     $files = $request->file('image_' . $index);
+    //                 //     $fileMap = [];
+
+    //                 //     // Map original names to file objects
+    //                 //     foreach ($files as $file) {
+    //                 //         $fileMap[$file->getClientOriginalName()] = $file;
+    //                 //     }
+
+    //                 //     // Sort & store according to client-side order
+    //                 //     foreach ($imageOrder as $originalName) {
+    //                 //         if (isset($fileMap[$originalName]) && $fileMap[$originalName]->isValid()) {
+
+    //                 //             // Create Intervention Image instance
+    //                 //             $img = Image::make($fileMap[$originalName]->getRealPath())->encode('webp', 90);
+
+    //                 //             // Reduce size if above 80 KB
+    //                 //             $quality = 90;
+    //                 //             while (strlen($img) > 80 * 1024 && $quality > 10) {
+    //                 //                 $quality -= 5;
+    //                 //                 $img = Image::make($fileMap[$originalName]->getRealPath())->encode('webp', $quality);
+    //                 //             }
+
+    //                 //             // Generate safe unique filename
+    //                 //             $fileBaseName = pathinfo($originalName, PATHINFO_FILENAME);
+    //                 //             $safeName = \Str::slug($fileBaseName) . '-' . uniqid() . '.webp';
+
+    //                 //             // Save to storage/app/public/images
+    //                 //             $savePath = storage_path('app/public/images/' . $safeName);
+    //                 //             if (!is_dir(dirname($savePath))) {
+    //                 //                 mkdir(dirname($savePath), 0755, true);
+    //                 //             }
+    //                 //             $img->save($savePath);
+
+    //                 //             // Add to final list
+    //                 //             $imageNames[] = $safeName;
+
+    //                 //             // Set thumbnail if this was the selected one
+    //                 //             if ($thumbnailImage == $originalName) {
+    //                 //                 $thumbnailImage = $safeName;
+    //                 //             }
+    //                 //         }
+    //                 //     }
+    //                 // }
+
+
+
+    //                 if ($request->hasFile('image_' . $index)) {
+
+    //                     $files = $request->file('image_' . $index);
+    //                     $fileMap = [];
+
+    //                     foreach ($files as $file) {
+    //                         $fileMap[$file->getClientOriginalName()] = $file;
+    //                     }
+
+    //                     $productFolder = 'products';
+
+    //                     foreach ($imageOrder as $originalName) {
+
+    //                         if (isset($fileMap[$originalName]) && $fileMap[$originalName]->isValid()) {
+
+    //                             $file = $fileMap[$originalName];
+    //                             $ext = strtolower($file->getClientOriginalExtension());
+
+    //                             $safeName = uniqid() . '.webp';
+
+    //                             // ✅ Already webp → no conversion
+    //                             if ($ext === 'webp') {
+    //                                 $imageContent = file_get_contents($file->getRealPath());
+    //                             } else {
+    //                                 $imageContent = (string) Image::make($file->getRealPath())
+    //                                                     ->encode('webp', 90);
+    //                             }
+
+    //                             $r2Path = $productFolder . '/' . $safeName;
+
+    //                             Storage::disk('r2')->put($r2Path, $imageContent);
+
+    //                             $publicPath = '/' . $r2Path;
+
+    //                             $imageNames[] = $publicPath;
+
+    //                             // ✅ Thumbnail match
+    //                             if ($thumbnailImage == $originalName) {
+    //                                 $thumbnailImage = $publicPath;
+    //                             }
+    //                         }
+    //                     }
+    //                 }
+
+    //                 $oldImages  = $request->input('old_image_' . $index, []);
+    //                 $finalImages = array_merge($oldImages, $imageNames);
+    //                 $imageJson = !empty($finalImages) ? json_encode($finalImages) : null;
+
+
+    //             $skuProduct = [
+    //                 'seller_id' => auth('seller')->id() ?? null,
+    //                 'product_id' => $id,
+    //                 'sizes' => $skus,
+    //                 'sku' => $request->skues[$index] ?? null,
+    //                 'tax' => $request->taxes[$index] ?? null,
+    //                 'variant_mrp' => $request->unit_prices[$index] ?? null,
+    //                 'discount_percent' => $request->var_tax[$index] ?? null,
+    //                 'gst_percent' => $request->tax_gst[$index] ?? null,
+    //                 'discount_type' => $request->discount_types[$index] ?? null,
+    //                 'discount' => $request->discounts[$index] ?? null,
+    //                 'listed_price' => $request->selling_prices[$index] ?? null,
+    //                 'listed_percent' => $request->selling_taxs[$index] ?? null,
+    //                 'listed_gst_percent' => $request->tax1_gst[$index],
+    //                 'commission_fee' => $request->commission_fee[$index] ?? null,
+    //                 'quantity' => $request->quant[$index] ?? null,
+    //                 'length' => $request->lengths[$index] ?? null,
+    //                 'breadth' => $request->breadths[$index] ?? null,
+    //                 'weight' => $request->weights[$index] ?? null,
+    //                 'height' => $request->heights[$index] ?? null,
+    //                 'color_name' => $request->color_names[$index] ?? null,
+    //                 'thumbnail_image' => $thumbnailImage ?? $request->new_thumbnail_image,
+    //                 'image' => $imageJson,
+    //             ];
+    //                 DB::table('sku_product_new')
+    //                     ->where('sizes', $skus)
+    //                     ->where('sku', $request->skues[$index])
+    //                     ->where('product_id', $request->ids)
+    //                     ->update($skuProduct);
+            
+    //         }
+    //     }
+    
+    //     $post = [
+    //         'seller_id'               => auth('seller')->id() ?? null,
+    //         'product_id'              => $id,
+    //         'specification'           => json_encode($request->specification_values),
+    //         'key_features'            => json_encode($request->features_values),
+    //         'technical_specification' => json_encode($request->technical_specification_values),
+    //         'other_details'           => json_encode($request->other_details_values),
+    //         'created_at'              => now(),
+    //         'updated_at'              => now()
+    //     ];
+            
+    //     DB::table('key_specification_values')->where('product_id', $id)->update($post);
+            
+    //         $tag_ids = [];
+    //         if ($request->tags != null) {
+    //             $tags = explode(",", $request->tags);
+    //         }
+    //         if(isset($tags)){
+    //             foreach ($tags as $key => $value) {
+    //                 $tag = Tag::firstOrNew(
+    //                     ['tag' => trim($value)]
+    //                 );
+    //                 $tag->save();
+    //                 $tag_ids[] = $tag->id;
+    //             }
+    //         }
+    //         $product->tags()->sync($tag_ids);
+
+    //         foreach ($request->lang as $index => $key) {
+    //             if ($request->name[$index] && $key != 'en') {
+    //                 Translation::updateOrInsert(
+    //                     ['translationable_type' => 'App\Model\Product',
+    //                         'translationable_id' => $product->id,
+    //                         'locale' => $key,
+    //                         'key' => 'name'],
+    //                     ['value' => $request->name[$index]]
+    //                 );
+    //             }
+    //             if ($request->description[$index] && $key != 'en') {
+    //                 Translation::updateOrInsert(
+    //                     ['translationable_type' => 'App\Model\Product',
+    //                         'translationable_id' => $product->id,
+    //                         'locale' => $key,
+    //                         'key' => 'description'],
+    //                     ['value' => $request->description[$index]]
+    //                 );
+    //             }
+    //         }
+    //         Toastr::success('Product updated successfully.');
+    //         return back();
+    //     }
+    // }
+
+
+
+
+
+
+
+
     public function get_variations(Request $request)
     {
         $product = Product::find($request['id']);
